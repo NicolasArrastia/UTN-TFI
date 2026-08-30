@@ -2,6 +2,8 @@
 
 Repositorio correspondiente al Trabajo Integrador Final de la Tecnicatura Universitaria en Programación de la Universidad Tecnológica Nacional.
 
+[Informe Completo](https://drive.google.com/drive/folders/1qmHW4E682uEEiqG2EBWcNyQU8OOAFTsm?usp=sharing)
+
 ## Integrantes
 
 - Mariano Astorga
