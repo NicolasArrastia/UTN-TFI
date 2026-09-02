@@ -14,61 +14,64 @@ Repositorio correspondiente al Trabajo Integrador Final de la Tecnicatura Univer
 
 Nuestro proyecto consiste en el desarrollo de una aplicación web de gestión comercial orientada a pequeños comercios y emprendimientos.
 
-Como punto de partida, identificamos una posible problemática en comercios que administran sus productos, ventas y stock de forma manual o mediante herramientas que no están integradas entre sí. Esto puede generar dificultades para mantener la información organizada, consultarla rápidamente y utilizarla para analizar el funcionamiento del negocio.
+Como punto de partida, identificamos una posible problemática en comercios que administran sus productos, ventas y stock de forma manual o mediante herramientas que no están integradas entre sí.
 
-Nuestra propuesta busca no solamente digitalizar estos procesos, sino también centralizar la información y aprovechar los datos registrados para generar estadísticas que puedan ser útiles para la gestión y la toma de decisiones.
+A partir del relevamiento realizado encontramos diferentes formas de registrar y administrar la información, incluyendo procesos manuales, registros parciales y el uso de distintas herramientas durante la actividad cotidiana de los comercios analizados.
 
-La problemática identificada será validada mediante el relevamiento con potenciales usuarios.
+El problema que buscamos abordar no se encuentra solamente en el uso de herramientas manuales, sino también en que parte de la información puede quedar sin registrar, registrarse de forma parcial o quedar distribuida entre distintos medios. Esto dificulta mantener un historial detallado y aprovechar posteriormente los datos para analizar las ventas, los productos y el stock.
+
+Nuestra propuesta busca centralizar esta información en una aplicación web y aprovechar los datos registrados para mantener un historial de las operaciones, actualizar el stock y generar estadísticas que puedan ser útiles para la gestión del negocio.
 
 ## Objetivo
 
-Desarrollar una aplicación web de gestión comercial que permita a pequeños negocios administrar productos, ventas y stock, gestionar usuarios y obtener información estadística que facilite la toma de decisiones.
+Desarrollar una aplicación web que permita centralizar la gestión de productos, ventas y stock de pequeños comercios, y aprovechar la información registrada para facilitar el control y análisis del negocio.
 
 ## Funcionalidades principales
 
-Para la primera versión del sistema planteamos las siguientes funcionalidades:
+Para la primera versión del sistema definimos las siguientes funcionalidades:
 
 ### Usuarios
 
-- Registro e inicio de sesión.
-- Autenticación.
-- Roles y permisos.
-- Asociación de usuarios a un negocio.
+- Registrar usuarios e iniciar sesión.
+- Autenticar a los usuarios del sistema.
+- Diferenciar el acceso a las funcionalidades según el rol asignado.
+- Permitir que varios usuarios puedan trabajar sobre la información de un mismo negocio.
 
 ### Productos
 
-- Alta, modificación, consulta y baja lógica.
-- Nombre y descripción.
-- Precio de venta y costo.
-- Categorías y etiquetas.
-- Control de stock.
-- Estado del producto.
+- Registrar nuevos productos.
+- Consultar los productos existentes.
+- Modificar la información de un producto.
+- Realizar la baja lógica de productos.
+- Clasificar los productos por categoría y etiquetas.
+- Registrar y consultar el stock disponible.
+
+Cada producto contará con información como nombre, descripción, precio de venta, costo, categoría, etiquetas, stock y estado.
 
 ### Ventas
 
-- Registro de ventas.
-- Selección de productos y cantidades.
-- Cálculo automático del total.
-- Actualización del stock.
-- Registro del usuario que realizó la venta.
+- Registrar una nueva venta.
+- Seleccionar los productos y cantidades correspondientes.
+- Calcular automáticamente el total de la venta.
+- Registrar qué usuario realizó la operación.
+- Actualizar el stock de los productos vendidos.
 
-### Dashboard
+### Estadísticas
 
-- Total de ventas.
-- Facturación.
-- Producto más vendido.
-- Producto con mayor facturación.
-- Producto con mayor ganancia.
-- Productos con bajo stock.
+- Consultar información generada a partir de las ventas registradas.
+- Consultar estadísticas correspondientes a distintos períodos.
+- Visualizar productos que tengan poco stock.
 
-## Tecnologías utilizadas
+Entre los indicadores iniciales se mostrarán la cantidad de ventas, facturación, producto más vendido, producto con mayor facturación y producto con mayor ganancia.
+
+## Tecnologías
 
 El stack tecnológico definido inicialmente para el proyecto es:
 
 ### Frontend
 
 - React
-- JavaScript
+- TypeScript
 
 ### Backend
 
@@ -92,31 +95,6 @@ El stack tecnológico definido inicialmente para el proyecto es:
 
 Elegimos estas tecnologías teniendo en cuenta principalmente nuestra experiencia previa, los contenidos trabajados durante la carrera y las necesidades del proyecto.
 
-## Estructura del repositorio
-
-Todo el proyecto se desarrollará y mantendrá dentro de este repositorio.
-
-La estructura inicial será la siguiente:
-
-```text
-UTN-TFI/
-│
-├── frontend/          # Aplicación frontend desarrollada con React
-├── backend/           # API y lógica de negocio desarrollada con Spring Boot
-├── database/          # Scripts y archivos relacionados con la base de datos
-├── docs/              # Informes, diagramas y documentación del proyecto
-│
-└── README.md          # Documentación principal del proyecto
-```
-
-Esta estructura podrá ajustarse durante el desarrollo según las necesidades del proyecto.
-
-## Instalación y ejecución
-
-El proyecto se encuentra actualmente en una etapa inicial de análisis, relevamiento y diseño.
-
-Las instrucciones necesarias para instalar y ejecutar el frontend, backend y base de datos se agregarán en esta sección a medida que avance el desarrollo y se definan las configuraciones necesarias.
-
 ## Alcance del MVP
 
 La primera versión del sistema estará centrada en:
@@ -126,7 +104,7 @@ La primera versión del sistema estará centrada en:
 - Gestión de productos.
 - Control y actualización de stock.
 - Registro de ventas.
-- Dashboard con estadísticas sobre ventas, facturación, ganancias y stock.
+- Consulta de estadísticas sobre ventas, facturación, productos y stock.
 
 ### Fuera del alcance inicial
 
@@ -142,8 +120,18 @@ Para mantener un alcance viable para el Trabajo Integrador Final, inicialmente n
 
 Estas funcionalidades podrán evaluarse como posibles ampliaciones futuras.
 
-## Estado del proyecto
+## Estructura del repositorio
 
-Actualmente el proyecto se encuentra en etapa de análisis, relevamiento y definición del MVP.
+Todo el proyecto se desarrollará y mantendrá dentro de este repositorio.
 
-Este repositorio se irá actualizando durante las distintas etapas de desarrollo del Trabajo Integrador Final.
+La estructura inicial será la siguiente:
+
+```text
+UTN-TFI/
+│
+├── frontend/          # Aplicación frontend desarrollada con React y TypeScript
+├── backend/           # API y lógica de negocio desarrollada con Spring Boot
+├── database/          # Scripts y archivos relacionados con la base de datos
+├── docs/              # Documentación del proyecto
+│
+└── README.md          # Presentación general del proyecto
