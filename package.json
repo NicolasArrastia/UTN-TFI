@@ -1,0 +1,25 @@
+{
+  "name": "utn-tfi",
+  "version": "1.0.0",
+  "description": "Repositorio correspondiente al Trabajo Integrador Final de la Tecnicatura Universitaria en Programación de la Universidad Tecnológica Nacional.\r [Informe Completo](https://docs.google.com/document/d/1VEmq8IQWdE1cVnLsrtFOBDiN8HbyCjLl/edit?usp=drive_link&ouid=104223395228377711470&rtpof=true&sd=true)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/client"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NicolasArrastia/UTN-TFI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/NicolasArrastia/UTN-TFI/issues"
+  },
+  "homepage": "https://github.com/NicolasArrastia/UTN-TFI#readme"
+}
