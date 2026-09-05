@@ -4,7 +4,8 @@
   "description": "Repositorio correspondiente al Trabajo Integrador Final de la Tecnicatura Universitaria en Programación de la Universidad Tecnológica Nacional.\r [Informe Completo](https://docs.google.com/document/d/1VEmq8IQWdE1cVnLsrtFOBDiN8HbyCjLl/edit?usp=drive_link&ouid=104223395228377711470&rtpof=true&sd=true)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npm run dev --workspaces --if-present"
   },
   "workspaces": [
     "apps/api",
