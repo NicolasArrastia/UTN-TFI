@@ -5,10 +5,7 @@ Repositorio correspondiente al Trabajo Integrador Final de la Tecnicatura Univer
 
 
 Database - Mermaid -
----
-config:
-  layout: elk
----
+```mermaid
 erDiagram
     BUSINESSES ||--o{ USERS : "has"
     BUSINESSES ||--o{ PRODUCTS : "contains"
@@ -28,8 +25,8 @@ erDiagram
         ObjectId _id PK
         ObjectId businessId FK
         string name
-        string user UK 
-        string password 
+        string email UK "unique per business (businessId + email)"
+        string passwordHash "bcrypt hash, never plain text"
         string role "admin/employee"
         bool active
         ISODate createdAt
