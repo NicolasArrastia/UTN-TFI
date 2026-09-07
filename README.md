@@ -25,8 +25,8 @@ erDiagram
         ObjectId _id PK
         ObjectId businessId FK
         string name
-        string email UK "unique per business (businessId + email)"
-        string passwordHash "bcrypt hash, never plain text"
+        string user UK 
+        string password 
         string role "admin/employee"
         bool active
         ISODate createdAt
