@@ -1,0 +1,101 @@
+Project pos_system {
+  Note: 'Point of sale system for small businesses '
+}
+
+Enum user_role {
+  admin
+  employee
+}
+
+Enum product_status {
+  active
+  inactive
+}
+
+Enum sale_status {
+  completed
+  cancelled
+}
+
+Table businesses [headercolor: #2D9CDB] {
+  _id ObjectId [pk]
+  name string
+  active bool
+  createdAt ISODate
+  Note: 'Each business has its own users, products and sales'
+}
+
+Table users [headercolor: #27AE60] {
+  _id ObjectId [pk]
+  businessId ObjectId [not null]
+  name string
+  user string 
+  password string 
+  role user_role
+  active bool
+  createdAt ISODate
+}
+
+Table products [headercolor: #F2994A] {
+  _id ObjectId [pk]
+  businessId ObjectId [not null]
+  name string
+  description string
+  category string [note: 'one category per product']
+  tags array [note: 'array of strings, multiple tags per product']
+  salePrice float
+  cost float
+  current_stock int [note: 'flattened subdocument stock.actual']
+  minimum_stock int [note: 'flattened subdocument stock.minimum, restock alert']
+  status product_status [note: 'soft delete: document is never deleted']
+  createdAt ISODate
+  updatedAt ISODate
+
+  indexes {
+    (businessId, category)
+  }
+}
+
+Table sales [headercolor: #EB5757] {
+  _id ObjectId [pk]
+  businessId ObjectId [not null]
+  number int [note: 'sequential per business, never reused']
+  date ISODate
+  userId ObjectId [not null]
+  total float [note: 'calculated and persisted by the backend']
+  status sale_status
+  cancelledAt ISODate [note: 'null if not cancelled']
+  cancelledById ObjectId [note: 'logical FK to users: who cancelled the sale']
+  cancellationReason string [note: 'null if not cancelled']
+
+  indexes {
+    (businessId, date)
+    (businessId, number) [unique]
+  }
+
+  Note: 'Items are EMBEDDED as an array inside this document (see sale_items)'
+}
+
+Table sale_items [headercolor: #9B51E0] {
+  saleId ObjectId [not null]
+  productId ObjectId [not null]
+  name string [note: 'SNAPSHOT: product name at the time of the sale']
+  quantity int
+  unitPrice float [note: 'SNAPSHOT: price at the time of the sale']
+  subtotal float
+
+  indexes {
+    (saleId, productId) [pk]
+  }
+
+  Note: 'WARNING: this is NOT a physical collection. It is an array embedded within the sale document.'
+}
+
+// ─────────── Relationships ───────────
+
+Ref: users.businessId > businesses._id
+Ref: products.businessId > businesses._id
+Ref: sales.businessId > businesses._id
+Ref: sales.userId > users._id
+Ref: sale_items.saleId > sales._id
+Ref: sale_items.productId > products._id
