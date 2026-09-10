@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/NicolasArrastia/UTN-TFI/issues"
   },
-  "homepage": "https://github.com/NicolasArrastia/UTN-TFI#readme"
+  "homepage": "https://github.com/NicolasArrastia/UTN-TFI#readme",
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
 }
