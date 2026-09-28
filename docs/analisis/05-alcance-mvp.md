@@ -7,8 +7,7 @@
 - Autenticación.
 - Roles.
 - Control de acceso.
-- Asociación del usuario con un negocio.
-- Varios usuarios trabajando sobre el mismo negocio.
+- Varios usuarios trabajando sobre la información del mismo comercio.
 
 ## 5.2 Gestión de productos
 

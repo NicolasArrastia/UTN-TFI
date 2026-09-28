@@ -9,13 +9,12 @@
 - Autenticación mediante JWT.
 - Roles.
 - Permisos.
-- Asociación del usuario con un negocio.
 - Diferenciación de acceso según el rol.
-- Soporte para varios usuarios trabajando sobre un mismo negocio.
+- Soporte para varios usuarios trabajando sobre la información del mismo comercio.
 
 ### Justificación
 
-Este módulo es necesario porque el sistema contempla colaboración entre varias personas de un mismo negocio. La autenticación permite identificar al usuario y la autorización permite determinar qué operaciones puede realizar.
+Este módulo es necesario porque el sistema contempla colaboración entre varias personas de un mismo comercio. La autenticación permite identificar al usuario y la autorización permite determinar qué operaciones puede realizar.
 
 JWT fue seleccionado porque forma parte del stack definido y permite mantener la API REST sin depender de una sesión tradicional del servidor.
 

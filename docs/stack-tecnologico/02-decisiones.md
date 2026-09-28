@@ -16,7 +16,7 @@ El resto de las tecnologías del proyecto se mantiene sin cambios.
 
 ## Motivos
 
-El primer motivo es que la información del sistema es relacional. Un negocio tiene usuarios, productos, ventas, categorías y etiquetas, y esas entidades se relacionan entre sí de manera estable. PostgreSQL representa esas relaciones de forma directa y garantiza que los datos relacionados existan.
+El primer motivo es que la información del sistema es relacional. Las ventas están relacionadas con los usuarios que las registran y con los productos que se venden, los productos pertenecen a categorías y pueden tener varias etiquetas, y los renglones de una venta referencian tanto la venta como el producto. PostgreSQL representa esas relaciones de forma directa y garantiza que los datos relacionados existan.
 
 El segundo motivo, y el más relevante para el proyecto, es que la propuesta de valor incluye generar estadísticas de ventas, facturación, productos más vendidos y control de stock a partir de las operaciones registradas. PostgreSQL se adapta mejor a ese tipo de consultas, que combinan ventas, detalle de venta y productos para obtener los indicadores que el sistema necesita mostrar.
 

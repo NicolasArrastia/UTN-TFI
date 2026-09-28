@@ -19,7 +19,7 @@ El sistema contempla principalmente dos tipos de usuarios:
 | Administrador | Usuario con acceso a la gestión general del negocio, usuarios, productos y estadísticas.                                                    |
 | Empleado      | Usuario que puede realizar las operaciones permitidas por el administrador, principalmente relacionadas con ventas y consulta de productos. |
 
-Cada usuario pertenece a un negocio determinado. Esto permite mantener separados los datos de diferentes negocios.
+Cada usuario tiene un rol que determina las operaciones que puede realizar. La aplicación se despliega para un comercio concreto, por lo que todos los usuarios acceden a la misma información y no se considera el aislamiento entre comercios.
 
 ---
 
@@ -27,7 +27,7 @@ Cada usuario pertenece a un negocio determinado. Esto permite mantener separados
 
 ## RF-01 - Registro de usuario
 
-El sistema deberá permitir registrar nuevos usuarios asociados a un negocio.
+El sistema deberá permitir registrar nuevos usuarios.
 
 **Datos principales:**
 
@@ -35,7 +35,6 @@ El sistema deberá permitir registrar nuevos usuarios asociados a un negocio.
 * Usuario.
 * Contraseña.
 * Rol.
-* Negocio al que pertenece.
 
 El registro deberá validar que los datos obligatorios estén completos.
 
@@ -72,9 +71,9 @@ El sistema deberá verificar el rol antes de permitir operaciones que requieran 
 
 ## RF-05 - Gestión de múltiples usuarios
 
-El sistema deberá permitir que un mismo negocio tenga múltiples usuarios.
+El sistema deberá permitir que el comercio tenga múltiples usuarios.
 
-Cada usuario deberá estar asociado a un único negocio dentro del sistema.
+Cada usuario deberá tener un único rol dentro del sistema.
 
 ---
 
@@ -179,23 +178,7 @@ Estas estadísticas deberán utilizar la información almacenada en las ventas.
 
 ---
 
-## RF-14 - Asociación de información al negocio
-
-Los datos generados por los usuarios deberán estar asociados al negocio correspondiente.
-
-Esto incluye:
-
-* Usuarios.
-* Productos.
-* Categorías.
-* Etiquetas.
-* Ventas.
-
-De esta manera, un negocio no deberá acceder a la información perteneciente a otro negocio.
-
----
-
-## RF-15 - Desactivación de registros
+## RF-14 - Desactivación de registros
 
 El sistema deberá permitir desactivar determinados registros sin eliminarlos físicamente de la base de datos cuando corresponda.
 
@@ -205,7 +188,7 @@ Esto permitirá conservar la información histórica necesaria para las operacio
 
 ---
 
-## RF-16 - Control de acceso
+## RF-15 - Control de acceso
 
 El sistema deberá verificar que el usuario tenga los permisos necesarios antes de ejecutar operaciones restringidas.
 
@@ -223,33 +206,25 @@ Las contraseñas no deberán almacenarse de forma directa en texto plano en una 
 
 ---
 
-## RNF-02 - Protección de datos entre negocios
-
-El sistema deberá garantizar el aislamiento de la información entre diferentes negocios.
-
-Un usuario solamente deberá poder consultar y modificar información correspondiente al negocio al que pertenece.
-
----
-
-## RNF-03 - Usabilidad
+## RNF-02 - Usabilidad
 
 La interfaz deberá ser clara y sencilla, permitiendo que un usuario pueda realizar las operaciones principales sin conocimientos técnicos.
 
 ---
 
-## RNF-04 - Rendimiento
+## RNF-03 - Rendimiento
 
 Las operaciones habituales, como consultar productos, registrar ventas y consultar información básica, deberán ejecutarse en tiempos adecuados para el uso cotidiano del sistema.
 
 ---
 
-## RNF-05 - Disponibilidad
+## RNF-04 - Disponibilidad
 
 La aplicación deberá poder ser utilizada mediante Internet desde un navegador web, considerando la infraestructura de despliegue definida para el proyecto.
 
 ---
 
-## RNF-06 - Mantenibilidad
+## RNF-05 - Mantenibilidad
 
 El código deberá organizarse de forma modular para facilitar la incorporación de nuevas funcionalidades y el mantenimiento del sistema.
 
@@ -261,13 +236,13 @@ El backend seguirá una arquitectura de tres capas:
 
 ---
 
-## RNF-07 - Escalabilidad
+## RNF-06 - Escalabilidad
 
 La arquitectura deberá permitir incorporar nuevos usuarios, productos, ventas y funcionalidades sin necesidad de modificar completamente la estructura del sistema.
 
 ---
 
-## RNF-08 - Compatibilidad
+## RNF-07 - Compatibilidad
 
 La aplicación deberá funcionar en navegadores web modernos y adaptarse a las resoluciones de pantalla utilizadas habitualmente para acceder al sistema.
 
@@ -277,7 +252,7 @@ La aplicación deberá funcionar en navegadores web modernos y adaptarse a las r
 
 ## RN-01 - Asociación de usuarios
 
-Todo usuario deberá pertenecer a un negocio.
+Todo usuario deberá pertenecer al comercio para el que se instala el sistema y tendrá un único rol asociado.
 
 ---
 
@@ -289,13 +264,13 @@ Cada usuario deberá tener un rol que determine las operaciones que puede realiz
 
 ## RN-03 - Productos
 
-Cada producto deberá pertenecer a un negocio y podrá estar asociado a una categoría y a múltiples etiquetas.
+Cada producto deberá estar asociado a una categoría y podrá tener múltiples etiquetas.
 
 ---
 
 ## RN-04 - Ventas
 
-Cada venta deberá estar asociada a un usuario y a un negocio.
+Cada venta deberá estar asociada a un usuario.
 
 ---
 
@@ -328,19 +303,13 @@ No se deberá permitir registrar una venta de una cantidad superior al stock dis
 Las ventas deberán conservar un estado que permita diferenciar, como mínimo:
 
 * `completed`: venta completada.
-* `voided`: venta anulada.
+* `cancelled`: venta anulada.
 
 ---
 
 ## RN-09 - Métodos de pago
 
 Una venta deberá registrar uno de los métodos de pago disponibles en el sistema.
-
----
-
-## RN-10 - Aislamiento de información
-
-Un usuario no deberá poder acceder a productos, ventas, usuarios, categorías o etiquetas pertenecientes a otro negocio.
 
 ---
 
@@ -361,9 +330,8 @@ Un usuario no deberá poder acceder a productos, ventas, usuarios, categorías o
 | RF-11 Actualización de stock | Ventas / Productos                           |
 | RF-12 Stock mínimo           | Productos                                    |
 | RF-13 Estadísticas           | Estadísticas                                 |
-| RF-14 Asociación al negocio  | Autenticación y usuarios / todos los módulos |
-| RF-15 Desactivación          | Productos / Usuarios                         |
-| RF-16 Control de acceso      | Autenticación y usuarios                     |
+| RF-14 Desactivación          | Productos / Usuarios                         |
+| RF-15 Control de acceso      | Autenticación y usuarios                     |
 
 ---
 
@@ -379,8 +347,7 @@ Para mantener el alcance controlado, los requisitos se pueden implementar de man
 * RF-06 - Gestión de productos.
 * RF-09 - Registro de ventas.
 * RF-11 - Actualización del stock.
-* RF-14 - Asociación al negocio.
-* RF-16 - Control de acceso.
+* RF-15 - Control de acceso.
 
 ### Prioridad media
 
@@ -389,7 +356,7 @@ Para mantener el alcance controlado, los requisitos se pueden implementar de man
 * RF-08 - Etiquetas.
 * RF-10 - Métodos de pago.
 * RF-12 - Stock mínimo.
-* RF-15 - Desactivación de registros.
+* RF-14 - Desactivación de registros.
 
 ### Prioridad posterior
 
@@ -406,7 +373,7 @@ Los requisitos funcionales serán implementados mediante los módulos definidos 
 Por ejemplo:
 
 * La autenticación y los roles requieren mecanismos de JWT y autorización.
-* La separación de información entre negocios requiere validar el `businessId` en las operaciones correspondientes.
+* El registro de una venta requiere una operación transaccional que incluya la creación de la venta, su detalle y la actualización del stock.
 * La gestión de productos y ventas requiere comunicación entre la API, la lógica de negocio y la base de datos.
 * Las estadísticas utilizarán la información registrada en las ventas.
 * La mantenibilidad se abordará mediante una arquitectura organizada en tres capas.

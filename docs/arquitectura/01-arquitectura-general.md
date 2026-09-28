@@ -133,18 +133,12 @@ El sistema contempla roles para diferenciar el acceso a las funcionalidades.
 
 El rol inicial definido para el proyecto contempla:
 
-- **Admin:** responsable de la administración del negocio y de los usuarios.
-- **Employee:** usuario que trabaja con las operaciones permitidas del negocio.
+- **Admin:** responsable de la administración del comercio y de los usuarios.
+- **Employee:** usuario que trabaja con las operaciones permitidas del comercio.
 
 Los permisos concretos se implementarán mediante middleware de autorización y reglas de negocio.
 
-## 11.8 Aislamiento por negocio
-
-Cada usuario estará asociado a un negocio. Las operaciones sobre productos, ventas, categorías y etiquetas deberán respetar ese contexto.
-
-Esto evita que un usuario pueda consultar o modificar información perteneciente a otro negocio.
-
-## 11.9 Justificación de la arquitectura
+## 11.8 Justificación de la arquitectura
 
 La arquitectura de tres capas fue elegida por las siguientes razones:
 
@@ -159,7 +153,7 @@ La arquitectura de tres capas fue elegida por las siguientes razones:
 
 No se considera necesario utilizar una arquitectura más compleja, como microservicios, para el MVP debido al tamaño del proyecto y a los tiempos disponibles.
 
-## 11.10 Estructura tentativa del backend
+## 11.9 Estructura tentativa del backend
 
 ```text
 apps/api/

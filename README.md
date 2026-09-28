@@ -1,72 +1,32 @@
 # Trabajo Integrador Final - UTN
 
-Repositorio correspondiente al Trabajo Integrador Final de la Tecnicatura Universitaria en Programación de la Universidad Tecnológica Nacional.
-[Informe Completo](https://docs.google.com/document/d/1VEmq8IQWdE1cVnLsrtFOBDiN8HbyCjLl/edit?usp=drive_link&ouid=104223395228377711470&rtpof=true&sd=true)
+Repositorio correspondiente al Trabajo Final Integrador de la Tecnicatura Universitaria en Programación de la Universidad Tecnológica Nacional.
 
+- [Informe completo](https://docs.google.com/document/d/1VEmq8IQWdE1cVnLsrtFOBDiN8HbyCjLl/edit?usp=drive_link&ouid=104223395228377711470&rtpof=true&sd=true)
+- [Documentación del proyecto](docs/README.md)
 
-Database - Mermaid -
-```mermaid
-erDiagram
-    BUSINESSES ||--o{ USERS : "has"
-    BUSINESSES ||--o{ PRODUCTS : "contains"
-    BUSINESSES ||--o{ SALES : "registers"
-    USERS ||--o{ SALES : "makes"
-    SALES ||--|{ SALES_ITEMS : "embeds"
-    PRODUCTS ||--o{ SALES_ITEMS : "references"
+## Stack tecnológico
 
-    BUSINESSES {
-        ObjectId _id PK
-        string name
-        bool active
-        ISODate createdAt
-    }
+| Parte | Tecnología |
+|---|---|
+| Frontend | React + TypeScript |
+| Backend | Node.js + Express + TypeScript |
+| Base de datos | PostgreSQL alojado en Neon, accedido con Prisma |
+| Seguridad | JWT |
+| Comunicación | API REST |
+| Control de versiones | Git + GitHub |
+| Backend en producción | Render |
+| Frontend en producción | Vercel |
 
-    USERS {
-        ObjectId _id PK
-        ObjectId businessId FK
-        string name
-        string user UK 
-        string password 
-        string role "admin/employee"
-        bool active
-        ISODate createdAt
-    }
+La base de datos del proyecto es PostgreSQL. Inicialmente se había elegido MongoDB, pero durante la revisión de la arquitectura se decidió cambiar a una base de datos relacional. El motivo es que la información del sistema es relacional y el proyecto depende de consultas que combinan ventas, detalle de venta y productos para obtener las estadísticas. Los motivos completos están registrados en [Decisiones sobre el stack tecnológico](docs/stack-tecnologico/02-decisiones.md).
 
-    PRODUCTS {
-        ObjectId _id PK
-        ObjectId businessId FK
-        string name
-        string description
-        string category "one single category per product"
-        array tags "array of strings, multiple per product"
-        float salePrice
-        float cost
-        int stock_current "subdocument stock.current"
-        int stock_min "subdocument stock.min, restock alert"
-        string status "active/inactive, soft delete"
-        ISODate createdAt
-        ISODate updatedAt
-    }
+## Modelo de datos
 
-    SALES {
-        ObjectId _id PK
-        ObjectId businessId FK
-        int number UK "sequential per business, never reused"
-        ISODate date
-        ObjectId userId FK
-        array items "embedded array, see SALES_ITEMS"
-        float total "calculated and persisted by the backend"
-        string status "completed/voided"
-        ISODate voidedAt "null if not voided"
-        ObjectId voidedByUserId FK "who voided the sale"
-        string voidingReason "null if not voided"
-    }
+![Modelo relacional de la base de datos](docs/base-de-datos/db-model.png)
 
-    SALES_ITEMS {
-        ObjectId saleId PK
-        ObjectId productId FK
-        string name "SNAPSHOT of the name at the time of sale"
-        int quantity
-        float unitPrice "SNAPSHOT of the price at the time of sale"
-        float subtotal
-    }
+El detalle del modelo, con la definición de cada entidad y las decisiones de diseño que lo sustentan, se encuentra en [Modelo relacional](docs/base-de-datos/01-modelo-relacional.md).
+
+Artefactos asociados:
+
+- Definición del esquema en formato DBML: [dbml.dbml](docs/base-de-datos/dbml.dbml)
+- Script de creación de la base de datos: [crear-base-datos.sql](docs/base-de-datos/crear-base-datos.sql)
