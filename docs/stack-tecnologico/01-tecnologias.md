@@ -5,8 +5,8 @@
 | Parte | Tecnología |
 |---|---|
 | Frontend | React + TypeScript |
-| Backend | Node.js + Express |
-| Base de datos | MongoDB |
+| Backend | Node.js + Express + TypeScript |
+| Base de datos | PostgreSQL alojado en Neon |
 | Seguridad | JWT |
 | Comunicación | API REST |
 | Control de versiones | Git + GitHub |
@@ -21,17 +21,19 @@ React fue elegido porque el equipo posee experiencia previa y permite construir 
 
 TypeScript permite definir de forma más clara las estructuras de datos utilizadas por el sistema, como productos, ventas y usuarios.
 
-### Node.js + Express
+### Node.js + Express + TypeScript
 
-Node.js y Express permiten desarrollar una API REST de forma sencilla y mantener una separación clara entre frontend y backend.
+Elegimos Node.js y Express porque contamos con experiencia previa y nos permiten desarrollar una API REST para comunicar el frontend con la lógica del sistema.
 
-Además, son tecnologías conocidas por el equipo, lo que reduce el riesgo de incorporar herramientas completamente nuevas durante el proyecto.
+En el backend también utilizaremos TypeScript para definir los tipos de datos que manejamos, detectar ciertos errores durante el desarrollo y facilitar la comprensión y el mantenimiento del código.
 
-### MongoDB
+### PostgreSQL y Neon
 
-MongoDB fue seleccionado por su flexibilidad y por su adaptación a las estructuras de datos del sistema. También es una tecnología con la que el equipo tiene experiencia previa.
+Elegimos PostgreSQL porque consideramos que el modelo relacional se adapta a la información del sistema y a las relaciones entre usuarios, productos, ventas y sus detalles. Además, permite utilizar consultas SQL para obtener las estadísticas previstas y transacciones para registrar una venta junto con la actualización del stock, de manera que ambas operaciones se completen o se reviertan si ocurre un error.
 
-Las ventas pueden contener su propio detalle de productos, lo que resulta apropiado para representar una operación como un documento.
+Para alojar la base de datos utilizaremos Neon, lo que nos permite trabajar con PostgreSQL en la nube sin administrar un servidor de base de datos propio.
+
+La elección inicial de MongoDB y los motivos del cambio están documentados en [Decisiones tecnológicas](02-decisiones.md).
 
 ### JWT
 

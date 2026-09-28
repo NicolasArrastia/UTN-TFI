@@ -107,7 +107,7 @@ El detalle se mantiene embebido dentro de la venta porque los productos que comp
 
 Las estadísticas representan uno de los principales diferenciadores del proyecto. El objetivo no es solamente registrar información, sino convertir los datos de las operaciones en información útil para la toma de decisiones.
 
-MongoDB permite utilizar operaciones de agregación para obtener indicadores a partir de las ventas almacenadas.
+Utilizaremos consultas SQL en PostgreSQL para relacionar la información de las ventas y sus detalles, agrupar los datos por producto o período y calcular los indicadores definidos para el MVP.
 
 El MVP comenzará con indicadores concretos para evitar agregar complejidad innecesaria.
 

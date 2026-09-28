@@ -4,20 +4,21 @@ Documentación organizada por etapas y componentes del sistema.
 
 ## Índice
 
-1. [Problemática](01-problema.md)
-2. [Relevamiento](02-relevamiento.md)
-3. [Propuesta](03-propuesta.md)
-4. [Objetivos](04-objetivos.md)
-5. [Alcance MVP](05-alcance-mvp.md)
-6. [Stack tecnológico](06-stack.md)
-7. [Plan de trabajo](07-plan-trabajo.md)
-8. [Riesgos](08-riesgos.md)
-9. [Viabilidad](09-viabilidad.md)
-10. [Uso de IA](10-uso-ia.md)
-11. [Arquitectura](11-arquitectura.md)
-12. [Módulos](12-modulos.md)
-13. [Base de datos](13-base-datos.md)
+1. [Problemática](analisis/01-problema.md)
+2. [Relevamiento](analisis/02-relevamiento.md)
+3. [Propuesta](analisis/03-propuesta.md)
+4. [Objetivos](analisis/04-objetivos.md)
+5. [Alcance MVP](analisis/05-alcance-mvp.md)
+6. [Stack tecnológico](stack-tecnologico/01-tecnologias.md)
+7. [Decisiones tecnológicas](stack-tecnologico/02-decisiones.md)
+8. [Plan de trabajo](planificacion/01-plan-de-trabajo.md)
+9. [Riesgos](planificacion/02-riesgos.md)
+10. [Viabilidad](planificacion/03-viabilidad.md)
+11. [Uso de IA](ia/01-uso-de-ia.md)
+12. [Arquitectura](arquitectura/01-arquitectura-general.md)
+13. [Módulos](modulos/00-modulos.md)
+14. [Requisitos](requisitos/00-requisitos.md)
 
 ## Nota sobre la base de datos
 
-El proyecto utiliza MongoDB. El archivo `13-base-datos.md` incluye además un SQL equivalente únicamente como representación conceptual del modelo relacional solicitado para la documentación.
+El proyecto utilizará PostgreSQL alojado en Neon. Inicialmente se había elegido MongoDB, pero durante la revisión de la arquitectura decidimos cambiar a una base de datos relacional. Los motivos están registrados en [Decisiones tecnológicas](stack-tecnologico/02-decisiones.md).

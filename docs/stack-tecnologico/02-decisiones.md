@@ -6,7 +6,7 @@ Inicialmente el proyecto se había definido con un stack MERN, utilizando MongoD
 
 Si bien la elección era viable, el equipo ya identificaba que probablemente no se trataba de la opción más adecuada para las características del proyecto.
 
-Al revisar nuevamente la arquitectura, y aprovechando que el desarrollo todavía no había comenzado, se decidió modificar la base de datos elegida.
+Al revisar nuevamente la arquitectura, y antes de implementar la persistencia de datos, decidimos cambiar la base de datos elegida.
 
 ## Decisión
 
@@ -28,8 +28,8 @@ Para el despliegue se eligió Neon como servicio que aloja la base de datos Post
 
 El equipo consultó el cambio con la cátedra, explicando la decisión de modificar el stack, los motivos del cambio y la propuesta de utilizar Neon para el despliegue. La respuesta fue afirmativa.
 
-El equipo realizaron el cambio en ese momento, aun cuando implicara dedicar un poco más de tiempo al desarrollo, con el objetivo de asegurarse de que la implementación final cumpla correctamente con las expectativas y los requisitos del proyecto.
+El equipo realizó el cambio en ese momento, aun cuando implicara dedicar un poco más de tiempo al desarrollo, con el objetivo de asegurarse de que la implementación final cumpla correctamente con las expectativas y los requisitos del proyecto.
 
 ## Alcance del cambio
 
-El cambio se definió antes de comenzar el desarrollo, por lo que no implicó migrar código ni datos almacenados. Sí requiere actualizar la documentación del proyecto, en particular el stack tecnológico, la arquitectura del sistema, el modelo de datos, la viabilidad y los riesgos.
+El cambio se definió cuando todavía no habíamos implementado la conexión ni las operaciones con la base de datos. Por eso, no fue necesario migrar datos ni adaptar código de persistencia. Sí necesitamos actualizar el modelo de datos y los apartados de la documentación relacionados con el stack tecnológico, la arquitectura, la viabilidad y los riesgos.

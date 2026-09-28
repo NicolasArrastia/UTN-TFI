@@ -23,7 +23,7 @@ flowchart TB
         S --> R[3. Acceso a datos<br/>Repositories / Models]
     end
 
-    R --> DB[(MongoDB)]
+    R --> DB[(PostgreSQL)]
 
     S --> AUTH[JWT / Autorización]
 ```
@@ -79,22 +79,25 @@ Ejemplos:
 - Aplicar reglas de baja lógica.
 - Coordinar operaciones que involucran varias entidades.
 
-Esta separación evita que las reglas de negocio queden mezcladas con las rutas HTTP o con las consultas a MongoDB.
+Esta separación evita que las reglas de negocio queden mezcladas con las rutas HTTP o con las consultas a PostgreSQL.
 
 ## 11.5 Capa 3 - Acceso a datos
 
-Esta capa es responsable de comunicarse con MongoDB.
+Esta capa es responsable de comunicarse con PostgreSQL, alojado en Neon.
 
 Responsabilidades:
 
-- Consultar documentos.
-- Insertar documentos.
-- Actualizar documentos.
-- Aplicar filtros.
-- Ejecutar agregaciones para estadísticas.
-- Encapsular el acceso a las colecciones.
+- Consultar, insertar y actualizar registros.
 
-Los servicios no deberían depender directamente de detalles de conexión o consultas específicas de la base de datos.
+- Aplicar filtros y consultar información relacionada entre tablas.
+
+- Obtener los datos necesarios para las estadísticas.
+
+- Ejecutar las operaciones de persistencia dentro de las transacciones coordinadas por los servicios.
+
+- Concentrar el acceso a la base de datos en los repositorios.
+
+Los servicios definen las reglas del negocio y utilizan los repositorios para acceder a los datos, sin encargarse de los detalles de conexión.
 
 ## 11.6 Autenticación y autorización
 
@@ -108,7 +111,8 @@ sequenceDiagram
     participant F as Frontend
     participant A as API
     participant S as Auth Service
-    participant DB as MongoDB
+    participant DB as PostgreSQL
+
 
     U->>F: Inicia sesión
     F->>A: POST /auth/login
@@ -158,18 +162,48 @@ No se considera necesario utilizar una arquitectura más compleja, como microser
 ## 11.10 Estructura tentativa del backend
 
 ```text
-backend/
+apps/api/
 ├── src/
+│   ├── config/
 │   ├── routes/
 │   ├── controllers/
 │   ├── services/
 │   ├── repositories/
-│   ├── models/
 │   ├── middlewares/
 │   ├── validators/
-│   ├── config/
-│   └── app.ts
-└── package.json
+│   ├── types/
+│   ├── app.ts
+│   └── server.ts
+├── migrations/
+├── .env
+├── package.json
+└── tsconfig.json
+```
+## 11.11 Estructura tentativa del frontend
+
+```text
+apps/client/
+├── public/
+├── src/
+│   ├── assets/
+│   ├── components/
+│   ├── layouts/
+│   ├── pages/
+│   ├── routes/
+│   ├── services/
+│   ├── hooks/
+│   ├── context/
+│   ├── types/
+│   ├── styles/
+│   ├── App.tsx
+│   └── main.tsx
+├── index.html
+├── package.json
+├── tsconfig.json
+├── tsconfig.app.json
+├── tsconfig.node.json
+├── vite.config.ts
+└── eslint.config.js
 ```
 
-La estructura podrá adaptarse durante la implementación sin modificar el principio general de separación por capas.
+Estas estructuras son una propuesta de organización. Las carpetas y los archivos se incorporarán a medida que se desarrollen las funcionalidades y podrán ajustarse según las necesidades del equipo.

@@ -46,6 +46,7 @@ Federico Gonzalez, 34605567
 - [8. Stack tecnológico](#8-stack-tecnológico)
   - [8.1 Tecnologías seleccionadas](#81-tecnologías-seleccionadas)
   - [8.2 Justificación](#82-justificación)
+  - [8.3 Cambio de base de datos](#83-cambio-de-base-de-datos)
 - [9. Plan de trabajo](#9-plan-de-trabajo)
   - [9.1 Etapas, estimaciones y entregables](#91-etapas-estimaciones-y-entregables)
 - [10. Riesgos del proyecto](#10-riesgos-del-proyecto)
@@ -290,13 +291,13 @@ Estas funcionalidades podrían incorporarse posteriormente como futuras ampliaci
 
 ## 8.1 Tecnologías seleccionadas
 
-Para el desarrollo del proyecto definimos inicialmente el siguiente stack tecnológico:
+Para el desarrollo del proyecto definimos el siguiente stack tecnológico, actualizado luego de la revisión de la arquitectura:
 
 | **Parte**            | **Tecnología**     |
 | -------------------- | ------------------ |
 | Frontend             | React + TypeScript |
-| Backend              | Node + Express     |
-| Base de Datos        | MongoDB            |
+| Backend              | Node + Express + TypeScript      |
+| Base de Datos        | PostgreSQL alojado en Neon       |
 | Seguridad            | JWT                |
 | Control de versiones | Git + GitHub       |
 | API                  | REST               |
@@ -307,9 +308,9 @@ Para el desarrollo del proyecto definimos inicialmente el siguiente stack tecnol
 
 **React + TypeScript:** elegimos React porque ya tenemos experiencia trabajando con esta tecnología y nos permite desarrollar la interfaz utilizando componentes reutilizables. Para este proyecto decidimos utilizar TypeScript porque también lo hemos trabajado previamente y nos permite definir de forma más clara las estructuras de datos que vamos a manejar, como productos, ventas y usuarios.
 
-**Node + Express:** elegimos Node.js junto con Express para desarrollar el backend porque contamos con experiencia previa trabajando con estas tecnologías. Esta combinación nos permite desarrollar una API REST de forma sencilla y mantener una separación clara entre el frontend y el backend.
+**Node + Express + TypeScript:** elegimos Node.js y Express porque contamos con experiencia previa y nos permiten desarrollar una API REST para comunicar el frontend con la lógica del sistema. En el backend también utilizaremos TypeScript para definir los tipos de datos que manejamos, detectar ciertos errores durante el desarrollo y facilitar la comprensión y el mantenimiento del código.
 
-**MongoDB:** elegimos MongoDB como base de datos porque permite almacenar la información del sistema de forma flexible y se adapta a las estructuras de datos que vamos a manejar, como usuarios, productos y ventas. Además, es una tecnología con la que contamos con experiencia previa.
+**PostgreSQL:** elegimos PostgreSQL porque consideramos que el modelo relacional se adapta a la información del sistema y a las relaciones entre usuarios, productos, ventas y sus detalles. Además, nos permite utilizar consultas SQL para obtener las estadísticas previstas y transacciones para registrar una venta junto con la actualización del stock, de manera que ambas operaciones se completen o se reviertan si ocurre un error. Para alojar la base de datos utilizaremos Neon, lo que nos permite trabajar con PostgreSQL en la nube sin administrar un servidor de base de datos propio.
 
 **JWT:** utilizaremos JSON Web Tokens (JWT) para implementar la autenticación de los usuarios. Los tokens permitirán identificar al usuario en las solicitudes realizadas al backend y controlar el acceso a las funcionalidades correspondientes.
 
@@ -320,6 +321,18 @@ Para el desarrollo del proyecto definimos inicialmente el siguiente stack tecnol
 **Render:** elegimos Render como alternativa inicial para desplegar el backend sin tener que administrar un servidor propio. Para el alcance académico del proyecto consideramos que es una alternativa adecuada para realizar las pruebas y publicar el MVP.
 
 **Vercel:** elegimos Vercel para desplegar el frontend de la aplicación, ya que permite publicar proyectos desarrollados con React de forma sencilla y facilita realizar despliegues y pruebas durante el desarrollo del MVP.
+
+## 8.3 Cambio de base de datos
+
+En la propuesta inicial elegimos MongoDB porque era una tecnología conocida por el equipo. Sin embargo, durante la revisión de la arquitectura y del modelo de datos, decidimos cambiar a PostgreSQL.
+
+Al analizar las relaciones entre usuarios, productos, ventas y detalles de venta, consideramos que una base de datos relacional se ajusta mejor a la organización de la información que necesitamos. También tuvimos en cuenta las consultas que vamos a realizar para obtener estadísticas de ventas, facturación y ganancias.
+
+Consultamos esta propuesta con nuestro tutor el 16 de septiembre de 2026 y recibimos su aprobación el 18 de septiembre. El cambio se decidió antes de implementar la persistencia de datos.
+
+Con esta decisión, el proyecto pasa de MERN a PERN, manteniendo React, Node.js, Express y TypeScript. Para alojar la base de datos PostgreSQL utilizaremos Neon.
+
+A partir de este cambio, debemos adaptar el modelo de datos y actualizar los apartados de la documentación que describen la tecnología anterior.
 
 # 9. Plan de trabajo
 
@@ -364,7 +377,7 @@ A partir del alcance, las tecnologías y los tiempos que definimos para el proye
 
 Consideramos que el proyecto es técnicamente viable porque las funcionalidades que definimos para el MVP pueden desarrollarse utilizando tecnologías que ya conocemos y que hemos trabajado durante la carrera.
 
-Para el frontend elegimos React con TypeScript y para el backend Node con Express. También vamos a utilizar MongoDB como base de datos y JWT para la autenticación y el control de acceso. La elección y justificación de estas tecnologías se encuentra desarrollada en la sección de stack tecnológico. Las funcionalidades principales que planteamos, como la gestión de productos, el registro de ventas, la actualización del stock y la generación de estadísticas, no requieren tecnologías que estén fuera de nuestros conocimientos o que impliquen incorporar herramientas completamente nuevas durante el desarrollo.
+Para el frontend elegimos React con TypeScript y para el backend Node.js con Express y TypeScript. También vamos a utilizar PostgreSQL alojado en Neon como base de datos y JWT para la autenticación, junto con controles de autorización para definir qué operaciones puede realizar cada usuario.
 
 De todas formas, identificamos que algunas partes pueden presentar una mayor dificultad, principalmente la autenticación y autorización de usuarios, la integración entre frontend y backend y la generación de estadísticas. Estos aspectos fueron incluidos dentro de los riesgos del proyecto para poder trabajarlos de manera progresiva y evitar que se conviertan en un problema cerca de la entrega.
 
@@ -372,9 +385,11 @@ Por estos motivos, consideramos que el proyecto es técnicamente viable siempre 
 
 ## 11.2 Viabilidad económica
 
-Para desarrollar el proyecto vamos a utilizar principalmente tecnologías y herramientas que no requieren un costo de licencia, como React, Node, Express, MongoDB, Git y GitHub.
+Para desarrollar el proyecto vamos a utilizar principalmente tecnologías y herramientas que no requieren un costo de licencia, como React, Node, Express, PostgreSQL, Git y GitHub.
 
 Para el despliegue elegimos inicialmente Render, buscando una alternativa que nos permita publicar el MVP sin tener que administrar un servidor propio y sin generar un costo importante durante el desarrollo académico.
+
+Para alojar la base de datos utilizaremos Neon. Al planificar el despliegue tendremos en cuenta los límites y las condiciones del plan elegido, para evaluar si cubre las necesidades del MVP. Si el sistema se utiliza posteriormente en un comercio real, también deberemos considerar los posibles costos de alojamiento y mantenimiento.
 
 Por este motivo, no identificamos inicialmente un costo económico que nos impida desarrollar el MVP. De todas formas, entendemos que, si el sistema se utilizará posteriormente en un entorno real y aumentará la cantidad de usuarios o información almacenada, podría ser necesario contratar servicios de infraestructura con mayores recursos.
 
