@@ -47,12 +47,23 @@ Artefactos asociados:
 npm install
 ```
 
-Ejecutar la API y el cliente en terminales separadas:
+Ejecutar la API y el cliente con pnpm:
 
 ```bash
-npm run dev -w api
-npm run dev -w client
+pnpm install
+pnpm dev
 ```
+
+O con npm:
+
+```bash
+npm install
+npm run dev
+```
+
+Ambos comandos levantan la API y el cliente en paralelo, con la salida
+etiquetada por proceso. Si necesitás verlos por separado, usá
+`npm run dev -w api` y `npm run dev -w client` en terminales distintas.
 
 - Cliente: <http://localhost:5173>
 - API: <http://localhost:3000>

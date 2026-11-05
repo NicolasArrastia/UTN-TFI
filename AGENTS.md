@@ -10,8 +10,10 @@
 
 ## Setup and commands
 
-- `npm install` from the repo root (single root lockfile; no package-level installs).
-- Root `npm run dev` uses `npm run dev --workspaces`, which runs sequentially and blocks forever on the API watcher, so the client never starts. Run `npm run dev -w api` and `npm run dev -w client` in separate terminals. `concurrently` is installed but unused.
+- `npm install` or `pnpm install` from the repo root (single root lockfile; no package-level installs). pnpm needs the committed `pnpm-workspace.yaml`; both `package-lock.json` and `pnpm-lock.yaml` are tracked, so update the one for the package manager you use.
+- Root `npm run dev` or `pnpm dev` runs the API and the client together with `concurrently`, with labeled output. It replaces the old sequential `--workspaces` script that blocked on the API watcher.
+- Run `npm run dev -w api` and `npm run dev -w client` in separate terminals only when isolated logs are needed.
+- With pnpm, workspace commands use `pnpm --filter <name> <script>` (for example `pnpm --filter client build`); `-w` in pnpm means workspace root, not workspace name.
 - Client lint: `npm run lint -w client` (ESLint flat config, only workspace with lint).
 - Client typecheck + build: `npm run build -w client` (`tsc -b && vite build`).
 - API has no build, lint, or typecheck script: use `npx tsc --noEmit -p apps/api/tsconfig.json`.
@@ -40,6 +42,7 @@
 ## Git workflow
 
 - Always commit and push changes when a task is finished, including doc-only edits to `AGENTS.md`.
+- Commits must always be atomic: one logical task per commit, only the files related to it, and the build must stay green. Do not mix features, fixes, refactors, formatting or docs in the same commit; split the work into ordered commits.
 - Work on `main` unless told otherwise. Stage only files related to the task, then `git push origin main`.
 - Commit messages follow the existing conventional style (`feat:`, `fix:`, `docs:`, `refactor:`), in Spanish or English.
 - Confirm `git status` is clean and the push succeeded before reporting the task as done.
