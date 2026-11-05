@@ -71,3 +71,143 @@ export function IconStore(props: IconProps) {
     </Svg>
   );
 }
+
+export function IconGrid(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </Svg>
+  );
+}
+
+export function IconBox(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m21 8-9-5-9 5 9 5 9-5Z" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <path d="M12 13v8" />
+    </Svg>
+  );
+}
+
+export function IconCart(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="9" cy="20" r="1.2" />
+      <circle cx="19" cy="20" r="1.2" />
+      <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H6" />
+    </Svg>
+  );
+}
+
+export function IconChart(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 3v18h18" />
+      <path d="M7 16v-4" />
+      <path d="M12 16V8" />
+      <path d="M17 16v-7" />
+    </Svg>
+  );
+}
+
+export function IconSettings(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 7h9" />
+      <path d="M17 7h3" />
+      <circle cx="15" cy="7" r="2" />
+      <path d="M4 17h3" />
+      <path d="M11 17h9" />
+      <circle cx="9" cy="17" r="2" />
+    </Svg>
+  );
+}
+
+export function IconLogout(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </Svg>
+  );
+}
+
+export function IconMenu(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </Svg>
+  );
+}
+
+export function IconClose(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m6 6 12 12" />
+      <path d="M18 6 6 18" />
+    </Svg>
+  );
+}
+
+export function IconSearch(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </Svg>
+  );
+}
+
+export function IconPlus(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </Svg>
+  );
+}
+
+export function IconBell(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+    </Svg>
+  );
+}
+
+export function IconWarning(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M10.3 4.1 1.9 19a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 4.1a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9v4" />
+      <path d="M12 17h.01" />
+    </Svg>
+  );
+}
+
+export function IconTrendUp(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m3 17 6-6 4 4 8-8" />
+      <path d="M17 7h4v4" />
+    </Svg>
+  );
+}
+
+export function IconDownload(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
+    </Svg>
+  );
+}
