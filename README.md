@@ -29,4 +29,35 @@ El detalle del modelo, con la definición de cada entidad y las decisiones de di
 Artefactos asociados:
 
 - Definición del esquema en formato DBML: [dbml.dbml](docs/base-de-datos/dbml.dbml)
-- Script de creación de la base de datos: [crear-base-datos.sql](docs/base-de-datos/crear-base-datos.sql)
+- Script de creación de la base de datos: [crear-base-datos.sql](database/crear-base-datos.sql)
+
+## Estado del desarrollo
+
+- Autenticación y autorización con JWT: login (`POST /api/auth/login`) y perfil
+  del usuario autenticado (`GET /api/auth/me`).
+- Login en la raíz de la aplicación y panel protegido en `/dashboard` con las
+  secciones **Products**, **Ventas**, **Estadísticas** y **Settings**
+  (contenido mockeado).
+- Los usuarios se almacenan en memoria hasta conectar PostgreSQL. El usuario
+  administrador por defecto es `admin` / `admin`.
+
+## Puesta en marcha
+
+```bash
+npm install
+```
+
+Ejecutar la API y el cliente en terminales separadas:
+
+```bash
+npm run dev -w api
+npm run dev -w client
+```
+
+- Cliente: <http://localhost:5173>
+- API: <http://localhost:3000>
+- Vite redirige `/api` hacia la API, por lo que no hace falta configurar CORS.
+
+Variables de entorno opcionales de la API: `PORT`, `JWT_SECRET`,
+`JWT_EXPIRES_IN`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`. En el cliente se puede
+usar `VITE_API_URL` para apuntar a otro backend.

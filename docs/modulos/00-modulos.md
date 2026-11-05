@@ -18,6 +18,25 @@ Este módulo es necesario porque el sistema contempla colaboración entre varias
 
 JWT fue seleccionado porque forma parte del stack definido y permite mantener la API REST sin depender de una sesión tradicional del servidor.
 
+### Estado de implementación
+
+La primera iteración del módulo ya está implementada:
+
+- `POST /api/auth/login`: valida usuario y contraseña y devuelve un token JWT.
+- `GET /api/auth/me`: devuelve el usuario autenticado a partir del token.
+- Middleware de autenticación y de autorización por rol (`admin` / `employee`).
+- Contraseñas almacenadas con hash `bcrypt`.
+- Usuario administrador por defecto: `admin` / `admin`, configurable mediante
+  las variables `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
+
+Mientras PostgreSQL no esté conectado, los usuarios se mantienen en un
+repositorio en memoria. El reemplazo por la base de datos solo afecta a la capa
+de repositorios, sin cambiar servicios ni controladores.
+
+Pendiente para próximas iteraciones: registro de usuarios (RF-01),
+administración de usuarios y refresh tokens. El detalle del plan se encuentra
+en [Plan de autenticación](../planificacion/04-plan-autenticacion.md).
+
 ---
 
 ## 12.2 Módulo de productos
