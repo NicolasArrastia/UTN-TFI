@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npm run dev --workspaces --if-present"
+    "dev": "concurrently --kill-others-on-fail --names api,client --prefix-colors blue,magenta \"npm run dev:api\" \"npm run dev:client\"",
+    "dev:api": "npm run dev -w api",
+    "dev:client": "npm run dev -w client"
   },
   "workspaces": [
     "apps/api",
