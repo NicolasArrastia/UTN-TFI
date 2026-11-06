@@ -61,6 +61,24 @@ Los productos constituyen una de las entidades principales del sistema. El módu
 
 La baja lógica permite conservar la información histórica sin eliminar físicamente productos que pudieron participar en ventas anteriores.
 
+### Estado de implementación
+
+La primera iteración del backend ya está implementada:
+
+- `GET /api/products`: listado con filtros (`search`, `categoryId`, `tagId`,
+  `isActive`, `lowStock`) y paginación.
+- `GET /api/products/:id`: consulta de un producto.
+- `POST /api/products`: alta de productos (rol `admin`).
+- `PATCH /api/products/:id`: modificación parcial (rol `admin`).
+- `DELETE /api/products/:id`: baja lógica mediante `is_active` (rol `admin`).
+- Validación de categorías y etiquetas contra repositorios sembrados.
+- Rutas protegidas con JWT; las mutaciones requieren rol `admin`.
+
+Los productos, las categorías y las etiquetas se almacenan en memoria hasta
+conectar PostgreSQL. El CRUD de categorías y etiquetas queda para la siguiente
+iteración. El detalle del plan se encuentra en
+[Plan de productos](../planificacion/05-plan-productos.md).
+
 ---
 
 ## 12.3 Módulo de ventas

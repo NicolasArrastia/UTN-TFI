@@ -35,9 +35,11 @@ Artefactos asociados:
 
 - Autenticación y autorización con JWT: login (`POST /api/auth/login`) y perfil
   del usuario autenticado (`GET /api/auth/me`).
+- CRUD de productos en la API (`/api/products`) con filtros, paginación, baja
+  lógica y validación de categorías y etiquetas.
 - Login en la raíz de la aplicación y panel protegido en `/dashboard` con las
   secciones **Products**, **Ventas**, **Estadísticas** y **Settings**
-  (contenido mockeado).
+  (contenido todavía mockeado en el cliente).
 - Los usuarios se almacenan en memoria hasta conectar PostgreSQL. El usuario
   administrador por defecto es `admin` / `admin`.
 

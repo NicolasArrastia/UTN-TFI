@@ -341,3 +341,18 @@ Pruebas manuales con la API levantada:
 - Agregar SKU, código de barras e imágenes.
 - Integrar la pantalla **Products** del cliente con estos endpoints.
 - Evaluar permisos de edición de stock para el rol `employee`.
+
+## 11. Estado de implementación
+
+La primera iteración del backend quedó implementada y verificada en la rama
+`feat/api-products-crud`:
+
+- [x] Repositorios en memoria de categorías, etiquetas y productos.
+- [x] Validadores de entrada.
+- [x] Servicio con las reglas de negocio y baja lógica.
+- [x] Endpoints protegidos con JWT y autorización `admin` para mutaciones.
+- [x] Verificación con `npx tsc --noEmit` y pruebas manuales de los casos del
+  apartado 9.
+
+La integración con PostgreSQL y el CRUD de categorías y etiquetas siguen
+pendientes.
