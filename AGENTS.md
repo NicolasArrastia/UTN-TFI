@@ -43,8 +43,19 @@
 
 - Always commit and push changes when a task is finished, including doc-only edits to `AGENTS.md`.
 - Commits must always be atomic: one logical task per commit, only the files related to it, and the build must stay green. Do not mix features, fixes, refactors, formatting or docs in the same commit; split the work into ordered commits.
-- Work on `main` unless told otherwise. Stage only files related to the task, then `git push origin main`.
-- Commit messages follow the existing conventional style (`feat:`, `fix:`, `docs:`, `refactor:`), in Spanish or English.
+- Start each task from an up-to-date `main` on a topic branch. Work directly on `main` only for trivial changes explicitly requested.
+- Branch names follow `<type>/<scope>-<short-description>`:
+  - `type`: same values as commit types (`feat`, `fix`, `docs`, `refactor`, `chore`, `test`, `perf`, `build`, `ci`).
+  - `scope`: affected area (`api`, `client`, `docs`, `db`, `repo`).
+  - `short-description`: lowercase kebab-case, imperative and brief.
+  - Examples: `feat/api-products-crud`, `fix/client-login-redirect`, `docs/product-plan`.
+- Push the topic branch to `origin` and report its name. Merge or open a pull request only when explicitly requested.
+- Commit messages are written in English and follow [Conventional Commits](https://www.conventionalcommits.org/): `<type>(<scope>): <subject>`.
+  - `type`: `feat`, `fix`, `docs`, `refactor`, `chore`, `test`, `perf`, `build` or `ci`.
+  - `scope`: optional but recommended; use the affected area (`api`, `client`, `docs`, `db`, `repo`).
+  - `subject`: imperative, lowercase, no trailing period, at most 72 characters.
+  - Add a body when the reason for the change is not obvious and a `BREAKING CHANGE:` footer when applicable.
+  - Examples: `feat(api): add products CRUD`, `docs: define branch and commit conventions`.
 - Confirm `git status` is clean and the push succeeded before reporting the task as done.
 
 ## Docs
