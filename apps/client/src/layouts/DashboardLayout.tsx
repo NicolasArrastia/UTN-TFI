@@ -52,6 +52,24 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   },
 };
 
+const getPageMeta = (
+  pathname: string,
+): { title: string; subtitle: string } => {
+  if (/^\/dashboard\/products\/\d+$/.test(pathname)) {
+    return {
+      title: "Detalle del producto",
+      subtitle: "Información completa, stock y precios.",
+    };
+  }
+
+  return (
+    PAGE_META[pathname] ?? {
+      title: "Panel",
+      subtitle: "Gestión comercial.",
+    }
+  );
+};
+
 const getInitials = (fullname: string): string =>
   fullname
     .split(" ")
@@ -66,10 +84,7 @@ export function DashboardLayout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const meta = PAGE_META[location.pathname] ?? {
-    title: "Panel",
-    subtitle: "Gestión comercial.",
-  };
+  const meta = getPageMeta(location.pathname);
 
   const roleLabel = user?.role === "admin" ? "Administrador" : "Empleado";
 

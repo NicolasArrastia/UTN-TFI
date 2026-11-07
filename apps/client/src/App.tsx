@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthProvider.tsx";
 import { DashboardLayout } from "./layouts/DashboardLayout.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
 import { OverviewPage } from "./pages/dashboard/OverviewPage.tsx";
+import { ProductDetailPage } from "./pages/dashboard/ProductDetailPage.tsx";
 import { ProductsPage } from "./pages/dashboard/ProductsPage.tsx";
 import { SalesPage } from "./pages/dashboard/SalesPage.tsx";
 import { SettingsPage } from "./pages/dashboard/SettingsPage.tsx";
@@ -38,6 +39,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<OverviewPage />} />
               <Route path="products" element={<ProductsPage />} />
+              <Route path="products/:id" element={<ProductDetailPage />} />
               <Route path="sales" element={<SalesPage />} />
               <Route path="stats" element={<StatsPage />} />
               <Route path="settings" element={<SettingsPage />} />
