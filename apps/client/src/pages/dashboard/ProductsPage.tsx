@@ -104,6 +104,12 @@ export function ProductsPage() {
   useEffect(() => {
     const normalizedSearch = debouncedSearch.trim();
 
+    // Evita que un valor debounceado viejo pise lo que el usuario ya escribió
+    // o el search que acaba de confirmar un cambio de filtro.
+    if (normalizedSearch !== searchInput.trim()) {
+      return;
+    }
+
     if (normalizedSearch === search) {
       return;
     }
@@ -118,7 +124,13 @@ export function ProductsPage() {
 
     next.delete("page");
     setSearchParams(next, { replace: true });
-  }, [debouncedSearch, search, searchParams, setSearchParams]);
+  }, [
+    debouncedSearch,
+    search,
+    searchInput,
+    searchParams,
+    setSearchParams,
+  ]);
 
   const applyFilters = (changes: Record<string, string | null>) => {
     const next = new URLSearchParams(searchParams);
