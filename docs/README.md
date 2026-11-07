@@ -15,10 +15,11 @@ Documentación organizada por etapas y componentes del sistema.
 9. [Riesgos](planificacion/02-riesgos.md)
 10. [Viabilidad](planificacion/03-viabilidad.md)
 11. [Plan de autenticación](planificacion/04-plan-autenticacion.md)
-12. [Uso de IA](ia/01-uso-de-ia.md)
-13. [Arquitectura](arquitectura/01-arquitectura-general.md)
-14. [Módulos](modulos/00-modulos.md)
-15. [Requisitos](requisitos/00-requisitos.md)
+12. [Plan de productos](planificacion/05-plan-productos.md)
+13. [Uso de IA](ia/01-uso-de-ia.md)
+14. [Arquitectura](arquitectura/01-arquitectura-general.md)
+15. [Módulos](modulos/00-modulos.md)
+16. [Requisitos](requisitos/00-requisitos.md)
 
 ## Nota sobre la base de datos
 
