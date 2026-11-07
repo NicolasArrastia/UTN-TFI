@@ -197,14 +197,16 @@ export function ProductDetailPage() {
                   <IconEdit width={16} height={16} />
                   Editar
                 </Link>
-                <button
-                  type="button"
-                  className="btn btn--ghost btn--sm"
-                  onClick={() => setIsConfirmingDelete(true)}
-                >
-                  <IconTrash width={16} height={16} />
-                  Dar de baja
-                </button>
+                {product.isActive ? (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--sm"
+                    onClick={() => setIsConfirmingDelete(true)}
+                  >
+                    <IconTrash width={16} height={16} />
+                    Dar de baja
+                  </button>
+                ) : null}
               </>
             ) : null}
           </div>

@@ -134,15 +134,17 @@ export function ProductTable({
                           >
                             <IconEdit width={16} height={16} />
                           </Link>
-                          <button
-                            type="button"
-                            className="icon-btn icon-btn--sm icon-btn--danger"
-                            title="Dar de baja"
-                            aria-label={`Dar de baja ${product.name}`}
-                            onClick={() => onDelete(product)}
-                          >
-                            <IconTrash width={16} height={16} />
-                          </button>
+                          {product.isActive ? (
+                            <button
+                              type="button"
+                              className="icon-btn icon-btn--sm icon-btn--danger"
+                              title="Dar de baja"
+                              aria-label={`Dar de baja ${product.name}`}
+                              onClick={() => onDelete(product)}
+                            >
+                              <IconTrash width={16} height={16} />
+                            </button>
+                          ) : null}
                         </>
                       ) : null}
                     </div>
