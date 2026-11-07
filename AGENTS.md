@@ -32,6 +32,16 @@
 - Product endpoints: `GET /api/products` and `GET /api/products/:id` require authentication; `POST /api/products`, `PATCH /api/products/:id` and `DELETE /api/products/:id` require `admin`. `DELETE` is a soft delete. Categories and tags are read-only in-memory stores until their modules exist.
 - Strict TS extras: API enables `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; client enables `noUnusedLocals`/`noUnusedParameters`.
 
+## Code style and clean code
+
+- Keep functions small and focused on one responsibility. Use guard clauses and early returns/throws instead of deeply nested `if` blocks.
+- Validate input declaratively. Define a shape that maps each field to a parser from `src/validators/validation.ts` and parse it with `parseObject`, `parsePartialObject` or `parseOptionalObject`; do not repeat one `if` per field in each validator.
+- Add reusable parsers and generic helpers to `src/validators/validation.ts` instead of duplicating validation mechanics. Keep module-specific limits, messages and schemas in the module validator.
+- Keep input parsing in `validators/`, business rules in `services/` and data access in `repositories/`.
+- Extract named constants for limits and defaults; avoid magic numbers and duplicated strings.
+- Prefer the shared parser helpers over adding a new validation dependency (for example Zod). If a dependency is still needed, make it an explicit decision first.
+- Keep user-facing messages in Spanish and code identifiers in English.
+
 ## Database
 
 - PostgreSQL on Neon. The executable schema is `database/crear-base-datos.sql` (idempotent, applied manually with `psql -f`). The README link to `docs/base-de-datos/crear-base-datos.sql` is stale; edit the file under `database/`.
