@@ -18,7 +18,7 @@ import { notify } from "../services/notifications.ts";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Resumen", icon: IconGrid, end: true },
-  { to: "/dashboard/products", label: "Products", icon: IconBox, end: false },
+  { to: "/dashboard/products", label: "Productos", icon: IconBox, end: false },
   { to: "/dashboard/sales", label: "Ventas", icon: IconCart, end: false },
   { to: "/dashboard/stats", label: "Estadísticas", icon: IconChart, end: false },
   {
@@ -35,7 +35,7 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: "Vista general del comercio y de la actividad reciente.",
   },
   "/dashboard/products": {
-    title: "Products",
+    title: "Productos",
     subtitle: "Catálogo, precios y estado del stock.",
   },
   "/dashboard/sales": {

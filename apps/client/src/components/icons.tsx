@@ -211,3 +211,49 @@ export function IconDownload(props: IconProps) {
     </Svg>
   );
 }
+
+export function IconEdit(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </Svg>
+  );
+}
+
+export function IconTrash(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v5" />
+      <path d="M14 11v5" />
+    </Svg>
+  );
+}
+
+export function IconRefresh(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M21 12a9 9 0 1 1-2.6-6.4" />
+      <path d="M21 3v6h-6" />
+    </Svg>
+  );
+}
+
+export function IconChevronLeft(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m15 18-6-6 6-6" />
+    </Svg>
+  );
+}
+
+export function IconChevronRight(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m9 18 6-6-6-6" />
+    </Svg>
+  );
+}
