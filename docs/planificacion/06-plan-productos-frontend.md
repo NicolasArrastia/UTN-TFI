@@ -295,3 +295,20 @@ Pruebas manuales:
 - Reemplazar los repositorios en memoria por PostgreSQL.
 - Agregar pruebas de componentes y de integración.
 - Incorporar imágenes, SKU y código de barras.
+
+## 12. Estado de implementación
+
+La integración se implementó en la rama `feat/client-products-api-integration`:
+
+- [x] Endpoints de solo lectura de categorías y etiquetas.
+- [x] Cliente HTTP autenticado y almacén de token compartido.
+- [x] Tipos, servicios y hooks de productos y catálogo.
+- [x] Listado con búsqueda, filtros, paginación y baja con confirmación.
+- [x] Detalle de producto.
+- [x] Alta y edición con validación en el cliente.
+- [x] Protección de las pantallas de escritura para `admin`.
+- [x] Conservación de búsqueda, filtros y página al volver del detalle.
+- [x] Verificación con `tsc`, `eslint`, `build` y pruebas manuales de la API.
+
+Quedan pendientes las pruebas automatizadas, el cierre automático de sesión ante
+un `401` y el reemplazo de los repositorios en memoria por PostgreSQL.

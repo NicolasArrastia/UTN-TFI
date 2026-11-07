@@ -354,5 +354,9 @@ La primera iteración del backend quedó implementada y verificada en la rama
 - [x] Verificación con `npx tsc --noEmit` y pruebas manuales de los casos del
   apartado 9.
 
+La integración de la pantalla **Products** del cliente con estos endpoints se
+completó en una iteración posterior, documentada en
+[Plan de integración del frontend de productos](06-plan-productos-frontend.md).
+
 La integración con PostgreSQL y el CRUD de categorías y etiquetas siguen
 pendientes.
