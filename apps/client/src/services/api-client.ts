@@ -1,4 +1,5 @@
 import type { ApiErrorBody } from "../types/auth.types.ts";
+import { tokenStorage } from "./token-storage.ts";
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api";
 
@@ -28,7 +29,11 @@ export async function apiRequest<T>(
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw error;
+    }
+
     throw new ApiError(
       "No se pudo conectar con el servidor. Verificá que la API esté en ejecución.",
       "NETWORK_ERROR",
@@ -51,4 +56,22 @@ export async function apiRequest<T>(
   }
 
   return body as T;
+}
+
+/**
+ * Envía una solicitud autenticada con el token guardado en el navegador.
+ * Centraliza el encabezado `Authorization` para no repetirlo en cada módulo.
+ */
+export function authenticatedRequest<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const headers = new Headers(options.headers);
+  const token = tokenStorage.get();
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  return apiRequest<T>(path, { ...options, headers });
 }

@@ -5,9 +5,8 @@ import type { AuthStatus } from "./auth-context.ts";
 import { ApiError } from "../services/api-client.ts";
 import { authService } from "../services/auth.service.ts";
 import { notify } from "../services/notifications.ts";
+import { tokenStorage } from "../services/token-storage.ts";
 import type { AuthUser } from "../types/auth.types.ts";
-
-const TOKEN_STORAGE_KEY = "utn-tfi.token";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -16,11 +15,11 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>(() =>
-    localStorage.getItem(TOKEN_STORAGE_KEY) ? "checking" : "guest",
+    tokenStorage.get() ? "checking" : "guest",
   );
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const token = tokenStorage.get();
 
     if (!token) {
       return;
@@ -38,7 +37,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .catch((error: unknown) => {
         if (cancelled) return;
 
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        tokenStorage.clear();
         setUser(null);
         setStatus("guest");
 
@@ -60,7 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     async (username: string, password: string): Promise<AuthUser> => {
       const response = await authService.login(username, password);
 
-      localStorage.setItem(TOKEN_STORAGE_KEY, response.token);
+      tokenStorage.set(response.token);
       setUser(response.user);
       setStatus("authenticated");
 
@@ -70,7 +69,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    tokenStorage.clear();
     setUser(null);
     setStatus("guest");
   }, []);
