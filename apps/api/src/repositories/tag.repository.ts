@@ -47,4 +47,8 @@ export const tagRepository = {
     const tag = findTagById(id);
     return tag?.isActive ? tag : undefined;
   },
+
+  findAllActive(): Tag[] {
+    return tags.filter((tag) => tag.isActive);
+  },
 };
