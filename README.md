@@ -37,9 +37,14 @@ Artefactos asociados:
   del usuario autenticado (`GET /api/auth/me`).
 - CRUD de productos en la API (`/api/products`) con filtros, paginación, baja
   lógica y validación de categorías y etiquetas.
-- Login en la raíz de la aplicación y panel protegido en `/dashboard` con las
-  secciones **Products**, **Ventas**, **Estadísticas** y **Settings**
-  (contenido todavía mockeado en el cliente).
+- Endpoints de solo lectura para categorías (`/api/categories`) y etiquetas
+  (`/api/tags`).
+- Login en la raíz de la aplicación y panel protegido en `/dashboard`.
+- Sección **Productos** conectada a la API: listado con filtros y paginación,
+  detalle, alta, edición y baja lógica. Las secciones **Ventas**,
+  **Estadísticas** y **Settings** siguen mockeadas.
+- Los usuarios se almacenan en memoria hasta conectar PostgreSQL. El usuario
+  administrador por defecto es `admin` / `admin`.
 - Los usuarios se almacenan en memoria hasta conectar PostgreSQL. El usuario
   administrador por defecto es `admin` / `admin`.
 

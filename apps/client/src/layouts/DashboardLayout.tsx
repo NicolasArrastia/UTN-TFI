@@ -18,7 +18,7 @@ import { notify } from "../services/notifications.ts";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Resumen", icon: IconGrid, end: true },
-  { to: "/dashboard/products", label: "Products", icon: IconBox, end: false },
+  { to: "/dashboard/products", label: "Productos", icon: IconBox, end: false },
   { to: "/dashboard/sales", label: "Ventas", icon: IconCart, end: false },
   { to: "/dashboard/stats", label: "Estadísticas", icon: IconChart, end: false },
   {
@@ -35,7 +35,7 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     subtitle: "Vista general del comercio y de la actividad reciente.",
   },
   "/dashboard/products": {
-    title: "Products",
+    title: "Productos",
     subtitle: "Catálogo, precios y estado del stock.",
   },
   "/dashboard/sales": {
@@ -52,6 +52,38 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   },
 };
 
+const getPageMeta = (
+  pathname: string,
+): { title: string; subtitle: string } => {
+  if (pathname === "/dashboard/products/new") {
+    return {
+      title: "Nuevo producto",
+      subtitle: "Alta de producto en el catálogo.",
+    };
+  }
+
+  if (/^\/dashboard\/products\/\d+\/edit$/.test(pathname)) {
+    return {
+      title: "Editar producto",
+      subtitle: "Actualizá los datos del producto.",
+    };
+  }
+
+  if (/^\/dashboard\/products\/\d+$/.test(pathname)) {
+    return {
+      title: "Detalle del producto",
+      subtitle: "Información completa, stock y precios.",
+    };
+  }
+
+  return (
+    PAGE_META[pathname] ?? {
+      title: "Panel",
+      subtitle: "Gestión comercial.",
+    }
+  );
+};
+
 const getInitials = (fullname: string): string =>
   fullname
     .split(" ")
@@ -66,10 +98,7 @@ export function DashboardLayout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const meta = PAGE_META[location.pathname] ?? {
-    title: "Panel",
-    subtitle: "Gestión comercial.",
-  };
+  const meta = getPageMeta(location.pathname);
 
   const roleLabel = user?.role === "admin" ? "Administrador" : "Empleado";
 

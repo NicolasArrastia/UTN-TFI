@@ -4,7 +4,7 @@
 
 - UTN final project: Spanish-language commercial management system (products, sales, stock, stats).
 - npm workspaces monorepo: `apps/api` (Express 5 + TS) and `apps/client` (React 19 + Vite 8).
-- Auth and the products CRUD are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`). The client has a login screen plus a protected dashboard; its Products/Ventas/Estadisticas/Settings sections are still mocks. Sales, stock and stats are still mocks: do not assume real modules exist.
+- Auth and the products CRUD are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`). Read-only `/api/categories` and `/api/tags` endpoints support the product forms. The client has a login screen plus a protected dashboard; its **Productos** section is connected to the API (list, detail, create, edit and soft delete), while Ventas, Estadisticas and Settings are still mocks. Sales, stock and stats are still mocks: do not assume real modules exist.
 - Users live in an in-memory repository seeded with `admin`/`admin`; PostgreSQL is not connected yet.
 - Docs and SQL comments are in Spanish; code identifiers are in English.
 
@@ -74,4 +74,5 @@
 - `docs/README.md` is the index; `README.md` has the stack table, DB diagram and setup commands.
 - `docs/planificacion/04-plan-autenticacion.md` documents the auth plan, endpoints, routes and pending work.
 - `docs/planificacion/05-plan-productos.md` documents the products plan, endpoints and pending work.
+- `docs/planificacion/06-plan-productos-frontend.md` documents the client integration for products and its verification steps.
 - `docs/arquitectura` and `docs/modulos` define intended structure and module priority (auth → products → categories/tags → sales → stock → stats), useful for deciding where new code belongs.

@@ -55,4 +55,8 @@ export const categoryRepository = {
     const category = findCategoryById(id);
     return category?.isActive ? category : undefined;
   },
+
+  findAllActive(): Category[] {
+    return categories.filter((category) => category.isActive);
+  },
 };

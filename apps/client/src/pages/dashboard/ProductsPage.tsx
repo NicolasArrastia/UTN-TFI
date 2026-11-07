@@ -1,87 +1,208 @@
-import { useState } from "react";
-import { IconPlus, IconSearch } from "../../components/icons.tsx";
-import { notify } from "../../services/notifications.ts";
-import { formatCurrency } from "../../utils/format.ts";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ConfirmDialog } from "../../components/ConfirmDialog.tsx";
+import { StateCard } from "../../components/StateCard.tsx";
+import { IconPlus, IconRefresh } from "../../components/icons.tsx";
+import { Pagination } from "../../components/products/Pagination.tsx";
+import { ProductFilters } from "../../components/products/ProductFilters.tsx";
+import { ProductTable } from "../../components/products/ProductTable.tsx";
+import { useAuth } from "../../hooks/useAuth.ts";
+import { useCatalog } from "../../hooks/useCatalog.ts";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue.ts";
+import { useProducts } from "../../hooks/useProducts.ts";
+import { productService } from "../../services/product.service.ts";
+import {
+  getProductErrorMessage,
+  notify,
+} from "../../services/notifications.ts";
+import type {
+  Product,
+  ProductListParams,
+  ProductPagination,
+  ProductStatusFilter,
+} from "../../types/product.types.ts";
 
-interface MockProduct {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  stock: number;
-  minStock: number;
-  isActive: boolean;
-}
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 350;
 
-const products: MockProduct[] = [
-  {
-    id: 1,
-    name: "Café molido 500 g",
-    category: "Almacén",
-    price: 4_200,
-    stock: 34,
-    minStock: 10,
-    isActive: true,
-  },
-  {
-    id: 2,
-    name: "Yerba mate 1 kg",
-    category: "Almacén",
-    price: 6_500,
-    stock: 8,
-    minStock: 12,
-    isActive: true,
-  },
-  {
-    id: 3,
-    name: "Detergente 750 ml",
-    category: "Limpieza",
-    price: 3_100,
-    stock: 0,
-    minStock: 6,
-    isActive: false,
-  },
-  {
-    id: 4,
-    name: "Pan lactal integral",
-    category: "Panadería",
-    price: 2_800,
-    stock: 21,
-    minStock: 8,
-    isActive: true,
-  },
-  {
-    id: 5,
-    name: "Agua mineral 2 L",
-    category: "Bebidas",
-    price: 1_900,
-    stock: 56,
-    minStock: 20,
-    isActive: true,
-  },
-];
+const parseCategoryId = (value: string | null): number | null => {
+  if (!value) {
+    return null;
+  }
 
-const getStockTone = (product: MockProduct): string => {
-  if (product.stock === 0) return "danger";
-  if (product.stock <= product.minStock) return "warning";
-  return "success";
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
-const getInitials = (name: string): string =>
-  name
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
+const parsePage = (value: string | null): number => {
+  if (!value) {
+    return 1;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+};
+
+const parseStatus = (value: string | null): ProductStatusFilter => {
+  if (value === "all") {
+    return "all";
+  }
+
+  if (value === "false") {
+    return false;
+  }
+
+  return true;
+};
+
+const getResultLabel = (
+  pagination: ProductPagination | null,
+  isLoading: boolean,
+): string => {
+  if (isLoading) {
+    return "Cargando productos...";
+  }
+
+  const total = pagination?.total ?? 0;
+  return `${total} ${total === 1 ? "producto" : "productos"}`;
+};
 
 export function ProductsPage() {
-  const [query, setQuery] = useState("");
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const filteredProducts = products.filter((product) =>
-    `${product.name} ${product.category}`
-      .toLowerCase()
-      .includes(query.trim().toLowerCase()),
+  const search = searchParams.get("search") ?? "";
+  const status = parseStatus(searchParams.get("isActive"));
+  const categoryId = parseCategoryId(searchParams.get("categoryId"));
+  const lowStock = searchParams.get("lowStock") === "true";
+  const page = parsePage(searchParams.get("page"));
+
+  const [searchInput, setSearchInput] = useState(search);
+  const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
+
+  const { categories, isLoading: isCatalogLoading } = useCatalog();
+
+  const params = useMemo<ProductListParams>(
+    () => ({
+      search: search || undefined,
+      categoryId: categoryId ?? undefined,
+      isActive: status,
+      lowStock,
+      page,
+      limit: PAGE_SIZE,
+    }),
+    [search, categoryId, status, lowStock, page],
   );
+
+  const { products, pagination, isLoading, error, reload } =
+    useProducts(params);
+
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const canManage = user?.role === "admin";
+
+  useEffect(() => {
+    const normalizedSearch = debouncedSearch.trim();
+
+    // Evita que un valor debounceado viejo pise lo que el usuario ya escribió
+    // o el search que acaba de confirmar un cambio de filtro.
+    if (normalizedSearch !== searchInput.trim()) {
+      return;
+    }
+
+    if (normalizedSearch === search) {
+      return;
+    }
+
+    const next = new URLSearchParams(searchParams);
+
+    if (normalizedSearch) {
+      next.set("search", normalizedSearch);
+    } else {
+      next.delete("search");
+    }
+
+    next.delete("page");
+    setSearchParams(next, { replace: true });
+  }, [
+    debouncedSearch,
+    search,
+    searchInput,
+    searchParams,
+    setSearchParams,
+  ]);
+
+  const applyFilters = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === null || value === "") {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+    }
+
+    if (!("search" in changes)) {
+      const normalizedSearch = searchInput.trim();
+
+      if (normalizedSearch) {
+        next.set("search", normalizedSearch);
+      } else {
+        next.delete("search");
+      }
+    }
+
+    if (!("page" in changes)) {
+      next.delete("page");
+    }
+
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleStatusChange = (value: ProductStatusFilter) => {
+    applyFilters({
+      isActive: value === true ? null : String(value),
+    });
+  };
+
+  const handleCategoryChange = (value: number | null) => {
+    applyFilters({
+      categoryId: value === null ? null : String(value),
+    });
+  };
+
+  const handleLowStockChange = (value: boolean) => {
+    applyFilters({ lowStock: value ? "true" : null });
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    applyFilters({ page: String(nextPage) });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await productService.remove(productToDelete.id);
+      notify.success(`Se dio de baja "${productToDelete.name}".`);
+      setProductToDelete(null);
+
+      if (products.length === 1 && page > 1) {
+        applyFilters({ page: String(page - 1) });
+      } else {
+        reload();
+      }
+    } catch (deleteError) {
+      notify.error(getProductErrorMessage(deleteError));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <section className="card">
@@ -89,88 +210,95 @@ export function ProductsPage() {
         <div>
           <h2 className="card__title">Catálogo de productos</h2>
           <p className="card__subtitle">
-            {filteredProducts.length} productos · datos de ejemplo
+            {error
+              ? "No se pudo cargar el catálogo"
+              : `${getResultLabel(pagination, isLoading)} · precios en ARS`}
           </p>
         </div>
 
         <div className="toolbar">
-          <label className="search">
-            <IconSearch width={16} height={16} />
-            <input
-              type="search"
-              placeholder="Buscar producto o categoría..."
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label="Buscar producto"
-            />
-          </label>
+          {canManage ? (
+            <Link
+              to="/dashboard/products/new"
+              className="btn btn--primary btn--sm"
+            >
+              <IconPlus width={16} height={16} />
+              Nuevo producto
+            </Link>
+          ) : null}
 
           <button
             type="button"
-            className="btn btn--primary btn--sm"
-            onClick={() =>
-              notify.info("La gestión de productos estará disponible pronto.")
-            }
+            className="icon-btn"
+            onClick={reload}
+            aria-label="Actualizar listado"
+            title="Actualizar listado"
           >
-            <IconPlus width={16} height={16} />
-            Nuevo producto
+            <IconRefresh width={18} height={18} />
           </button>
         </div>
       </div>
 
-      <div className="table-wrap">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Producto</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((product) => (
-              <tr key={product.id}>
-                <td>
-                  <div className="cell-product">
-                    <span className="cell-product__avatar">
-                      {getInitials(product.name)}
-                    </span>
-                    <span className="cell-strong">{product.name}</span>
-                  </div>
-                </td>
-                <td>
-                  <span className="badge badge--neutral">{product.category}</span>
-                </td>
-                <td className="cell-strong">{formatCurrency(product.price)}</td>
-                <td>
-                  <span
-                    className={`badge badge--${getStockTone(product)}`}
-                    title={`Mínimo: ${product.minStock} unidades`}
-                  >
-                    {product.stock} u.
-                  </span>
-                </td>
-                <td>
-                  <span
-                    className={`badge ${
-                      product.isActive ? "badge--success" : "badge--neutral"
-                    }`}
-                  >
-                    {product.isActive ? "Activo" : "Inactivo"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ProductFilters
+        search={searchInput}
+        onSearchChange={setSearchInput}
+        status={status}
+        onStatusChange={handleStatusChange}
+        categoryId={categoryId}
+        categories={categories}
+        isCatalogLoading={isCatalogLoading}
+        onCategoryChange={handleCategoryChange}
+        lowStock={lowStock}
+        onLowStockChange={handleLowStockChange}
+      />
 
-      {filteredProducts.length === 0 ? (
-        <p className="empty-state">
-          No encontramos productos para “{query}”.
-        </p>
+      {error ? (
+        <StateCard
+          title="No pudimos cargar los productos"
+          message={error}
+          tone="error"
+          action={
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={reload}
+            >
+              Reintentar
+            </button>
+          }
+        />
+      ) : (
+        <>
+          <ProductTable
+            products={products}
+            isLoading={isLoading}
+            canManage={canManage}
+            onDelete={setProductToDelete}
+          />
+
+          {!isLoading && pagination && pagination.total > 0 ? (
+            <Pagination
+              pagination={pagination}
+              onPageChange={handlePageChange}
+            />
+          ) : null}
+        </>
+      )}
+
+      {productToDelete ? (
+        <ConfirmDialog
+          title="Dar de baja producto"
+          message={`¿Confirmás que querés dar de baja "${productToDelete.name}"? Dejará de aparecer en el listado de activos, pero podrás reactivarlo editándolo.`}
+          confirmLabel="Dar de baja"
+          tone="danger"
+          isBusy={isDeleting}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => {
+            if (!isDeleting) {
+              setProductToDelete(null);
+            }
+          }}
+        />
       ) : null}
     </section>
   );
