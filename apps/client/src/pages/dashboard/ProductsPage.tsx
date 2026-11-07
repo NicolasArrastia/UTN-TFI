@@ -198,7 +198,9 @@ export function ProductsPage() {
         <div>
           <h2 className="card__title">Catálogo de productos</h2>
           <p className="card__subtitle">
-            {getResultLabel(pagination, isLoading)} · precios en ARS
+            {error
+              ? "No se pudo cargar el catálogo"
+              : `${getResultLabel(pagination, isLoading)} · precios en ARS`}
           </p>
         </div>
 

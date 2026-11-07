@@ -55,6 +55,20 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
 const getPageMeta = (
   pathname: string,
 ): { title: string; subtitle: string } => {
+  if (pathname === "/dashboard/products/new") {
+    return {
+      title: "Nuevo producto",
+      subtitle: "Alta de producto en el catálogo.",
+    };
+  }
+
+  if (/^\/dashboard\/products\/\d+\/edit$/.test(pathname)) {
+    return {
+      title: "Editar producto",
+      subtitle: "Actualizá los datos del producto.",
+    };
+  }
+
   if (/^\/dashboard\/products\/\d+$/.test(pathname)) {
     return {
       title: "Detalle del producto",
