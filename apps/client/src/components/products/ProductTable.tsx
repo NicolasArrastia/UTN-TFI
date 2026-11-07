@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { IconEdit, IconTrash } from "../icons.tsx";
 import { formatCurrency } from "../../utils/format.ts";
 import type { Product } from "../../types/product.types.ts";
@@ -30,6 +30,9 @@ export function ProductTable({
   canManage,
   onDelete,
 }: ProductTableProps) {
+  const location = useLocation();
+  const from = `${location.pathname}${location.search}`;
+
   return (
     <div className="table-wrap">
       <table className="table">
@@ -72,6 +75,7 @@ export function ProductTable({
                     <Link
                       className="cell-product cell-product--link"
                       to={`/dashboard/products/${product.id}`}
+                      state={{ from }}
                     >
                       <span className="cell-product__avatar">
                         {getInitials(product.name)}
@@ -113,6 +117,7 @@ export function ProductTable({
                     <div className="table__actions">
                       <Link
                         to={`/dashboard/products/${product.id}`}
+                        state={{ from }}
                         className="btn btn--ghost btn--sm"
                       >
                         Ver
@@ -122,6 +127,7 @@ export function ProductTable({
                         <>
                           <Link
                             to={`/dashboard/products/${product.id}/edit`}
+                            state={{ from }}
                             className="icon-btn icon-btn--sm"
                             title="Editar producto"
                             aria-label={`Editar ${product.name}`}

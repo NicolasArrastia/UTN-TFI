@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { StateCard } from "../../components/StateCard.tsx";
 import { IconChevronLeft } from "../../components/icons.tsx";
 import { ProductForm } from "../../components/products/ProductForm.tsx";
@@ -12,6 +12,7 @@ import {
   notify,
 } from "../../services/notifications.ts";
 import type { ProductPayload } from "../../types/product.types.ts";
+import { getPreviousPath } from "../../utils/navigation.ts";
 
 const parseProductId = (value: string | undefined): number | null => {
   if (!value) {
@@ -65,6 +66,7 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
   const isEdit = mode === "edit";
   const { id: idParam } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const id = isEdit ? parseProductId(idParam) : null;
 
@@ -85,10 +87,12 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const backTo =
+  const defaultBackTo =
     isEdit && product
       ? `/dashboard/products/${product.id}`
       : "/dashboard/products";
+  const backTo = getPreviousPath(location.state, defaultBackTo);
+  const listPath = getPreviousPath(location.state, "/dashboard/products");
   const backLabel = isEdit && product ? "Volver al detalle" : "Volver al listado";
   const pageTitle = isEdit ? "Editar producto" : "Nuevo producto";
   const pageSubtitle = isEdit
@@ -102,13 +106,19 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
       if (isEdit && product) {
         const updated = await productService.update(product.id, payload);
         notify.success("Producto actualizado correctamente.");
-        navigate(`/dashboard/products/${updated.id}`, { replace: true });
+        navigate(`/dashboard/products/${updated.id}`, {
+          replace: true,
+          state: { from: backTo },
+        });
         return;
       }
 
       const created = await productService.create(payload);
       notify.success("Producto creado correctamente.");
-      navigate(`/dashboard/products/${created.id}`, { replace: true });
+      navigate(`/dashboard/products/${created.id}`, {
+        replace: true,
+        state: { from: backTo },
+      });
     } catch (error) {
       notify.error(getProductErrorMessage(error));
     } finally {
@@ -119,7 +129,7 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
   if (isEdit && id === null) {
     return (
       <FormShell
-        backTo="/dashboard/products"
+        backTo={listPath}
         backLabel="Volver al listado"
         title="Producto no encontrado"
         subtitle="El identificador del producto no es válido."
@@ -129,7 +139,7 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
           message="El producto que intentás editar no existe o el enlace es incorrecto."
           tone="error"
           action={
-            <Link to="/dashboard/products" className="btn btn--ghost btn--sm">
+            <Link to={listPath} className="btn btn--ghost btn--sm">
               Ir al listado
             </Link>
           }
@@ -157,7 +167,7 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
   if (isEdit && (productError || !product)) {
     return (
       <FormShell
-        backTo="/dashboard/products"
+        backTo={listPath}
         backLabel="Volver al listado"
         title={pageTitle}
         subtitle={pageSubtitle}
@@ -168,10 +178,7 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
           tone="error"
           action={
             <div className="toolbar toolbar--end">
-              <Link
-                to="/dashboard/products"
-                className="btn btn--ghost btn--sm"
-              >
+              <Link to={listPath} className="btn btn--ghost btn--sm">
                 Ir al listado
               </Link>
               <button
@@ -202,10 +209,7 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
           tone="error"
           action={
             <div className="toolbar toolbar--end">
-              <Link
-                to="/dashboard/products"
-                className="btn btn--ghost btn--sm"
-              >
+              <Link to={listPath} className="btn btn--ghost btn--sm">
                 Ir al listado
               </Link>
               <button

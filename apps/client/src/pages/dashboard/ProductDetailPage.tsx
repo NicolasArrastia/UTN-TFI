@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "../../components/ConfirmDialog.tsx";
 import { StateCard } from "../../components/StateCard.tsx";
 import {
@@ -18,6 +18,7 @@ import {
   formatCurrency,
   formatDateTime,
 } from "../../utils/format.ts";
+import { getPreviousPath } from "../../utils/navigation.ts";
 
 const parseProductId = (value: string | undefined): number | null => {
   if (!value) {
@@ -55,7 +56,9 @@ export function ProductDetailPage() {
   const { user } = useAuth();
   const { id: idParam } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  const listPath = getPreviousPath(location.state, "/dashboard/products");
   const id = parseProductId(idParam);
   const { product, isLoading, error, reload } = useProduct(id);
 
@@ -73,7 +76,7 @@ export function ProductDetailPage() {
     try {
       await productService.remove(product.id);
       notify.success(`Se dio de baja "${product.name}".`);
-      navigate("/dashboard/products", { replace: true });
+      navigate(listPath, { replace: true });
     } catch (deleteError) {
       notify.error(getProductErrorMessage(deleteError));
     } finally {
@@ -85,7 +88,7 @@ export function ProductDetailPage() {
   if (id === null) {
     return (
       <div className="detail-page">
-        <Link to="/dashboard/products" className="back-link">
+        <Link to={listPath} className="back-link">
           <IconChevronLeft width={16} height={16} />
           Volver al listado
         </Link>
@@ -94,7 +97,7 @@ export function ProductDetailPage() {
             title="Producto no encontrado"
             message="El identificador del producto no es válido."
             action={
-              <Link to="/dashboard/products" className="btn btn--ghost btn--sm">
+              <Link to={listPath} className="btn btn--ghost btn--sm">
                 Ir al listado
               </Link>
             }
@@ -107,7 +110,7 @@ export function ProductDetailPage() {
   if (isLoading) {
     return (
       <div className="detail-page">
-        <Link to="/dashboard/products" className="back-link">
+        <Link to={listPath} className="back-link">
           <IconChevronLeft width={16} height={16} />
           Volver al listado
         </Link>
@@ -124,7 +127,7 @@ export function ProductDetailPage() {
   if (error || !product) {
     return (
       <div className="detail-page">
-        <Link to="/dashboard/products" className="back-link">
+        <Link to={listPath} className="back-link">
           <IconChevronLeft width={16} height={16} />
           Volver al listado
         </Link>
@@ -135,10 +138,7 @@ export function ProductDetailPage() {
             tone="error"
             action={
               <div className="toolbar toolbar--end">
-                <Link
-                  to="/dashboard/products"
-                  className="btn btn--ghost btn--sm"
-                >
+                <Link to={listPath} className="btn btn--ghost btn--sm">
                   Ir al listado
                 </Link>
                 <button
@@ -160,7 +160,7 @@ export function ProductDetailPage() {
 
   return (
     <div className="detail-page">
-      <Link to="/dashboard/products" className="back-link">
+      <Link to={listPath} className="back-link">
         <IconChevronLeft width={16} height={16} />
         Volver al listado
       </Link>
@@ -191,6 +191,7 @@ export function ProductDetailPage() {
               <>
                 <Link
                   to={`/dashboard/products/${product.id}/edit`}
+                  state={{ from: listPath }}
                   className="btn btn--primary btn--sm"
                 >
                   <IconEdit width={16} height={16} />
