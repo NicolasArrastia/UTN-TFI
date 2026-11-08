@@ -49,18 +49,14 @@
 -- 1. Tipos enumerados
 -- =============================================================================
 --
--- Los valores posibles de rol, estado de venta y medio de pago se definen como
--- tipos enumerados y no como texto libre. De esta forma el motor rechaza
--- cualquier valor que no esté en la lista, en lugar de dejarlo pasar y que el
--- error aparezca más adelante en la aplicación.
+-- El estado de una venta y el medio de pago se definen como tipos enumerados
+-- porque el código interpreta sus valores: las estadísticas filtran
+-- `completed` y la anulación cambia el estado a `cancelled`. Los roles son
+-- datos del negocio y se guardan en una tabla de catálogo.
 --
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE user_role AS ENUM ('admin', 'employee');
-    END IF;
-
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'sale_status') THEN
         CREATE TYPE sale_status AS ENUM ('completed', 'cancelled');
     END IF;
@@ -98,7 +94,26 @@ CREATE SEQUENCE IF NOT EXISTS sale_number_seq START 1;
 --
 
 -- -----------------------------------------------------------------------------
--- 3.1 users
+-- 3.1 roles
+-- -----------------------------------------------------------------------------
+-- Catálogo de roles. Agregar un rol nuevo requiere insertar una fila y, si debe
+-- acceder a endpoints nuevos, asignarlo en las rutas de la API.
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS roles (
+    id          SERIAL       PRIMARY KEY,
+    name        VARCHAR(30)  NOT NULL,
+    description TEXT,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_roles_name UNIQUE (name)
+);
+
+COMMENT ON TABLE roles IS 'Catálogo de roles. Los permisos sobre endpoints se asignan en las rutas.';
+
+
+-- -----------------------------------------------------------------------------
+-- 3.2 users
 -- -----------------------------------------------------------------------------
 -- Usuarios que operan el sistema. El comercio puede tener varios usuarios y
 -- cada uno opera según lo que su rol le permita.
@@ -110,20 +125,25 @@ CREATE TABLE IF NOT EXISTS users (
     username   VARCHAR(100) NOT NULL,
     email      VARCHAR(150) NOT NULL,
     password   VARCHAR(255) NOT NULL,
-    role       user_role    NOT NULL,
+    role_id    INTEGER      NOT NULL,
     is_active  BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_users_username UNIQUE (username),
-    CONSTRAINT uq_users_email    UNIQUE (email)
+    CONSTRAINT uq_users_email    UNIQUE (email),
+
+    CONSTRAINT fk_users_role
+        FOREIGN KEY (role_id) REFERENCES roles (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 );
 
 COMMENT ON COLUMN users.password IS 'Hash de la contraseña. Nunca se almacena en texto plano.';
 
 
 -- -----------------------------------------------------------------------------
--- 3.2 categories
+-- 3.3 categories
 -- -----------------------------------------------------------------------------
 -- Clasificación principal de los productos. Un producto pertenece a una única
 -- categoría, por eso la relación es de varios a uno.
@@ -142,7 +162,7 @@ CREATE TABLE IF NOT EXISTS categories (
 
 
 -- -----------------------------------------------------------------------------
--- 3.3 tags
+-- 3.4 tags
 -- -----------------------------------------------------------------------------
 -- Clasificación secundaria de los productos. Un producto puede tener varias
 -- etiquetas, por eso la relación se resuelve con la tabla product_tags.
@@ -163,7 +183,7 @@ COMMENT ON COLUMN tags.color IS 'Color de la etiqueta en formato hexadecimal, po
 
 
 -- -----------------------------------------------------------------------------
--- 3.4 products
+-- 3.5 products
 -- -----------------------------------------------------------------------------
 -- Entidad central del sistema. Participa de la venta, del control de stock y
 -- del cálculo de las estadísticas.
@@ -192,7 +212,7 @@ COMMENT ON COLUMN products.min_stock IS 'Umbral a partir del cual se informa que
 
 
 -- -----------------------------------------------------------------------------
--- 3.5 product_tags
+-- 3.6 product_tags
 -- -----------------------------------------------------------------------------
 -- Tabla de relación entre productos y etiquetas. Resuelve la relación de
 -- varios a varios entre ambas entidades.
@@ -357,6 +377,9 @@ $$;
 -- docs/base-de-datos/01-modelo-relacional.md.
 -- -----------------------------------------------------------------------------
 
+-- Consulta de usuarios por rol.
+CREATE INDEX IF NOT EXISTS idx_users_role ON users (role_id);
+
 -- Listado de productos: muestra siempre los activos y se ordena por nombre.
 CREATE INDEX IF NOT EXISTS idx_products_active   ON products (is_active);
 CREATE INDEX IF NOT EXISTS idx_products_name     ON products (name);
@@ -428,7 +451,8 @@ CREATE TRIGGER trg_products_updated_at
 -- cantidad. Ejecutarla al terminar permite comprobar que el esquema quedó
 -- completo antes de seguir con el desarrollo.
 --
---   SELECT 'users' AS tabla, COUNT(*) FROM users
+--   SELECT 'roles' AS tabla, COUNT(*) FROM roles
+--   UNION ALL SELECT 'users', COUNT(*) FROM users
 --   UNION ALL SELECT 'categories', COUNT(*) FROM categories
 --   UNION ALL SELECT 'tags', COUNT(*) FROM tags
 --   UNION ALL SELECT 'products', COUNT(*) FROM products
@@ -442,6 +466,14 @@ CREATE TRIGGER trg_products_updated_at
 -- 8. Datos iniciales
 -- =============================================================================
 --
+-- Roles del sistema. La inserción es idempotente para que el script pueda
+-- ejecutarse más de una vez sin duplicar filas.
+INSERT INTO roles (name, description)
+VALUES
+    ('admin', 'Administra el comercio, los usuarios y el catálogo.'),
+    ('employee', 'Registra ventas y consulta la información del comercio.')
+ON CONFLICT (name) DO NOTHING;
+
 -- El sistema necesita al menos un usuario con rol de administrador para poder
 -- iniciar sesión. Ese usuario se crea una sola vez, y el hash de la contraseña
 -- debe generarse desde la aplicación, porque el algoritmo y el formato del hash
@@ -452,13 +484,13 @@ CREATE TRIGGER trg_products_updated_at
 -- autenticación, el alta del primer administrador se hará desde la aplicación o
 -- desde un script de inicialización que use el mismo código de hash.
 --
---   INSERT INTO users (fullname, username, email, password, role)
+--   INSERT INTO users (fullname, username, email, password, role_id)
 --   VALUES (
 --       'Administrador',
 --       'admin',
 --       'admin@ejemplo.com',
 --       '<hash bcrypt generado por la aplicación>',
---       'admin'
+--       (SELECT id FROM roles WHERE name = 'admin')
 --   );
 --
 -- El resto de los datos son los que va registrando el usuario durante el uso
