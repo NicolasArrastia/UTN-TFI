@@ -98,18 +98,12 @@ iteración. El detalle del plan se encuentra en
 
 ### Datos principales
 
-Una venta contempla:
+En el modelo relacional, la venta se compone de dos tablas relacionadas:
 
-- `date`
-- `userId`
-- `details`
-  - `productId`
-  - `quantity`
-  - `unitPrice`
-  - `subtotal`
-- `total`
-- `paymentMethod`
-- `status`
+- **Cabecera (`sales`):** `id`, `number`, `user_id`, `payment_method`, `total`, `status`, `created_at` y los campos de anulación (`cancelled_at`, `cancelled_by`, `cancellation_reason`).
+- **Detalle (`sale_products`):** `sale_id`, `product_id`, `product_name`, `quantity`, `unit_price` y `subtotal`.
+
+La cabecera se vincula con el usuario que registró la venta y el detalle se vincula con la cabecera y con cada producto mediante claves foráneas. La escritura de ambas tablas y el descuento de stock se realizan en una misma transacción. El detalle del proceso y el manejo de la concurrencia están en la sección «Actualización del stock» del [modelo relacional](../base-de-datos/01-modelo-relacional.md).
 
 ### Justificación
 
@@ -122,8 +116,6 @@ Esto permite posteriormente:
 - Analizar ganancias.
 - Actualizar stock.
 - Mantener un historial detallado.
-
-El detalle se mantiene embebido dentro de la venta porque los productos que componen una operación se consultan normalmente junto con la venta y forman parte de la misma operación histórica.
 
 ---
 
@@ -183,45 +175,30 @@ Se utiliza una relación de una categoría por producto y múltiples etiquetas p
 
 ```mermaid
 flowchart LR
-    AU[Autenticación y usuarios] --> P[Productos]
-    AU --> V[Ventas]
-    AU --> E[Estadísticas]
-
-    C[Categorías] --> P
-    T[Etiquetas] --> P
-
-    P --> V
-    V --> E
-    P --> E
-
-    V --> S[Actualización de stock]
-    S --> P
+    P[Productos] --> C[Categorías y etiquetas]
+    P --> AU[Autenticación y usuarios]
+    C --> AU
+    V[Ventas] --> P
+    V --> AU
+    E[Estadísticas] --> V
+    E --> P
 ```
 
-## 12.7 Flujo principal de una venta
+En el diagrama, `A → B` significa que el módulo A utiliza al módulo B. La flecha no representa un flujo de datos ni un orden de ejecución. La actualización de stock no aparece como módulo separado porque es una operación del módulo de ventas sobre los productos.
 
-```mermaid
-flowchart TD
-    A[Usuario autenticado] --> B[Seleccionar productos]
-    B --> C[Validar productos y cantidades]
-    C --> D[Validar stock]
-    D --> E[Calcular subtotales y total]
-    E --> F[Guardar venta]
-    F --> G[Actualizar stock]
-    G --> H[Venta registrada]
-    H --> I[Datos disponibles para estadísticas]
-```
+## 12.7 Procesos críticos
+
+El registro de una venta y su anulación se detallan en [Procesos críticos](../procesos/01-procesos-criticos.md).
 
 ## 12.8 Priorización para el MVP
 
-El orden de implementación recomendado es:
+El equipo definió el siguiente orden de implementación:
 
 1. Autenticación y usuarios.
-2. Productos.
-3. Categorías y etiquetas.
-4. Ventas.
-5. Actualización de stock.
-6. Estadísticas.
-7. Integración y pruebas.
+2. Categorías y etiquetas.
+3. Productos.
+4. Ventas, incluida la actualización de stock.
+5. Estadísticas.
+6. Integración y pruebas.
 
-Esta prioridad coincide con las dependencias del sistema: las ventas necesitan productos y usuarios; las estadísticas necesitan ventas registradas; y el control de stock depende de los productos y las ventas.
+El orden sigue las dependencias del diagrama: categorías y etiquetas solo necesitan la autenticación; productos usa categorías, etiquetas y autenticación; ventas necesita productos y usuarios; y estadísticas necesita ventas y productos. La actualización de stock queda dentro de ventas porque es la operación que modifica el stock de productos al registrar o anular una venta, no un módulo aparte.
