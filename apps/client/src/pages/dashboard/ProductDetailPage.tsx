@@ -305,6 +305,14 @@ export function ProductDetailPage() {
                   <dd>{formatDateTime(product.createdAt)}</dd>
                 </div>
                 <div>
+                  <dt>Última modificación por</dt>
+                  <dd>
+                    {product.modifiedBy !== null
+                      ? `Usuario #${product.modifiedBy}`
+                      : "Sin datos"}
+                  </dd>
+                </div>
+                <div>
                   <dt>Última modificación</dt>
                   <dd>{formatDateTime(product.updatedAt)}</dd>
                 </div>

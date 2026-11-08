@@ -21,6 +21,7 @@ export interface Product {
   minStock: number;
   lowStock: boolean;
   isActive: boolean;
+  modifiedBy: number | null;
   tags: ProductTagSummary[];
   createdAt: string;
   updatedAt: string;
