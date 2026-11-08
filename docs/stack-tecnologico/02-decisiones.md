@@ -1,4 +1,4 @@
-# 8.3 Cambio de stack: de MERN a PERN
+# 6.3 Cambio de stack: de MERN a PERN
 
 ## Contexto
 
