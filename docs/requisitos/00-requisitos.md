@@ -182,7 +182,7 @@ Estas estadísticas deberán utilizar la información almacenada en las ventas.
 
 El sistema deberá permitir desactivar determinados registros sin eliminarlos físicamente de la base de datos cuando corresponda.
 
-Para estos casos se utilizará un estado lógico, como `isDeleted` o `status`.
+Para estos casos se utiliza `is_active` en usuarios, categorías, etiquetas y productos, y el estado `cancelled` en las ventas.
 
 Esto permitirá conservar la información histórica necesaria para las operaciones y estadísticas.
 
