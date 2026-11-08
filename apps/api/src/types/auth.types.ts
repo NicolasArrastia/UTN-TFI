@@ -6,11 +6,13 @@ export interface User {
   username: string;
   email: string;
   passwordHash: string;
-  role: UserRole;
+  roleId: number;
   isActive: boolean;
 }
 
-export type PublicUser = Omit<User, "passwordHash">;
+export type PublicUser = Omit<User, "passwordHash" | "roleId"> & {
+  role: UserRole;
+};
 
 export interface AuthTokenPayload {
   sub: number;

@@ -2,6 +2,7 @@ import { compare } from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import { env } from "../config/env.ts";
 import { AppError } from "../errors/app-error.ts";
+import { roleRepository } from "../repositories/role.repository.ts";
 import { userRepository } from "../repositories/user.repository.ts";
 import type {
   AuthTokenPayload,
@@ -9,22 +10,37 @@ import type {
   User,
   UserRole,
 } from "../types/auth.types.ts";
+import type { Role } from "../types/role.types.ts";
 
 export interface LoginResult {
   token: string;
   user: PublicUser;
 }
 
+const getRoleOrThrow = (roleId: number): Role => {
+  const role = roleRepository.findById(roleId);
+
+  if (!role) {
+    throw new AppError(
+      "El rol del usuario no existe.",
+      500,
+      "ROLE_NOT_FOUND",
+    );
+  }
+
+  return role;
+};
+
 const toPublicUser = (user: User): PublicUser => {
-  const { passwordHash: _passwordHash, ...publicUser } = user;
-  return publicUser;
+  const { passwordHash: _passwordHash, roleId, ...publicUser } = user;
+  return { ...publicUser, role: getRoleOrThrow(roleId).name };
 };
 
 const signToken = (user: User): string => {
   const payload: AuthTokenPayload = {
     sub: user.id,
     username: user.username,
-    role: user.role,
+    role: getRoleOrThrow(user.roleId).name,
   };
 
   const options: SignOptions = {
