@@ -111,6 +111,8 @@ sequenceDiagram
 
 Al iniciar sesión, `authService.login` busca el usuario, compara la contraseña con bcrypt y firma un JWT. El token lleva el identificador (`sub`), el nombre de usuario (`username`) y el rol (`role`). El middleware `authenticate` lee el encabezado `Authorization: Bearer <token>`, llama a `authService.verifyToken` y guarda el contenido en `req.auth`. Si falta el token o no es válido, responde `401 UNAUTHORIZED`. Un usuario deshabilitado no puede iniciar sesión y recibe `403 USER_INACTIVE`.
 
+Mientras PostgreSQL no esté conectado, el repositorio de usuarios es en memoria. La búsqueda del diagrama se resuelve contra ese repositorio y, cuando se conecte la base, el cambio queda acotado a la capa de repositorios.
+
 ### Autorización por roles (RBAC)
 
 El modelo es RBAC (control de acceso basado en roles): cada usuario tiene un rol y cada ruta declara qué roles acepta. `authorize(...roles)` se coloca después de `authenticate`; si no hay un usuario autenticado responde `401`, y si el rol no está en la lista responde `403 FORBIDDEN`. Por ejemplo, las mutaciones de productos usan `authorize("admin")` y quedan fuera del alcance de `employee`.
