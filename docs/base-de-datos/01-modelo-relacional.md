@@ -1,8 +1,8 @@
 # Base de datos: modelo relacional
 
-Este documento define el modelo de datos del sistema. Es la fuente de referencia del esquema: cualquier cambio posterior debe verse reflejado acá y aplicarse mediante una migración sobre la base de datos.
+Este documento describe el modelo de datos del sistema.
 
-La base de datos sobre la que se ejecuta es PostgreSQL, y el acceso se realiza mediante Prisma, según lo definido en `docs/stack-tecnologico/02-decisiones.md`. El esquema se define en formato DBML, en el archivo `dbml.dbml` de esta misma carpeta, y el diagrama del modelo se muestra en la sección siguiente.
+La base de datos es PostgreSQL. El esquema se define en formato DBML, en el archivo `dbml.dbml` de esta misma carpeta, y el diagrama del modelo se muestra en la sección siguiente. El acceso a la base se realizará desde la capa de repositorios; por ahora los módulos implementados usan repositorios en memoria con las mismas columnas.
 
 ---
 
@@ -34,7 +34,7 @@ Las ventas no utilizan este mecanismo porque no se editan: una venta se registra
 
 El diagrama muestra las entidades del sistema, sus columnas y las relaciones entre ellas.
 
-La definición que genera este diagrama se encuentra en el archivo `dbml.dbml`, dentro de la misma carpeta. Ese archivo puede editarse y exportarse directamente desde [dbdiagram.io](https://dbdiagram.io). Cualquier modificación del modelo debe realizarse primero en `dbml.dbml` y luego exportarse como imagen para reemplazar `db-model.png`, de modo que ambos artefactos queden siempre sincronizados.
+El diagrama se genera a partir de `dbml.dbml`, en esta misma carpeta. Ese archivo se edita y se exporta desde [dbdiagram.io](https://dbdiagram.io) como imagen para `db-model.png`.
 
 ---
 
@@ -69,9 +69,11 @@ Categorías de productos. Un producto pertenece a una única categoría.
 | is_active               | boolean      | Baja lógica                    |
 | created_at / updated_at | timestamptz  | Fechas                         |
 
+La categoría es la clasificación principal del producto: responde a qué es y cada producto tiene una sola. En un comercio, ejemplos de categorías son Lácteos, Bebidas o Limpieza.
+
 ### 3.3 tags
 
-Etiquetas de productos. A diferencia de las categorías, un producto puede tener varias.
+Etiquetas de productos. A diferencia de las categorías, un producto puede tener varias y se comparten entre categorías.
 
 | Columna                 | Tipo        | Descripción                                 |
 | ----------------------- | ----------- | ------------------------------------------- |
@@ -80,6 +82,8 @@ Etiquetas de productos. A diferencia de las categorías, un producto puede tener
 | color                   | varchar(8)  | Color de la etiqueta en formato hexadecimal |
 | is_active               | boolean     | Baja lógica                                 |
 | created_at / updated_at | timestamptz | Fechas                                      |
+
+Las etiquetas son atributos transversales: describen condiciones o características que pueden cruzar categorías. Sin TACC, Oferta o Refrigerado son etiquetas posibles; un yogur puede ser Lácteos y llevar Sin TACC, Oferta y Refrigerado al mismo tiempo.
 
 ### 3.4 products
 
@@ -99,6 +103,8 @@ Productos del comercio. Es la entidad central del sistema: participa de la venta
 | created_at / updated_at | timestamptz   | Fechas                                                  |
 
 El precio y el costo se guardan por separado porque la diferencia entre ambos es la base del cálculo de ganancia, que es uno de los indicadores del sistema.
+
+No se registran proveedores porque están fuera del alcance del MVP (ver [Alcance del MVP](../analisis/05-alcance-mvp.md)). Para calcular la ganancia alcanza con el costo vigente de cada producto. Si más adelante se incorporara la gestión de proveedores, se podría agregar una tabla `suppliers` y una relación desde `products` hacia el proveedor habitual, o una tabla de compras que registre qué se compró a quién y a qué costo. Ese cambio implicaría revisar el modelo y el cálculo de costo, que hoy es un único valor por producto.
 
 ### 3.5 product_tags
 
@@ -155,7 +161,7 @@ La clave primaria es compuesta por `sale_id` y `product_id`, lo que impide que u
 
 ## 4. Restricciones de verificación
 
-Las restricciones siguientes se declaran en SQL dentro de las migraciones, ya que la herramienta de acceso a datos no las cubre de forma declarativa.
+Las restricciones siguientes se declaran en SQL en el script de creación de la base (`database/crear-base-datos.sql`), porque el modelo DBML no las expresa.
 
 ```sql
 -- Un producto no puede tener precios ni existencias negativas
@@ -194,7 +200,35 @@ Si en algún momento se requiriera una numeración sin huecos, la alternativa es
 
 ---
 
-## 6. Índices
+## 6. Actualización del stock
+
+El stock se guarda en `products` y se actualiza en la misma transacción que registra la venta. No se calcula sumando o restando ventas históricas cada vez que se consulta.
+
+### Registro de una venta
+
+1. Se inicia la transacción.
+2. Se obtiene el número correlativo con `nextval('sale_number_seq')`.
+3. Se inserta la cabecera en `sales`.
+4. Se insertan los renglones en `sale_products`, con el nombre y el precio del producto copiados en ese momento.
+5. Por cada producto se descuenta la cantidad vendida:
+
+```sql
+UPDATE products
+SET stock = stock - :cantidad
+WHERE id = :id AND stock >= :cantidad;
+```
+
+Si la actualización no afecta ninguna fila, el producto no existe o no tiene stock suficiente. En ese caso se revierte la transacción completa y se devuelve el error de stock (RN-07): no quedan escritas ni la venta ni el detalle. El número que consumió la secuencia no se recupera, como se explica en la sección 5.
+
+La resta se hace sobre el valor guardado en la base y no sobre un valor leído antes en la aplicación. Así, dos ventas simultáneas del mismo producto se serializan: la segunda actualización ve el stock que dejó la primera. Si se leyera el stock, se calculara el nuevo valor en el backend y se guardara, dos operaciones concurrentes podrían pisarse y vender más de lo disponible. La condición `stock >= :cantidad` evita el stock negativo, y el `CHECK chk_products_stock` queda como última garantía si se ejecuta una escritura fuera de este flujo.
+
+### Anulación de una venta
+
+La anulación se resuelve en una transacción: se cambia `status` a `cancelled`, se completan `cancelled_at`, `cancelled_by` y `cancellation_reason`, y se devuelve el stock de cada renglón con `UPDATE products SET stock = stock + :cantidad WHERE id = :id`. Las estadísticas solo consideran las ventas con estado `completed`, de modo que una venta anulada deja de sumar facturación y cantidades.
+
+> **TODO (equipo):** confirmar que toda anulación devuelve el stock y si corresponde algún caso exceptuado.
+
+## 7. Índices
 
 Los índices declarados en el modelo responden a las consultas que el sistema realiza con frecuencia.
 
@@ -206,7 +240,7 @@ Los índices declarados en el modelo responden a las consultas que el sistema re
 
 ---
 
-## 7. Cambios respecto del modelo anterior
+## 8. Cambios respecto del modelo anterior
 
 El modelo en base de documentos se modificó al migrar a PostgreSQL. Los cambios relevantes fueron:
 
