@@ -49,20 +49,16 @@
 -- 1. Tipos enumerados
 -- =============================================================================
 --
--- El estado de una venta y el medio de pago se definen como tipos enumerados
--- porque el código interpreta sus valores: las estadísticas filtran
--- `completed` y la anulación cambia el estado a `cancelled`. Los roles son
--- datos del negocio y se guardan en una tabla de catálogo.
+-- El estado de una venta se define como tipo enumerado porque el código
+-- interpreta sus valores: las estadísticas filtran `completed` y la anulación
+-- cambia el estado a `cancelled`. Los roles y los medios de pago son datos del
+-- negocio y se guardan en tablas de catálogo.
 --
 
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'sale_status') THEN
         CREATE TYPE sale_status AS ENUM ('completed', 'cancelled');
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method') THEN
-        CREATE TYPE payment_method AS ENUM ('cash', 'transfer', 'card', 'other');
     END IF;
 END
 $$;
@@ -237,7 +233,26 @@ CREATE TABLE IF NOT EXISTS product_tags (
 
 
 -- -----------------------------------------------------------------------------
--- 3.6 sales
+-- 3.7 payment_methods
+-- -----------------------------------------------------------------------------
+-- Catálogo de medios de pago. Se puede dar de baja un medio con is_active sin
+-- borrar las ventas históricas que lo utilizaron.
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS payment_methods (
+    id         SERIAL      PRIMARY KEY,
+    name       VARCHAR(30) NOT NULL,
+    is_active  BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT uq_payment_methods_name UNIQUE (name)
+);
+
+COMMENT ON TABLE payment_methods IS 'Catálogo de medios de pago. La baja lógica usa is_active.';
+
+
+-- -----------------------------------------------------------------------------
+-- 3.8 sales
 -- -----------------------------------------------------------------------------
 -- Cabecera de la venta. Los productos que la componen se guardan en la tabla
 -- sale_products.
@@ -247,7 +262,7 @@ CREATE TABLE IF NOT EXISTS sales (
     id                  SERIAL        PRIMARY KEY,
     user_id             INTEGER       NOT NULL,
     number              INTEGER       NOT NULL,
-    payment_method      payment_method NOT NULL,
+    payment_method_id   INTEGER       NOT NULL,
     total               NUMERIC(10,2) NOT NULL,
     status              sale_status   NOT NULL DEFAULT 'completed',
     created_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
@@ -259,6 +274,11 @@ CREATE TABLE IF NOT EXISTS sales (
 
     CONSTRAINT fk_sales_user
         FOREIGN KEY (user_id) REFERENCES users (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_sales_payment_method
+        FOREIGN KEY (payment_method_id) REFERENCES payment_methods (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
 
@@ -276,7 +296,7 @@ COMMENT ON COLUMN sales.cancellation_reason IS 'Motivo de la anulación. Nulo mi
 
 
 -- -----------------------------------------------------------------------------
--- 3.7 sale_products
+-- 3.9 sale_products
 -- -----------------------------------------------------------------------------
 -- Detalle de la venta: los productos que la componen y la cantidad vendida de
 -- cada uno.
@@ -393,6 +413,9 @@ CREATE INDEX IF NOT EXISTS idx_sales_date ON sales (created_at);
 -- Consulta de las ventas registradas por un usuario.
 CREATE INDEX IF NOT EXISTS idx_sales_user ON sales (user_id);
 
+-- Estadísticas por medio de pago.
+CREATE INDEX IF NOT EXISTS idx_sales_payment_method ON sales (payment_method_id);
+
 -- Indicadores por producto: producto más vendido, mayor facturación y mayor
 -- ganancia. La clave primaria de sale_products empieza por sale_id, por lo que
 -- product_id queda como segunda columna y no sirve para este tipo de búsqueda.
@@ -457,6 +480,7 @@ CREATE TRIGGER trg_products_updated_at
 --   UNION ALL SELECT 'tags', COUNT(*) FROM tags
 --   UNION ALL SELECT 'products', COUNT(*) FROM products
 --   UNION ALL SELECT 'product_tags', COUNT(*) FROM product_tags
+--   UNION ALL SELECT 'payment_methods', COUNT(*) FROM payment_methods
 --   UNION ALL SELECT 'sales', COUNT(*) FROM sales
 --   UNION ALL SELECT 'sale_products', COUNT(*) FROM sale_products;
 --
@@ -472,6 +496,15 @@ INSERT INTO roles (name, description)
 VALUES
     ('admin', 'Administra el comercio, los usuarios y el catálogo.'),
     ('employee', 'Registra ventas y consulta la información del comercio.')
+ON CONFLICT (name) DO NOTHING;
+
+-- Medios de pago disponibles. También es idempotente.
+INSERT INTO payment_methods (name)
+VALUES
+    ('cash'),
+    ('transfer'),
+    ('card'),
+    ('other')
 ON CONFLICT (name) DO NOTHING;
 
 -- El sistema necesita al menos un usuario con rol de administrador para poder
