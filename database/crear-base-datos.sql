@@ -194,6 +194,7 @@ CREATE TABLE IF NOT EXISTS products (
     cost        NUMERIC(10,2) NOT NULL,
     stock       INTEGER       NOT NULL DEFAULT 0,
     min_stock   INTEGER       NOT NULL DEFAULT 0,
+    modified_by INTEGER,
     is_active   BOOLEAN       NOT NULL DEFAULT TRUE,
     created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
@@ -201,10 +202,17 @@ CREATE TABLE IF NOT EXISTS products (
     CONSTRAINT fk_products_category
         FOREIGN KEY (category_id) REFERENCES categories (id)
         ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_products_modified_by
+        FOREIGN KEY (modified_by) REFERENCES users (id)
+        ON DELETE SET NULL
         ON UPDATE CASCADE
 );
 
 COMMENT ON COLUMN products.min_stock IS 'Umbral a partir del cual se informa que el producto necesita reposición.';
+
+COMMENT ON COLUMN products.modified_by IS 'Último usuario que modificó el producto. No guarda el historial completo de cambios.';
 
 
 -- -----------------------------------------------------------------------------
