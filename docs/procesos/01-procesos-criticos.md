@@ -65,4 +65,4 @@ WHERE id = :id;
 
 La devolución del stock se hace en la misma transacción que la anulación para que no quede una venta anulada sin reponer sus productos. Las estadísticas solo consideran las ventas con estado `completed`, así que una venta anulada deja de sumar facturación y cantidades.
 
-> **TODO (equipo):** confirmar que toda anulación devuelve el stock y si corresponde algún caso exceptuado.
+La confirmación de que toda anulación debe devolver el stock queda pendiente en el [modelo relacional](../base-de-datos/01-modelo-relacional.md).
