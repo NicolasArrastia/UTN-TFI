@@ -35,6 +35,7 @@ const toProductResponse = (product: Product): ProductResponse => {
     minStock: product.minStock,
     lowStock: product.stock <= product.minStock,
     isActive: product.isActive,
+    modifiedBy: product.modifiedBy,
     tags,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
@@ -110,15 +111,15 @@ export const productService = {
     return toProductResponse(getProductOrThrow(id));
   },
 
-  create(body: unknown): ProductResponse {
+  create(body: unknown, actorId: number): ProductResponse {
     const input = parseCreateProductInput(body);
     ensureCategoryExists(input.categoryId);
     ensureTagsExist(input.tagIds);
 
-    return toProductResponse(productRepository.create(input));
+    return toProductResponse(productRepository.create(input, actorId));
   },
 
-  update(id: number, body: unknown): ProductResponse {
+  update(id: number, body: unknown, actorId: number): ProductResponse {
     const product = getProductOrThrow(id);
     const input = parseUpdateProductInput(body);
 
@@ -133,6 +134,7 @@ export const productService = {
     const updated = productRepository.replace(
       id,
       buildUpdatedInput(product, input),
+      actorId,
     );
 
     if (!updated) {
@@ -142,14 +144,14 @@ export const productService = {
     return toProductResponse(updated);
   },
 
-  remove(id: number): ProductResponse {
+  remove(id: number, actorId: number): ProductResponse {
     const product = getProductOrThrow(id);
 
     if (!product.isActive) {
       return toProductResponse(product);
     }
 
-    const updated = productRepository.deactivate(id);
+    const updated = productRepository.deactivate(id, actorId);
 
     if (!updated) {
       throw new AppError("Producto no encontrado.", 404, "PRODUCT_NOT_FOUND");

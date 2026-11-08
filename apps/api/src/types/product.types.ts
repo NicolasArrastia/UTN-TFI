@@ -8,6 +8,7 @@ export interface Product {
   stock: number;
   minStock: number;
   isActive: boolean;
+  modifiedBy: number | null;
   tagIds: number[];
   createdAt: string;
   updatedAt: string;
@@ -73,6 +74,7 @@ export interface ProductResponse {
   minStock: number;
   lowStock: boolean;
   isActive: boolean;
+  modifiedBy: number | null;
   tags: ProductTagSummary[];
   createdAt: string;
   updatedAt: string;

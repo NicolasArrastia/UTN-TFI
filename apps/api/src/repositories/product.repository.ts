@@ -24,6 +24,7 @@ const products: Product[] = [
     stock: 40,
     minStock: 10,
     isActive: true,
+    modifiedBy: null,
     tagIds: [1],
     createdAt: SEED_DATE,
     updatedAt: SEED_DATE,
@@ -38,6 +39,7 @@ const products: Product[] = [
     stock: 24,
     minStock: 6,
     isActive: true,
+    modifiedBy: null,
     tagIds: [2],
     createdAt: SEED_DATE,
     updatedAt: SEED_DATE,
@@ -52,6 +54,7 @@ const products: Product[] = [
     stock: 5,
     minStock: 8,
     isActive: true,
+    modifiedBy: null,
     tagIds: [1],
     createdAt: SEED_DATE,
     updatedAt: SEED_DATE,
@@ -66,6 +69,7 @@ const products: Product[] = [
     stock: 12,
     minStock: 3,
     isActive: true,
+    modifiedBy: null,
     tagIds: [2],
     createdAt: SEED_DATE,
     updatedAt: SEED_DATE,
@@ -130,11 +134,12 @@ export const productRepository = {
 
   findById,
 
-  create(input: ProductInput): Product {
+  create(input: ProductInput, modifiedBy: number | null): Product {
     const now = new Date().toISOString();
     const product: Product = {
       id: nextId,
       ...input,
+      modifiedBy,
       tagIds: [...input.tagIds],
       createdAt: now,
       updatedAt: now,
@@ -146,7 +151,11 @@ export const productRepository = {
     return product;
   },
 
-  replace(id: number, input: ProductInput): Product | undefined {
+  replace(
+    id: number,
+    input: ProductInput,
+    modifiedBy: number | null,
+  ): Product | undefined {
     const index = products.findIndex((product) => product.id === id);
     const current = products[index];
 
@@ -164,6 +173,7 @@ export const productRepository = {
       stock: input.stock,
       minStock: input.minStock,
       isActive: input.isActive,
+      modifiedBy,
       tagIds: [...input.tagIds],
       createdAt: current.createdAt,
       updatedAt: new Date().toISOString(),
@@ -174,7 +184,7 @@ export const productRepository = {
     return updated;
   },
 
-  deactivate(id: number): Product | undefined {
+  deactivate(id: number, modifiedBy: number | null): Product | undefined {
     const index = products.findIndex((product) => product.id === id);
     const current = products[index];
 
@@ -185,6 +195,7 @@ export const productRepository = {
     const updated: Product = {
       ...current,
       isActive: false,
+      modifiedBy,
       updatedAt: new Date().toISOString(),
     };
 
