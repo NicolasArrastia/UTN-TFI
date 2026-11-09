@@ -20,11 +20,15 @@ Antes de definir las entidades se fijan algunos criterios que después se aplica
 
 **Fechas.** Las fechas se definen con zona horaria, de modo que el instante almacenado sea inequívoco independientemente de dónde se lea. Se guarda en UTC y la conversión a la zona horaria del usuario se realiza al presentar la información.
 
-**Baja lógica.** Las entidades que se conservan porque pueden formar parte de información histórica no se eliminan de la base de datos: se marcan como inactivas mediante la columna `is_active`. Esto aplica a usuarios, categorías, etiquetas y productos. Se conservan así porque pueden haber participado en ventas anteriores, y eliminar los registros rompería el historial y las estadísticas.
+**Catálogos y enumeraciones.** Los roles y los medios de pago se modelan como tablas de catálogo porque son datos administrables: permiten agregar valores sin modificar el esquema y conservar la referencia histórica desde las ventas y los usuarios. El estado de una venta se mantiene como tipo enumerado porque el código interpreta sus valores de forma fija: las estadísticas filtran las ventas `completed` y la anulación cambia el estado a `cancelled`.
+
+**Baja lógica.** Las entidades que se conservan porque pueden formar parte de información histórica no se eliminan de la base de datos: se marcan como inactivas mediante la columna `is_active`. Esto aplica a usuarios, categorías, etiquetas, productos y medios de pago. Se conservan así porque pueden haber participado en ventas anteriores, y eliminar los registros rompería el historial y las estadísticas.
 
 Las ventas no utilizan este mecanismo porque no se editan: una venta se registra y, eventualmente, se anula. Por eso utilizan un estado propio que distingue una venta completada de una venta anulada, en lugar de un campo activo/inactivo.
 
 **Registros de fecha.** Todas las tablas incluyen `created_at`. Las entidades que se editan con frecuencia incluyen también `updated_at`, que se actualiza automáticamente. Las ventas no lo incluyen porque su contenido no se modifica una vez registradas.
+
+**Auditoría de cambios.** Los productos guardan en `modified_by` el último usuario que los modificó. No se mantiene un historial completo de cambios: la columna solo permite responder quién realizó la última edición. Se aplica únicamente a productos porque sus precios y existencias son los datos con mayor impacto económico; en categorías y etiquetas alcanza con `updated_at`, que registra cuándo ocurrió el último cambio. Si en el futuro se necesita el detalle de cada modificación, corresponde agregar una tabla de historial, fuera del alcance del MVP.
 
 ---
 
@@ -34,13 +38,26 @@ Las ventas no utilizan este mecanismo porque no se editan: una venta se registra
 
 El diagrama muestra las entidades del sistema, sus columnas y las relaciones entre ellas.
 
-La definición que genera este diagrama se encuentra en el archivo `dbml.dbml`, dentro de la misma carpeta. Ese archivo puede editarse y exportarse directamente desde [dbdiagram.io](https://dbdiagram.io). Cualquier modificación del modelo debe realizarse primero en `dbml.dbml` y luego exportarse como imagen para reemplazar `db-model.png`, de modo que ambos artefactos queden siempre sincronizados.
+La definición que genera este diagrama se encuentra en el archivo `dbml.dbml`, dentro de la misma carpeta. Ese archivo puede editarse y exportarse desde [dbdiagram.io](https://dbdiagram.io) o desde otra herramienta que interprete DBML. Cualquier modificación del modelo debe realizarse primero en `dbml.dbml` y luego regenerarse la imagen `db-model.png`, de modo que ambos artefactos queden siempre sincronizados.
 
 ---
 
 ## 3. Entidades
 
-### 3.1 users
+### 3.1 roles
+
+Catálogo de roles disponibles en el sistema. Cada usuario tiene asignado uno.
+
+| Columna    | Tipo        | Descripción                    |
+| ---------- | ----------- | ------------------------------ |
+| id         | int         | Identificador, autoincremental |
+| name       | varchar(30) | Nombre único del rol           |
+| description | text        | Descripción opcional           |
+| created_at | timestamptz | Fecha de alta                  |
+
+Se inicializa con los roles `admin` y `employee`. Agregar un rol nuevo consiste en insertar una fila; si ese rol debe acceder a endpoints nuevos, además se lo habilita en el middleware de autorización de las rutas. El modelo no incluye una tabla `role_permissions` porque los permisos del MVP son fijos y se resuelven en el código. Si en el futuro se necesitan permisos configurables por rol, esa tabla se agrega como una extensión del catálogo.
+
+### 3.2 users
 
 Usuarios que operan el sistema. El comercio puede tener varios usuarios, y cada uno opera dentro de las posibilidades que le permite su rol.
 
@@ -51,13 +68,15 @@ Usuarios que operan el sistema. El comercio puede tener varios usuarios, y cada 
 | username                | varchar(100) | Nombre de usuario, único en el sistema                |
 | email                   | varchar(150) | Correo, único en el sistema                           |
 | password                | varchar(255) | Contraseña almacenada como hash, nunca en texto plano |
-| role                    | enum         | `admin` o `employee`                                  |
+| role_id                 | int          | Rol asignado, referencia a `roles`                    |
 | is_active               | boolean      | Baja lógica                                           |
 | created_at / updated_at | timestamptz  | Fechas                                                |
 
 El rol `admin` administra el comercio: gestiona los usuarios, los productos, las categorías, las etiquetas y las anulaciones. El rol `employee` realiza las operaciones habituales del turno, principalmente el registro de ventas y la consulta de productos y stock.
 
-### 3.2 categories
+`role_id` es una clave foránea a `roles.id` y no admite nulos. La baja de un rol está restringida mientras tenga usuarios asignados, para no dejar cuentas sin rol.
+
+### 3.3 categories
 
 Categorías de productos. Un producto pertenece a una única categoría.
 
@@ -69,7 +88,7 @@ Categorías de productos. Un producto pertenece a una única categoría.
 | is_active               | boolean      | Baja lógica                    |
 | created_at / updated_at | timestamptz  | Fechas                         |
 
-### 3.3 tags
+### 3.4 tags
 
 Etiquetas de productos. A diferencia de las categorías, un producto puede tener varias.
 
@@ -81,7 +100,7 @@ Etiquetas de productos. A diferencia de las categorías, un producto puede tener
 | is_active               | boolean     | Baja lógica                                 |
 | created_at / updated_at | timestamptz | Fechas                                      |
 
-### 3.4 products
+### 3.5 products
 
 Productos del comercio. Es la entidad central del sistema: participa de la venta, del control de stock y del cálculo de las estadísticas.
 
@@ -95,12 +114,15 @@ Productos del comercio. Es la entidad central del sistema: participa de la venta
 | cost                    | decimal(10,2) | Costo                                                   |
 | stock                   | int           | Existencias disponibles                                 |
 | min_stock               | int           | Umbral a partir del cual se informa que hay que reponer |
+| modified_by             | int           | Último usuario que modificó el producto                 |
 | is_active               | boolean       | Baja lógica                                             |
 | created_at / updated_at | timestamptz   | Fechas                                                  |
 
 El precio y el costo se guardan por separado porque la diferencia entre ambos es la base del cálculo de ganancia, que es uno de los indicadores del sistema.
 
-### 3.5 product_tags
+`modified_by` es una clave foránea a `users.id`, admite nulos y se actualiza en cada alta, edición o baja lógica del producto. Si el usuario se elimina, la referencia queda nula para no perder el producto. No registra el historial completo de modificaciones, solo la última.
+
+### 3.6 product_tags
 
 Tabla de relación entre productos y etiquetas. Resuelve la relación de varios a varios: un producto puede tener varias etiquetas y una etiqueta puede clasificar varios productos.
 
@@ -111,7 +133,20 @@ Tabla de relación entre productos y etiquetas. Resuelve la relación de varios 
 
 La clave primaria es compuesta por ambas columnas, que garantiza que un producto no pueda tener dos veces la misma etiqueta. No se agrega una columna de baja lógica: quitar una etiqueta a un producto consiste en eliminar la fila de esta tabla, y la etiqueta en sí conserva su propio estado.
 
-### 3.6 sales
+### 3.7 payment_methods
+
+Catálogo de medios de pago disponibles para registrar ventas.
+
+| Columna    | Tipo        | Descripción                                 |
+| ---------- | ----------- | ------------------------------------------- |
+| id         | int         | Identificador, autoincremental              |
+| name       | varchar(30) | Nombre único del medio de pago              |
+| is_active  | boolean     | Baja lógica                                 |
+| created_at | timestamptz | Fecha de alta                               |
+
+Se inicializa con `cash`, `transfer`, `card` y `other`. Un medio de pago no se elimina: se marca como inactivo para que deje de ofrecerse en ventas nuevas sin romper las ventas históricas que lo utilizaron.
+
+### 3.8 sales
 
 Cabecera de una venta. Una venta fue registrada por un usuario y se identifica con un número correlativo.
 
@@ -120,7 +155,7 @@ Cabecera de una venta. Una venta fue registrada por un usuario y se identifica c
 | id                  | int           | Identificador, autoincremental                     |
 | user_id             | int           | Usuario que registró la venta                      |
 | number              | int           | Número correlativo de la venta                     |
-| payment_method      | enum          | `cash`, `transfer`, `card` u `other`               |
+| payment_method_id   | int           | Medio de pago, referencia a `payment_methods`      |
 | total               | decimal(10,2) | Total de la venta                                  |
 | status              | enum          | `completed` o `cancelled`                          |
 | created_at          | timestamptz   | Fecha y hora de la venta                           |
@@ -132,7 +167,9 @@ El número correlativo es único, nunca se reutiliza y no se reinicia por más q
 
 Los tres campos de anulación se dejan nulos mientras la venta está completada y se completan juntos cuando se anula.
 
-### 3.7 sale_products
+`payment_method_id` es una clave foránea a `payment_methods.id` y no admite nulos. La baja del medio de pago está restringida mientras existan ventas que lo referencien, y para dejar de ofrecerlo se usa su baja lógica.
+
+### 3.9 sale_products
 
 Detalle de una venta: los productos que la componen y la cantidad vendida de cada uno. Es la tabla que reemplaza al detalle embebido que se usaba en el modelo de documentos.
 
@@ -202,6 +239,10 @@ Los índices declarados en el modelo responden a las consultas que el sistema re
 
 **Historial y estadísticas por período.** El índice sobre `created_at` de las ventas acompaña la consulta del historial y el filtro de fechas de las estadísticas. Sin él, cada consulta tendría que recorrer todas las ventas.
 
+**Usuarios por rol.** El índice sobre `role_id` de `users` acompaña la consulta de usuarios filtrada por rol y la verificación de referencias antes de dar de baja un rol.
+
+**Estadísticas por medio de pago.** El índice sobre `payment_method_id` de `sales` permite agrupar y filtrar ventas por medio de pago sin recorrer la tabla completa.
+
 **Indicadores por producto.** El índice `(sale_id, product_id)` de `sale_products` sirve para recuperar el detalle de una venta, pero no para responder cuántos renglones de un producto existen, porque `product_id` es la segunda columna de esa clave. Por eso se agrega un índice adicional sobre `product_id`, que es el que permite calcular el producto más vendido, el de mayor facturación y el de mayor ganancia sin recorrer la tabla completa.
 
 ---
@@ -217,4 +258,6 @@ El modelo en base de documentos se modificó al migrar a PostgreSQL. Los cambios
 - Se agregaron el medio de pago y los datos de anulación, que estaban definidos en los requisitos pero no en el modelo.
 - Los importes pasaron de coma flotante a precisión decimal.
 - Se agregó la copia del nombre del producto en el detalle de la venta, para que el historial no cambie al renombrar un producto.
-- Los valores de rol, estado de venta y medio de pago se definieron como enumeraciones en lugar de texto libre.
+- Los roles y los medios de pago pasaron de enumeraciones a tablas de catálogo, para poder administrarlos sin modificar el esquema y conservar las referencias históricas.
+- El estado de venta se mantiene como enumeración porque sus valores son interpretados por el código y no se administran como datos.
+- Se agregó `modified_by` en productos para registrar el último usuario que modificó precios, stock o datos del producto.

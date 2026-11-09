@@ -131,12 +131,16 @@ sequenceDiagram
 
 El sistema contempla roles para diferenciar el acceso a las funcionalidades.
 
-El rol inicial definido para el proyecto contempla:
+Los roles se guardan en la tabla `roles` y cada usuario referencia uno mediante `users.role_id`. El JWT incluye el nombre del rol resuelto desde esa tabla, no el identificador, para que el cliente y el middleware de autorización trabajen con un valor estable y legible.
+
+Los roles iniciales definidos para el proyecto son:
 
 - **Admin:** responsable de la administración del comercio y de los usuarios.
 - **Employee:** usuario que trabaja con las operaciones permitidas del comercio.
 
-Los permisos concretos se implementarán mediante middleware de autorización y reglas de negocio.
+Agregar un rol nuevo requiere insertar la fila correspondiente y, si el rol debe acceder a endpoints nuevos, incluirlo en el middleware de autorización de esas rutas.
+
+Los permisos concretos se implementan con `authenticate` y `authorize(...roles)` en las rutas, y con reglas de negocio en los servicios. El MVP no incluye una tabla `role_permissions` porque los permisos son fijos y se resuelven en el código; si en el futuro se necesitan permisos configurables por rol, se agrega esa tabla como extensión del catálogo.
 
 ## 11.8 Justificación de la arquitectura
 

@@ -5,7 +5,7 @@
 - UTN final project: Spanish-language commercial management system (products, sales, stock, stats).
 - npm workspaces monorepo: `apps/api` (Express 5 + TS) and `apps/client` (React 19 + Vite 8).
 - Auth and the products CRUD are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`). Read-only `/api/categories` and `/api/tags` endpoints support the product forms. The client has a login screen plus a protected dashboard; its **Productos** section is connected to the API (list, detail, create, edit and soft delete), while Ventas, Estadisticas and Settings are still mocks. Sales, stock and stats are still mocks: do not assume real modules exist.
-- Users live in an in-memory repository seeded with `admin`/`admin`; PostgreSQL is not connected yet.
+- Users and roles live in in-memory repositories; the seeded user is `admin`/`admin` with the `admin` role. PostgreSQL is not connected yet.
 - Docs and SQL comments are in Spanish; code identifiers are in English.
 
 ## Setup and commands
@@ -28,8 +28,8 @@
 - `verbatimModuleSyntax` is on: use `import type` for type-only imports.
 - Entrypoints: `src/server.ts` (listen) and `src/app.ts` (Express app, routes mounted at `/api/<module>`).
 - Follow the three-layer layout in `docs/arquitectura/01-arquitectura-general.md` (routes → controllers → services → repositories); `routes/`, `controllers/`, `services/`, `repositories/`, `middlewares/`, `errors/`, `config/` and `types/` exist today. Keep business rules in services and data access in repositories.
-- Auth endpoints: `POST /api/auth/login` and `GET /api/auth/me`. Errors use `{ error: { code, message } }`; protect routes with `authenticate` and restrict roles with `authorize(...roles)`. The user store is in memory until PostgreSQL is connected.
-- Product endpoints: `GET /api/products` and `GET /api/products/:id` require authentication; `POST /api/products`, `PATCH /api/products/:id` and `DELETE /api/products/:id` require `admin`. `DELETE` is a soft delete. Categories and tags are read-only in-memory stores until their modules exist.
+- Auth endpoints: `POST /api/auth/login` and `GET /api/auth/me`. Errors use `{ error: { code, message } }`; protect routes with `authenticate` and restrict roles with `authorize(...roles)`. Users and roles are in memory until PostgreSQL is connected; the auth service resolves `roleId` to the role name from the roles repository and includes that name in the JWT and in `PublicUser`.
+- Product endpoints: `GET /api/products` and `GET /api/products/:id` require authentication; `POST /api/products`, `PATCH /api/products/:id` and `DELETE /api/products/:id` require `admin`. `DELETE` is a soft delete. Product writes record `modifiedBy` from `req.auth.sub`, and the response exposes it. Categories and tags are read-only in-memory stores until their modules exist.
 - Strict TS extras: API enables `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; client enables `noUnusedLocals`/`noUnusedParameters`.
 
 ## Code style and clean code
@@ -46,9 +46,12 @@
 
 - PostgreSQL on Neon. The executable schema is `database/crear-base-datos.sql` (idempotent, applied manually with `psql -f`). The README link to `docs/base-de-datos/crear-base-datos.sql` is stale; edit the file under `database/`.
 - Design source is `docs/base-de-datos/dbml.dbml`. For model changes, follow the documented order: edit `dbml.dbml` → export `db-model.png` → update `docs/base-de-datos/01-modelo-relacional.md` and the SQL script.
-- Conventions: plural snake_case tables, English enum values (`admin`/`employee`, `completed`/`cancelled`, `cash`/`transfer`/`card`/`other`), money as `decimal(10,2)`, `timestamptz` stored in UTC, soft delete via `is_active` (sales use `status` + cancellation fields instead), sale numbers from `sale_number_seq`.
+- Conventions: plural snake_case tables, English catalog values (`admin`/`employee`, `cash`/`transfer`/`card`/`other`), money as `decimal(10,2)`, `timestamptz` stored in UTC, soft delete via `is_active` (sales use `status` + cancellation fields instead), sale numbers from `sale_number_seq`.
+- Roles and payment methods are catalog tables (`roles`, `payment_methods`) referenced by `users.role_id` and `sales.payment_method_id`. Payment methods use soft delete via `is_active`; roles are protected by the FK from `users`. `sale_status` remains a PostgreSQL enum (`completed`/`cancelled`).
+- Products store the last modifier in `products.modified_by` (nullable FK to `users`, `ON DELETE SET NULL`); it is not a full audit history. Categories and tags only track `updated_at`; document any expansion of audit scope before implementing it.
+- The Neon schema may still have the old `users.role` and `sales.payment_method` columns; migrating an existing database is pending and must be handled as an explicit task.
 - Prisma is documented as the DB layer but is not installed and there is no `schema.prisma` or `.env`. There is no migrations folder; do not invent a Prisma workflow without adding the dependency.
-- The API does not query the `users` table yet; the in-memory repository mirrors its fields (including the bcrypt password hash). Products, categories and tags are also in-memory and mirror their tables.
+- The API does not query the `users` table yet; the in-memory repository mirrors its fields (including the bcrypt password hash and `roleId`). Roles, products, categories and tags are also in-memory and mirror their tables; products include `modifiedBy`. Payment methods exist only in the SQL/DBML until the sales module is implemented.
 
 ## Git workflow
 
