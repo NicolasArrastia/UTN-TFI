@@ -85,9 +85,3 @@ En las tablas siguientes, un día equivale a 4 horas de trabajo de un integrante
 | Documentación final e informe | 2 |
 | Preparación del repositorio y del video | 1 |
 | Verificación de la entrega | 1 |
-
-> **TODO (equipo):** validar las duraciones estimadas de cada actividad.
-
-## Organización
-
-El equipo está compuesto por tres integrantes. Las actividades que no tienen dependencias entre sí se realizan en paralelo. La prioridad es completar las funcionalidades del MVP y evitar incorporar nuevas funcionalidades que comprometan los tiempos.
