@@ -1,12 +1,12 @@
-import type { Category } from "../types/category.types.ts";
+import type { Category, CategoryInput } from "../types/category.types.ts";
 
 /**
  * Repositorio en memoria de categorías.
  *
- * El CRUD de categorías todavía no existe. Este repositorio de solo lectura
- * permite validar la categoría de cada producto y devolver su nombre en las
- * respuestas. Cuando se implemente el módulo de categorías, se amplía con las
- * operaciones de escritura sin cambiar el contrato de productos.
+ * Replica las columnas de la tabla `categories`. Cuando PostgreSQL esté
+ * conectado, este módulo se reemplaza por consultas reales sin modificar
+ * servicios ni controladores. El contrato que usan los productos se mantiene:
+ * `findById` y `findActiveById` siguen disponibles.
  */
 const SEED_DATE = "2026-01-15T12:00:00.000Z";
 
@@ -45,18 +45,94 @@ const categories: Category[] = [
   },
 ];
 
-const findCategoryById = (id: number): Category | undefined =>
+let nextId = categories.length + 1;
+
+const normalizeName = (name: string): string =>
+  name.trim().toLocaleLowerCase("es");
+
+const findById = (id: number): Category | undefined =>
   categories.find((category) => category.id === id);
 
 export const categoryRepository = {
-  findById: findCategoryById,
+  findById,
 
   findActiveById(id: number): Category | undefined {
-    const category = findCategoryById(id);
+    const category = findById(id);
     return category?.isActive ? category : undefined;
   },
 
-  findAllActive(): Category[] {
-    return categories.filter((category) => category.isActive);
+  findByName(name: string): Category | undefined {
+    const normalized = normalizeName(name);
+    return categories.find(
+      (category) => normalizeName(category.name) === normalized,
+    );
+  },
+
+  findAll(includeInactive: boolean): Category[] {
+    const filtered = includeInactive
+      ? categories
+      : categories.filter((category) => category.isActive);
+
+    return [...filtered].sort((a, b) =>
+      a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+    );
+  },
+
+  create(input: CategoryInput): Category {
+    const now = new Date().toISOString();
+    const category: Category = {
+      id: nextId,
+      name: input.name,
+      description: input.description,
+      isActive: input.isActive,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    nextId += 1;
+    categories.push(category);
+
+    return category;
+  },
+
+  update(id: number, input: CategoryInput): Category | undefined {
+    const index = categories.findIndex((category) => category.id === id);
+    const current = categories[index];
+
+    if (!current) {
+      return undefined;
+    }
+
+    const updated: Category = {
+      id: current.id,
+      name: input.name,
+      description: input.description,
+      isActive: input.isActive,
+      createdAt: current.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+
+    categories[index] = updated;
+
+    return updated;
+  },
+
+  softDelete(id: number): Category | undefined {
+    const index = categories.findIndex((category) => category.id === id);
+    const current = categories[index];
+
+    if (!current) {
+      return undefined;
+    }
+
+    const updated: Category = {
+      ...current,
+      isActive: false,
+      updatedAt: new Date().toISOString(),
+    };
+
+    categories[index] = updated;
+
+    return updated;
   },
 };

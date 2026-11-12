@@ -5,6 +5,7 @@ export interface Category {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  activeProductCount?: number;
 }
 
 export interface Tag {
@@ -14,6 +15,17 @@ export interface Tag {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CreateCategoryPayload {
+  name: string;
+  description: string | null;
+}
+
+export interface UpdateCategoryPayload {
+  name?: string;
+  description?: string | null;
+  isActive?: boolean;
 }
 
 export interface CreateTagPayload {
