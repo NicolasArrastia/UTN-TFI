@@ -29,4 +29,20 @@ export const verifyDatabaseConnection = async (): Promise<void> => {
   await pool.query("SELECT 1");
 };
 
+const USERS_TABLE = "public.users";
+
+/**
+ * Indica si el esquema ya fue aplicado. La API necesita la tabla `users` para
+ * autenticar, y una base recién creada existe pero no tiene tablas: sin esta
+ * verificación el login falla con un 500 genérico en lugar de un mensaje claro.
+ */
+export const isSchemaReady = async (): Promise<boolean> => {
+  const result = await pool.query<{ ready: boolean }>(
+    "SELECT to_regclass($1) IS NOT NULL AS ready",
+    [USERS_TABLE],
+  );
+
+  return result.rows[0]?.ready ?? false;
+};
+
 export const closeDatabase = (): Promise<void> => pool.end();

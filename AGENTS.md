@@ -57,7 +57,7 @@
 - Frontend on Vercel; the API and PostgreSQL run on Render. `apps/client/vercel.json` rewrites every route to `index.html` so the React Router deep links work.
 - Render Web Service (repo root, Node 22): build `npm install --include=dev && npm run build -w api`, start `npm start -w api`, health check path `/api/health`. Required env vars: `DATABASE_URL` (Render Postgres internal URL; database and service must share a region), `JWT_SECRET` and `CLIENT_URL`; `JWT_EXPIRES_IN` is optional. `ADMIN_USERNAME`/`ADMIN_PASSWORD` only matter when running `db:setup`.
 - Vercel (root directory `apps/client`): build `npm run build`, output `dist`, env `VITE_API_URL=https://<service>.onrender.com/api` (must include `/api`). Vite bakes it in at build time, so redeploy the client after changing it.
-- Apply the schema against Render Postgres from a local machine with the external database URL before the first API deploy; the API only verifies the connection on startup. Free Render Postgres expires 30 days after creation and has no backups.
+- Apply the schema against Render Postgres from a local machine with the external database URL before the first API deploy; the API warns at startup and `/api/health` returns 503 when the schema is missing. Free Render Postgres expires 30 days after creation and has no backups.
 
 ## Git workflow
 
