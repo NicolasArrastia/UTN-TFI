@@ -63,6 +63,31 @@ const ensureTagsExist = (tagIds: number[]): void => {
   }
 };
 
+/**
+ * Al editar un producto se conservan las etiquetas inactivas que ya tenía.
+ * Solo las etiquetas nuevas deben estar activas; las heredadas únicamente
+ * tienen que seguir existiendo.
+ */
+const ensureAssignableTags = (
+  tagIds: number[],
+  currentTagIds: number[],
+): void => {
+  for (const tagId of tagIds) {
+    const isRetained = currentTagIds.includes(tagId);
+    const tag = isRetained
+      ? tagRepository.findById(tagId)
+      : tagRepository.findActiveById(tagId);
+
+    if (!tag) {
+      throw new AppError(
+        `La etiqueta ${tagId} no existe o está inactiva.`,
+        400,
+        "INVALID_TAG",
+      );
+    }
+  }
+};
+
 const getProductOrThrow = (id: number): Product => {
   const product = productRepository.findById(id);
 
@@ -122,12 +147,15 @@ export const productService = {
     const product = getProductOrThrow(id);
     const input = parseUpdateProductInput(body);
 
-    if (input.categoryId !== undefined) {
+    if (
+      input.categoryId !== undefined &&
+      input.categoryId !== product.categoryId
+    ) {
       ensureCategoryExists(input.categoryId);
     }
 
     if (input.tagIds !== undefined) {
-      ensureTagsExist(input.tagIds);
+      ensureAssignableTags(input.tagIds, product.tagIds);
     }
 
     const updated = productRepository.replace(

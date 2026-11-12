@@ -101,6 +101,32 @@ export function getTagErrorMessage(error: unknown): string {
 }
 
 /**
+ * Traduce los errores del módulo de categorías a mensajes entendibles.
+ * El backend devuelve el detalle de nombres duplicados y validaciones.
+ */
+export function getCategoryErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case "NETWORK_ERROR":
+        return "No se pudo conectar con el servidor. Verificá que la API esté en ejecución.";
+      case "UNAUTHORIZED":
+        return "Tu sesión expiró. Iniciá sesión nuevamente.";
+      case "FORBIDDEN":
+        return "No tenés permisos para administrar categorías.";
+      case "CATEGORY_NOT_FOUND":
+        return "La categoría no existe o fue eliminada.";
+      case "CATEGORY_NAME_TAKEN":
+      case "VALIDATION_ERROR":
+        return error.message;
+      default:
+        return error.message;
+    }
+  }
+
+  return "Ocurrió un error inesperado. Intentá nuevamente.";
+}
+
+/**
  * Traduce los errores del módulo de productos a mensajes entendibles.
  * Los errores de validación conservan el detalle devuelto por la API.
  */

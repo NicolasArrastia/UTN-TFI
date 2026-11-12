@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Modal } from "../../components/Modal.tsx";
+import { CategoryManager } from "../../components/categories/CategoryManager.tsx";
 import { TagManager } from "../../components/tags/TagManager.tsx";
 import { CreateUserForm } from "../../components/users/CreateUserForm.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
@@ -167,6 +168,7 @@ export function SettingsPage() {
             </section>
 
             <TagManager />
+            <CategoryManager />
           </div>
         )}
 
