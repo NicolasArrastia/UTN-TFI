@@ -11,7 +11,7 @@ Repositorio correspondiente al Trabajo Final Integrador de la Tecnicatura Univer
 |---|---|
 | Frontend | React + TypeScript |
 | Backend | Node.js + Express + TypeScript |
-| Base de datos | PostgreSQL alojado en Neon, accedido con Prisma |
+| Base de datos | PostgreSQL alojado en Neon, accedido con `pg` |
 | Seguridad | JWT |
 | Comunicación | API REST |
 | Control de versiones | Git + GitHub |
@@ -41,20 +41,29 @@ Artefactos asociados:
   (`/api/tags`).
 - Login en la raíz de la aplicación y panel protegido en `/dashboard`.
 - Sección **Productos** conectada a la API: listado con filtros y paginación,
-  detalle, alta, edición y baja lógica. Las secciones **Ventas**,
-  **Estadísticas** y **Settings** siguen mockeadas.
-- Los usuarios se almacenan en memoria hasta conectar PostgreSQL. El usuario
-  administrador por defecto es `admin` / `admin`.
-- Los usuarios se almacenan en memoria hasta conectar PostgreSQL. El usuario
-  administrador por defecto es `admin` / `admin`.
+  detalle, alta, edición y baja lógica.
+- **Settings** incluye la gestión de etiquetas y el alta de usuarios (solo
+  `admin`). El perfil y las preferencias siguen simulados.
+- Los usuarios se persisten en PostgreSQL. El usuario administrador por defecto
+  es `admin` / `admin` y se crea al preparar la base de datos.
+- **Ventas** y **Estadísticas** siguen mockeadas.
 
 ## Puesta en marcha
 
+1. Tener PostgreSQL disponible y definir `DATABASE_URL` si no se usa la base
+   local por defecto (`postgres://postgres:postgres@localhost:5432/utn_tfi`).
+2. Instalar dependencias y preparar la base de datos:
+
 ```bash
 npm install
+npm run db:setup -w api
 ```
 
-Ejecutar la API y el cliente con pnpm:
+El script crea la base si no existe, aplica
+[crear-base-datos.sql](database/crear-base-datos.sql) y siembra el usuario
+administrador. Es idempotente: se puede volver a ejecutar sin perder datos.
+
+3. Ejecutar la API y el cliente con pnpm:
 
 ```bash
 pnpm install
@@ -76,6 +85,7 @@ etiquetada por proceso. Si necesitás verlos por separado, usá
 - API: <http://localhost:3000>
 - Vite redirige `/api` hacia la API, por lo que no hace falta configurar CORS.
 
-Variables de entorno opcionales de la API: `PORT`, `JWT_SECRET`,
-`JWT_EXPIRES_IN`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`. En el cliente se puede
-usar `VITE_API_URL` para apuntar a otro backend.
+Variables de entorno de la API: `DATABASE_URL` (por defecto la base local),
+`DATABASE_SSL` (`true` para Neon; se activa sola cuando el host no es local),
+`PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`. En
+el cliente se puede usar `VITE_API_URL` para apuntar a otro backend.

@@ -24,7 +24,7 @@ Fuera de alcance en esta iteración:
 - CRUD de categorías y etiquetas.
 - Movimientos de stock e historial de precios.
 - Carga de imágenes, SKU o código de barras.
-- Conexión a PostgreSQL y reemplazo de los repositorios en memoria.
+- Conexión de productos, categorías y etiquetas a PostgreSQL.
 - Pruebas automatizadas del cliente (no hay framework configurado).
 
 ## 2. Decisiones técnicas
@@ -282,7 +282,7 @@ Pruebas manuales:
 - **Token expirado:** la API devuelve `401`. El cliente muestra el error, pero
   no cierra la sesión automáticamente en esta iteración; queda como mejora.
 - **Datos en memoria:** reiniciar la API descarta los productos creados. Es
-  esperado hasta conectar PostgreSQL.
+  esperado hasta migrar el módulo de productos a PostgreSQL.
 - **Categorías y etiquetas fijas:** los endpoints son de solo lectura; no se
   pueden crear desde el formulario de productos.
 - **Concurrencia:** dos usuarios pueden editar el mismo producto; la última
@@ -292,7 +292,7 @@ Pruebas manuales:
 
 - Cerrar la sesión automáticamente ante un `401`.
 - Implementar el CRUD de categorías y etiquetas.
-- Reemplazar los repositorios en memoria por PostgreSQL.
+- Reemplazar los repositorios en memoria de productos, categorías y etiquetas por PostgreSQL.
 - Agregar pruebas de componentes y de integración.
 - Incorporar imágenes, SKU y código de barras.
 
@@ -311,4 +311,5 @@ La integración se implementó en la rama `feat/client-products-api-integration`
 - [x] Verificación con `tsc`, `eslint`, `build` y pruebas manuales de la API.
 
 Quedan pendientes las pruebas automatizadas, el cierre automático de sesión ante
-un `401` y el reemplazo de los repositorios en memoria por PostgreSQL.
+un `401` y el reemplazo de los repositorios en memoria de productos, categorías y
+etiquetas por PostgreSQL.

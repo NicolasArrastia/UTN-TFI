@@ -20,15 +20,15 @@ Incluido:
 Fuera de alcance:
 
 - CRUD de categorías.
-- Conexión a PostgreSQL y migraciones de Prisma.
+- Conexión de etiquetas y categorías a PostgreSQL.
 - Permisos más finos que `admin` / `employee`.
 
 ## 2. Decisiones
 
 ### Persistencia en memoria
 
-El repositorio de etiquetas sigue en memoria porque PostgreSQL todavía no está
-conectado. Replica las columnas de la tabla `tags` y ahora agrega `create`,
+El repositorio de etiquetas sigue en memoria aunque PostgreSQL ya esté conectado
+para los usuarios. Replica las columnas de la tabla `tags` y ahora agrega `create`,
 `update` y `softDelete`, además de las lecturas que ya usaba el módulo de
 productos (`findById` y `findActiveById`).
 
@@ -205,9 +205,9 @@ Pruebas manuales con `curl` y la API levantada:
     y las altas o ediciones que intentan asignar una etiqueta inactiva
     devuelven `400 INVALID_TAG`.
 
-El repositorio de usuarios en memoria solo siembra `admin`. Para probar el
-`403` se firmó manualmente un JWT con rol `employee` y el secreto de
-desarrollo; no se agregó un usuario `employee` al seed.
+La base de datos solo siembra `admin`. Para probar el `403` se firmó manualmente
+un JWT con rol `employee` y el secreto de desarrollo; no se agregó un usuario
+`employee` al seed.
 
 ## 8. Estado de implementación
 
@@ -221,5 +221,5 @@ desarrollo; no se agregó un usuario `employee` al seed.
 ## 9. Trabajo futuro
 
 - Implementar el CRUD de categorías con el mismo patrón.
-- Reemplazar los repositorios en memoria por consultas a PostgreSQL.
+- Reemplazar los repositorios en memoria de etiquetas y categorías por consultas a PostgreSQL.
 - Evaluar paginación o búsqueda si el catálogo de etiquetas crece.
