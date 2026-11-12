@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Modal } from "../../components/Modal.tsx";
+import { TagManager } from "../../components/tags/TagManager.tsx";
 import { CreateUserForm } from "../../components/users/CreateUserForm.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
 import { ApiError } from "../../services/api-client.ts";
@@ -164,6 +165,8 @@ export function SettingsPage() {
                 </div>
               </div>
             </section>
+
+            <TagManager />
           </div>
         )}
 

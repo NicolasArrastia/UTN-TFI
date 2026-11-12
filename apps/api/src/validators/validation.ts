@@ -108,6 +108,18 @@ export const text =
     return parsed;
   };
 
+const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
+
+export const hexColor =
+  (field: string): Parser<string> =>
+  (value) => {
+    if (typeof value !== "string" || !HEX_COLOR_PATTERN.test(value.trim())) {
+      throw invalid(`${field} debe ser un color hexadecimal #RRGGBB.`);
+    }
+
+    return value.trim().toUpperCase();
+  };
+
 export const nullableText =
   ({ field, maxLength }: TextOptions): Parser<string | null> =>
   (value) => {

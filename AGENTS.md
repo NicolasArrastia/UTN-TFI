@@ -4,7 +4,7 @@
 
 - UTN final project: Spanish-language commercial management system (products, sales, stock, stats).
 - npm workspaces monorepo: `apps/api` (Express 5 + TS) and `apps/client` (React 19 + Vite 8).
-- Auth and the products CRUD are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`). Read-only `/api/categories` and `/api/tags` endpoints support the product forms. The client has a login screen plus a protected dashboard; its **Productos** section is connected to the API (list, detail, create, edit and soft delete), while Ventas, Estadisticas and Settings are still mocks. Sales, stock and stats are still mocks: do not assume real modules exist.
+- Auth, the products CRUD and the tags CRUD are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`, `/api/tags`). Read-only `/api/categories` supports the product forms. The client has a login screen plus a protected dashboard; its **Productos** section is connected to the API (list, detail, create, edit and soft delete) and **Settings** includes an admin-only tags manager (list, create, edit, soft delete and reactivate), while profile/preferences in Settings remain simulated. Ventas and Estadisticas are still mocks. Sales, stock and stats are still mocks: do not assume real modules exist.
 - Users live in an in-memory repository seeded with `admin`/`admin`; PostgreSQL is not connected yet.
 - Docs and SQL comments are in Spanish; code identifiers are in English.
 
@@ -29,7 +29,8 @@
 - Entrypoints: `src/server.ts` (listen) and `src/app.ts` (Express app, routes mounted at `/api/<module>`).
 - Follow the three-layer layout in `docs/arquitectura/01-arquitectura-general.md` (routes → controllers → services → repositories); `routes/`, `controllers/`, `services/`, `repositories/`, `middlewares/`, `errors/`, `config/` and `types/` exist today. Keep business rules in services and data access in repositories.
 - Auth endpoints: `POST /api/auth/login` and `GET /api/auth/me`. Errors use `{ error: { code, message } }`; protect routes with `authenticate` and restrict roles with `authorize(...roles)`. The user store is in memory until PostgreSQL is connected.
-- Product endpoints: `GET /api/products` and `GET /api/products/:id` require authentication; `POST /api/products`, `PATCH /api/products/:id` and `DELETE /api/products/:id` require `admin`. `DELETE` is a soft delete. Categories and tags are read-only in-memory stores until their modules exist.
+- Product endpoints: `GET /api/products` and `GET /api/products/:id` require authentication; `POST /api/products`, `PATCH /api/products/:id` and `DELETE /api/products/:id` require `admin`. `DELETE` is a soft delete. Categories are a read-only in-memory store.
+- Tag endpoints: `GET /api/tags` and `GET /api/tags/:id` require authentication; `POST /api/tags`, `PATCH /api/tags/:id` and `DELETE /api/tags/:id` require `admin`. `DELETE` is a soft delete and `PATCH` with `isActive: true` reactivates. `GET /api/tags?includeInactive=true` is honored only for `admin`; for `employee` it is ignored. Names are unique case-insensitively and colors use `#RRGGBB`. Inactive tags cannot be assigned to products.
 - Strict TS extras: API enables `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; client enables `noUnusedLocals`/`noUnusedParameters`.
 
 ## Code style and clean code
@@ -75,4 +76,5 @@
 - `docs/planificacion/04-plan-autenticacion.md` documents the auth plan, endpoints, routes and pending work.
 - `docs/planificacion/05-plan-productos.md` documents the products plan, endpoints and pending work.
 - `docs/planificacion/06-plan-productos-frontend.md` documents the client integration for products and its verification steps.
+- `docs/planificacion/07-plan-tags-categorias.md` documents the tags CRUD (API and Settings UI), permissions and verification; categories are still pending.
 - `docs/arquitectura` and `docs/modulos` define intended structure and module priority (auth → products → categories/tags → sales → stock → stats), useful for deciding where new code belongs.

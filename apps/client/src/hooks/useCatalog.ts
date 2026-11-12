@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { catalogService } from "../services/catalog.service.ts";
+import {
+  CATALOG_CHANGED_EVENT,
+  catalogService,
+} from "../services/catalog.service.ts";
 import { getProductErrorMessage } from "../services/notifications.ts";
 import type { Category, Tag } from "../types/catalog.types.ts";
 
@@ -52,6 +55,14 @@ export function useCatalog() {
   const reload = useCallback(() => {
     setRefreshToken((current) => current + 1);
   }, []);
+
+  useEffect(() => {
+    window.addEventListener(CATALOG_CHANGED_EVENT, reload);
+
+    return () => {
+      window.removeEventListener(CATALOG_CHANGED_EVENT, reload);
+    };
+  }, [reload]);
 
   const isLoading = state.requestKey !== refreshToken;
 
