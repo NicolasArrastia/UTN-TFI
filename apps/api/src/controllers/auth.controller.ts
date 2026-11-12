@@ -33,13 +33,19 @@ export const login = async (
   }
 };
 
-export const me = (req: Request, res: Response, next: NextFunction): void => {
+export const me = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     if (!req.auth) {
       throw new AppError("No autenticado.", 401, "UNAUTHORIZED");
     }
 
-    res.status(200).json({ user: authService.getProfile(req.auth.sub) });
+    const user = await authService.getProfile(req.auth.sub);
+
+    res.status(200).json({ user });
   } catch (error) {
     next(error);
   }

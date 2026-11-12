@@ -1,54 +1,85 @@
-import { hashSync } from "bcryptjs";
-import { env } from "../config/env.ts";
-import type { User } from "../types/auth.types.ts";
+import type { QueryResultRow } from "pg";
+import { query } from "../config/database.ts";
+import type { User, UserRole } from "../types/auth.types.ts";
 
-/**
- * Repositorio en memoria.
- *
- * La base de datos PostgreSQL todavía no está conectada al proyecto, por lo que
- * esta primera iteración siembra el usuario administrador en memoria. Cuando se
- * incorpore el cliente de base de datos, solo debe reemplazarse este módulo:
- * los servicios y controladores no cambian.
- */
-const users: User[] = [
-  {
-    id: 1,
-    fullname: "Administrador",
-    username: env.adminUsername,
-    email: "admin@ejemplo.com",
-    passwordHash: hashSync(env.adminPassword, 10),
-    role: "admin",
-    isActive: true,
-  },
-];
+interface UserRow extends QueryResultRow {
+  id: number;
+  fullname: string;
+  username: string;
+  email: string;
+  passwordHash: string;
+  role: UserRole;
+  isActive: boolean;
+}
 
-let nextUserId = Math.max(...users.map((user) => user.id)) + 1;
+const USER_COLUMNS = `
+  id,
+  fullname,
+  username,
+  email,
+  password AS "passwordHash",
+  role,
+  is_active AS "isActive"
+`;
 
 export const userRepository = {
-  findByUsername(username: string): User | undefined {
-    const normalized = username.trim().toLowerCase();
+  async findByUsername(username: string): Promise<User | undefined> {
+    const result = await query<UserRow>(
+      `SELECT ${USER_COLUMNS}
+       FROM users
+       WHERE LOWER(username) = LOWER($1)
+       LIMIT 1`,
+      [username.trim()],
+    );
 
-    return users.find((user) => user.username.toLowerCase() === normalized);
+    return result.rows[0];
   },
 
-  findByEmail(email: string): User | undefined {
-    const normalized = email.trim().toLowerCase();
+  async findByEmail(email: string): Promise<User | undefined> {
+    const result = await query<UserRow>(
+      `SELECT ${USER_COLUMNS}
+       FROM users
+       WHERE LOWER(email) = LOWER($1)
+       LIMIT 1`,
+      [email.trim()],
+    );
 
-    return users.find((user) => user.email.toLowerCase() === normalized);
+    return result.rows[0];
   },
 
-  findById(id: number): User | undefined {
-    return users.find((user) => user.id === id);
+  async findById(id: number): Promise<User | undefined> {
+    const result = await query<UserRow>(
+      `SELECT ${USER_COLUMNS}
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [id],
+    );
+
+    return result.rows[0];
   },
 
   async create(user: Omit<User, "id">): Promise<User> {
-    const newUser: User = {
-      ...user,
-      id: nextUserId++,
-    };
+    const result = await query<UserRow>(
+      `INSERT INTO users (fullname, username, email, password, role, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING ${USER_COLUMNS}`,
+      [
+        user.fullname,
+        user.username,
+        user.email,
+        user.passwordHash,
+        user.role,
+        user.isActive,
+      ],
+    );
 
-    users.push(newUser);
+    const created = result.rows[0];
 
-    return newUser;
+    if (!created) {
+      throw new Error("PostgreSQL no devolvió el usuario creado.");
+    }
+
+    return created;
   },
 };
