@@ -53,7 +53,7 @@ export function SettingsPage() {
 
   return (
     <>
-      <div className="settings-grid">
+      <div className="settings-layout">
         <div className="settings-column">
           <section className="card">
             <div className="card__header">
