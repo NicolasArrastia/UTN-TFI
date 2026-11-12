@@ -50,8 +50,9 @@ Artefactos asociados:
 
 ## Puesta en marcha
 
-1. Tener PostgreSQL disponible y definir `DATABASE_URL` si no se usa la base
-   local por defecto (`postgres://postgres:postgres@localhost:5432/utn_tfi`).
+1. Copiar `.env.example` a `.env` en la raíz y ajustar los valores si hace
+   falta. El archivo `.env` no se versiona. Si se usa la base local por defecto
+   no hace falta cambiar `DATABASE_URL`.
 2. Instalar dependencias y preparar la base de datos:
 
 ```bash

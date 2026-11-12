@@ -1,9 +1,22 @@
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 /**
  * Configuración leída desde el entorno.
  *
- * No hay dotenv instalado: las variables se definen en la shell. Los valores
- * por defecto son solo para desarrollo local.
+ * Si existe un `.env` en la raíz del repositorio se carga con Node
+ * (`process.loadEnvFile`), sin dependencias extra. Las variables ya definidas
+ * en el entorno tienen prioridad, así que en Render manda el panel del
+ * servicio. Los valores por defecto son solo para desarrollo local.
  */
+const ENV_FILE_PATH = fileURLToPath(
+  new URL("../../../../.env", import.meta.url),
+);
+
+if (existsSync(ENV_FILE_PATH)) {
+  process.loadEnvFile(ENV_FILE_PATH);
+}
+
 const toNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
