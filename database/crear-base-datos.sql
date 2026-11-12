@@ -32,7 +32,7 @@
 -- Ese comando crea la base si no existe, aplica este script y siembra el
 -- usuario administrador con un hash bcrypt generado por la aplicación.
 --
--- En Neon, el host es el que aparece en la cadena de conexión del panel del
+-- En Render, el host es el que aparece en la cadena de conexión del panel del
 -- proyecto y el usuario es el que se haya configurado al crearlo.
 --
 -- -----------------------------------------------------------------------------

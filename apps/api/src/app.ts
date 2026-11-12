@@ -1,4 +1,6 @@
+import cors from "cors";
 import express from "express";
+import { env } from "./config/env.ts";
 import {
   errorHandler,
   notFoundHandler,
@@ -13,6 +15,7 @@ import userRouter from "./routes/user.routes.ts";
 const app = express();
 
 app.disable("x-powered-by");
+app.use(cors({ origin: env.clientOrigins }));
 app.use(express.json({ limit: "10kb" }));
 
 app.use("/api/health", healthRouter);

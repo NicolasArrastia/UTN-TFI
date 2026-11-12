@@ -16,12 +16,12 @@
 - With pnpm, workspace commands use `pnpm --filter <name> <script>` (for example `pnpm --filter client build`); `-w` in pnpm means workspace root, not workspace name.
 - Client lint: `npm run lint -w client` (ESLint flat config, only workspace with lint).
 - Client typecheck + build: `npm run build -w client` (`tsc -b && vite build`).
-- API has no build, lint, or typecheck script: use `npx tsc --noEmit -p apps/api/tsconfig.json`.
+- API typecheck: `npx tsc --noEmit -p apps/api/tsconfig.json`. Production build: `npm run build -w api` (`tsc` to `apps/api/dist`, gitignored) and `npm start -w api` (`node dist/server.js`).
 - Do not run `npm test` (root, api, or client): all three are placeholders that exit 1. No test framework is configured.
 - No CI, formatter, or pre-commit hooks.
-- API reads `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DATABASE_URL` and `DATABASE_SSL`; no dotenv installed, so set env vars in the shell. Defaults are dev-only (`admin`/`admin`, `dev-secret-change-me`, `postgres://postgres:postgres@localhost:5432/utn_tfi`). `DATABASE_SSL` defaults to `true` for non-local hosts (Neon).
+- API reads `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DATABASE_URL`, `DATABASE_SSL` and `CLIENT_URL`; no dotenv installed, so set env vars in the shell. Defaults are dev-only (`admin`/`admin`, `dev-secret-change-me`, `postgres://postgres:postgres@localhost:5432/utn_tfi`). `DATABASE_SSL` defaults to `true` for non-local hosts (Render, Neon). `CLIENT_URL` accepts a comma-separated list of allowed origins for CORS and defaults to `http://localhost:5173`.
 - Prepare the database with `npm run db:setup -w api`: creates `utn_tfi` if needed, applies `database/crear-base-datos.sql` (idempotent) and seeds the admin user. The API verifies the connection on startup and exits if PostgreSQL is unreachable.
-- Vite serves on 5173 and proxies `/api` to `http://localhost:3000`; `VITE_API_URL` overrides the client's API base URL.
+- Vite serves on 5173 and proxies `/api` to `http://localhost:3000` in development; `VITE_API_URL` overrides the client's API base URL in production. The API enables `cors` with the origins listed in `CLIENT_URL`, so deployed clients must be registered there.
 
 ## API conventions
 
@@ -46,11 +46,18 @@
 
 ## Database
 
-- PostgreSQL on Neon. The executable schema is `database/crear-base-datos.sql` (idempotent, applied by `npm run db:setup -w api` or manually with `psql -f`). The README link to `docs/base-de-datos/crear-base-datos.sql` is stale; edit the file under `database/`.
+- PostgreSQL on Render. The executable schema is `database/crear-base-datos.sql` (idempotent, applied by `npm run db:setup -w api` or manually with `psql -f`). The README link to `docs/base-de-datos/crear-base-datos.sql` is stale; edit the file under `database/`.
 - Design source is `docs/base-de-datos/dbml.dbml`. For model changes, follow the documented order: edit `dbml.dbml` → export `db-model.png` → update `docs/base-de-datos/01-modelo-relacional.md` and the SQL script.
 - Conventions: plural snake_case tables, English enum values (`admin`/`employee`, `completed`/`cancelled`, `cash`/`transfer`/`card`/`other`), money as `decimal(10,2)`, `timestamptz` stored in UTC, soft delete via `is_active` (sales use `status` + cancellation fields instead), sale numbers from `sale_number_seq`.
 - The API uses `pg` (no Prisma, no `schema.prisma`, no migrations folder). `src/config/database.ts` owns the pool; `src/scripts/setup-database.ts` creates the database, applies the SQL schema and seeds the admin.
 - Users are read from and written to the `users` table. Products, categories and tags still use in-memory repositories that mirror their tables.
+
+## Deployment
+
+- Frontend on Vercel; the API and PostgreSQL run on Render. `apps/client/vercel.json` rewrites every route to `index.html` so the React Router deep links work.
+- Render Web Service (repo root, Node 22): build `npm install --include=dev && npm run build -w api`, start `npm start -w api`, health check path `/api/health`. Required env vars: `DATABASE_URL` (Render Postgres internal URL; database and service must share a region), `JWT_SECRET` and `CLIENT_URL`; `JWT_EXPIRES_IN` is optional. `ADMIN_USERNAME`/`ADMIN_PASSWORD` only matter when running `db:setup`.
+- Vercel (root directory `apps/client`): build `npm run build`, output `dist`, env `VITE_API_URL=https://<service>.onrender.com/api` (must include `/api`). Vite bakes it in at build time, so redeploy the client after changing it.
+- Apply the schema against Render Postgres from a local machine with the external database URL before the first API deploy; the API only verifies the connection on startup. Free Render Postgres expires 30 days after creation and has no backups.
 
 ## Git workflow
 
