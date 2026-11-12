@@ -22,6 +22,14 @@
   --shadow: 0 20px 45px -25px rgba(15, 23, 42, 0.35);
   --sidebar: #0b1220;
   --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  /* Toasts */
+  --toastify-color-dark: #0f172a;
+  --toastify-text-color-dark: #f8fafc;
+  --toastify-font-family: var(--font);
+  --toastify-toast-bd-radius: 12px;
+  --toastify-color-success: #22c55e;
+  --toastify-color-error: #f87171;
 }
 
 * {
@@ -60,6 +68,13 @@ h3,
 h4,
 p {
   margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Toasts
+   --------------------------------------------------------------------------- */
+.Toastify__toast {
+  font-size: 14px;
 }
 
 /* ---------------------------------------------------------------------------

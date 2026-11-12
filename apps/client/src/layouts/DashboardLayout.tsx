@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import {
   IconBell,
   IconBox,
@@ -104,7 +103,7 @@ export function DashboardLayout() {
 
   const handleLogout = () => {
     logout();
-    toast.success("Sesión cerrada correctamente.");
+    notify.success("Sesión cerrada correctamente.");
     navigate("/", { replace: true });
   };
 

@@ -1,5 +1,9 @@
-import toast from "react-hot-toast";
+import { createElement } from "react";
+import { toast } from "react-toastify";
+import type { Id } from "react-toastify";
 import { ApiError } from "./api-client.ts";
+
+const DEFAULT_AUTO_CLOSE = 4000;
 
 export const notify = {
   success(message: string): void {
@@ -10,8 +14,40 @@ export const notify = {
     toast.error(message);
   },
 
-  info(message: string): void {
-    toast(message, { icon: "ℹ️" });
+  info(message: string, icon?: string): void {
+    toast.info(
+      message,
+      icon
+        ? {
+            icon: () =>
+              createElement("span", { "aria-hidden": true }, icon),
+          }
+        : undefined,
+    );
+  },
+
+  loading(message: string): Id {
+    return toast.loading(message);
+  },
+
+  resolve(id: Id, message: string): void {
+    toast.update(id, {
+      render: message,
+      type: "success",
+      isLoading: false,
+      autoClose: DEFAULT_AUTO_CLOSE,
+      closeButton: true,
+    });
+  },
+
+  reject(id: Id, message: string): void {
+    toast.update(id, {
+      render: message,
+      type: "error",
+      isLoading: false,
+      autoClose: DEFAULT_AUTO_CLOSE,
+      closeButton: true,
+    });
   },
 };
 
