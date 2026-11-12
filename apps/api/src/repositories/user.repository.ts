@@ -22,13 +22,33 @@ const users: User[] = [
   },
 ];
 
+let nextUserId = Math.max(...users.map((user) => user.id)) + 1;
+
 export const userRepository = {
   findByUsername(username: string): User | undefined {
     const normalized = username.trim().toLowerCase();
+
     return users.find((user) => user.username.toLowerCase() === normalized);
+  },
+
+  findByEmail(email: string): User | undefined {
+    const normalized = email.trim().toLowerCase();
+
+    return users.find((user) => user.email.toLowerCase() === normalized);
   },
 
   findById(id: number): User | undefined {
     return users.find((user) => user.id === id);
+  },
+
+  async create(user: Omit<User, "id">): Promise<User> {
+    const newUser: User = {
+      ...user,
+      id: nextUserId++,
+    };
+
+    users.push(newUser);
+
+    return newUser;
   },
 };
