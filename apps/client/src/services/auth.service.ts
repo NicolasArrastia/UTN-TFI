@@ -1,9 +1,18 @@
-import { apiRequest } from "./api-client.ts";
+import { apiRequest, authenticatedRequest } from "./api-client.ts";
 import type {
   AuthUser,
   LoginResponse,
   ProfileResponse,
 } from "../types/auth.types.ts";
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  message: string;
+}
 
 export const authService = {
   login(username: string, password: string): Promise<LoginResponse> {
@@ -19,5 +28,17 @@ export const authService = {
     });
 
     return response.user;
+  },
+
+  changePassword(
+    payload: ChangePasswordPayload,
+  ): Promise<ChangePasswordResponse> {
+    return authenticatedRequest<ChangePasswordResponse>(
+      "/auth/change-password",
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      },
+    );
   },
 };
