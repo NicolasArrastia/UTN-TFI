@@ -22,6 +22,19 @@ interface FormValues {
   tagIds: number[];
 }
 
+interface CategoryOption {
+  id: number;
+  name: string;
+  isActive: boolean;
+}
+
+interface TagOption {
+  id: number;
+  name: string;
+  color: string;
+  isActive: boolean;
+}
+
 type FormErrors = Partial<Record<keyof FormValues, string>>;
 
 interface ValidationResult {
@@ -75,7 +88,7 @@ const parseInteger = (value: string): number | null => {
 
 const validateForm = (
   values: FormValues,
-  categories: Category[],
+  categoryOptions: CategoryOption[],
 ): ValidationResult => {
   const errors: FormErrors = {};
 
@@ -101,7 +114,7 @@ const validateForm = (
     categoryId <= 0
   ) {
     errors.categoryId = "Seleccioná una categoría.";
-  } else if (!categories.some((category) => category.id === categoryId)) {
+  } else if (!categoryOptions.some((category) => category.id === categoryId)) {
     errors.categoryId = "La categoría seleccionada no está disponible.";
   }
 
@@ -186,7 +199,42 @@ export function ProductForm({
     getInitialValues(initialProduct),
   );
   const [errors, setErrors] = useState<FormErrors>({});
-  const hasCategories = categories.length > 0;
+
+  const retainedCategory =
+    initialProduct &&
+    !categories.some((category) => category.id === initialProduct.categoryId)
+      ? initialProduct.category
+      : null;
+
+  const categoryOptions: CategoryOption[] = [
+    ...categories.map(({ id, name }) => ({ id, name, isActive: true })),
+    ...(retainedCategory
+      ? [{ ...retainedCategory, isActive: false }]
+      : []),
+  ];
+
+  const retainedTags =
+    initialProduct?.tags.filter(
+      (tag) => !tags.some((activeTag) => activeTag.id === tag.id),
+    ) ?? [];
+
+  const tagOptions: TagOption[] = [
+    ...tags.map(({ id, name, color }) => ({
+      id,
+      name,
+      color,
+      isActive: true,
+    })),
+    ...retainedTags.map(({ id, name, color }) => ({
+      id,
+      name,
+      color,
+      isActive: false,
+    })),
+  ];
+
+  const availableTagIds = new Set(tagOptions.map((tag) => tag.id));
+  const hasCategories = categoryOptions.length > 0;
   const priceValue = Number(values.price);
   const costValue = Number(values.cost);
   const hasMargin =
@@ -223,14 +271,12 @@ export function ProductForm({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const result = validateForm(values, categories);
+    const result = validateForm(values, categoryOptions);
     setErrors(result.errors);
 
     if (!result.payload) {
       return;
     }
-
-    const availableTagIds = new Set(tags.map((tag) => tag.id));
 
     onSubmit({
       ...result.payload,
@@ -269,9 +315,11 @@ export function ProductForm({
             disabled={!hasCategories}
           >
             <option value="">Seleccioná una categoría</option>
-            {categories.map((category) => (
+            {categoryOptions.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {category.isActive
+                  ? category.name
+                  : `${category.name} (inactiva)`}
               </option>
             ))}
           </select>
@@ -390,11 +438,11 @@ export function ProductForm({
 
         <div className="field field--full">
           <span className="field__label">Etiquetas</span>
-          {tags.length === 0 ? (
+          {tagOptions.length === 0 ? (
             <p className="form-hint">No hay etiquetas disponibles.</p>
           ) : (
             <div className="tag-picker">
-              {tags.map((tag) => {
+              {tagOptions.map((tag) => {
                 const isSelected = values.tagIds.includes(tag.id);
 
                 return (
@@ -414,6 +462,9 @@ export function ProductForm({
                       style={{ backgroundColor: tag.color }}
                     />
                     {tag.name}
+                    {tag.isActive ? null : (
+                      <span className="badge badge--neutral">Inactiva</span>
+                    )}
                   </label>
                 );
               })}
