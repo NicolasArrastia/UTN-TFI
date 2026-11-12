@@ -4,8 +4,8 @@
 
 - UTN final project: Spanish-language commercial management system (products, sales, stock, stats).
 - npm workspaces monorepo: `apps/api` (Express 5 + TS) and `apps/client` (React 19 + Vite 8).
-- Auth, the products CRUD and the tags CRUD are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`, `/api/tags`). Read-only `/api/categories` supports the product forms. The client has a login screen plus a protected dashboard; its **Productos** section is connected to the API (list, detail, create, edit and soft delete) and **Settings** includes an admin-only tags manager (list, create, edit, soft delete and reactivate), while profile/preferences in Settings remain simulated. Ventas and Estadisticas are still mocks. Sales, stock and stats are still mocks: do not assume real modules exist.
-- Users live in an in-memory repository seeded with `admin`/`admin`; PostgreSQL is not connected yet.
+- Auth, the products CRUD and the tags CRUD are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`, `/api/tags`). Read-only `/api/categories` supports the product forms. The client has a login screen plus a protected dashboard; its **Productos** section is connected to the API (list, detail, create, edit and soft delete) and **Settings** includes an admin-only tags manager (list, create, edit, soft delete and reactivate) and the user creation form, while profile/preferences in Settings remain simulated. Ventas and Estadisticas are still mocks. Sales, stock and stats are still mocks: do not assume real modules exist.
+- Users are persisted in PostgreSQL through `pg`; the API seeds `admin`/`admin` when `npm run db:setup -w api` runs. Products, categories and tags remain in memory.
 - Docs and SQL comments are in Spanish; code identifiers are in English.
 
 ## Setup and commands
@@ -19,7 +19,8 @@
 - API has no build, lint, or typecheck script: use `npx tsc --noEmit -p apps/api/tsconfig.json`.
 - Do not run `npm test` (root, api, or client): all three are placeholders that exit 1. No test framework is configured.
 - No CI, formatter, or pre-commit hooks.
-- API reads `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME` and `ADMIN_PASSWORD`; no dotenv installed, so set env vars in the shell. Defaults are dev-only (`admin`/`admin`, `dev-secret-change-me`).
+- API reads `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DATABASE_URL` and `DATABASE_SSL`; no dotenv installed, so set env vars in the shell. Defaults are dev-only (`admin`/`admin`, `dev-secret-change-me`, `postgres://postgres:postgres@localhost:5432/utn_tfi`). `DATABASE_SSL` defaults to `true` for non-local hosts (Neon).
+- Prepare the database with `npm run db:setup -w api`: creates `utn_tfi` if needed, applies `database/crear-base-datos.sql` (idempotent) and seeds the admin user. The API verifies the connection on startup and exits if PostgreSQL is unreachable.
 - Vite serves on 5173 and proxies `/api` to `http://localhost:3000`; `VITE_API_URL` overrides the client's API base URL.
 
 ## API conventions
@@ -28,7 +29,7 @@
 - `verbatimModuleSyntax` is on: use `import type` for type-only imports.
 - Entrypoints: `src/server.ts` (listen) and `src/app.ts` (Express app, routes mounted at `/api/<module>`).
 - Follow the three-layer layout in `docs/arquitectura/01-arquitectura-general.md` (routes → controllers → services → repositories); `routes/`, `controllers/`, `services/`, `repositories/`, `middlewares/`, `errors/`, `config/` and `types/` exist today. Keep business rules in services and data access in repositories.
-- Auth endpoints: `POST /api/auth/login` and `GET /api/auth/me`. Errors use `{ error: { code, message } }`; protect routes with `authenticate` and restrict roles with `authorize(...roles)`. The user store is in memory until PostgreSQL is connected.
+- Auth endpoints: `POST /api/auth/login` and `GET /api/auth/me`. Errors use `{ error: { code, message } }`; protect routes with `authenticate` and restrict roles with `authorize(...roles)`. Users are read from PostgreSQL; `login` and `getProfile` are async.
 - Product endpoints: `GET /api/products` and `GET /api/products/:id` require authentication; `POST /api/products`, `PATCH /api/products/:id` and `DELETE /api/products/:id` require `admin`. `DELETE` is a soft delete. Categories are a read-only in-memory store.
 - Tag endpoints: `GET /api/tags` and `GET /api/tags/:id` require authentication; `POST /api/tags`, `PATCH /api/tags/:id` and `DELETE /api/tags/:id` require `admin`. `DELETE` is a soft delete and `PATCH` with `isActive: true` reactivates. `GET /api/tags?includeInactive=true` is honored only for `admin`; for `employee` it is ignored. Names are unique case-insensitively and colors use `#RRGGBB`. Inactive tags cannot be assigned to products.
 - Strict TS extras: API enables `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`; client enables `noUnusedLocals`/`noUnusedParameters`.
@@ -45,11 +46,11 @@
 
 ## Database
 
-- PostgreSQL on Neon. The executable schema is `database/crear-base-datos.sql` (idempotent, applied manually with `psql -f`). The README link to `docs/base-de-datos/crear-base-datos.sql` is stale; edit the file under `database/`.
+- PostgreSQL on Neon. The executable schema is `database/crear-base-datos.sql` (idempotent, applied by `npm run db:setup -w api` or manually with `psql -f`). The README link to `docs/base-de-datos/crear-base-datos.sql` is stale; edit the file under `database/`.
 - Design source is `docs/base-de-datos/dbml.dbml`. For model changes, follow the documented order: edit `dbml.dbml` → export `db-model.png` → update `docs/base-de-datos/01-modelo-relacional.md` and the SQL script.
 - Conventions: plural snake_case tables, English enum values (`admin`/`employee`, `completed`/`cancelled`, `cash`/`transfer`/`card`/`other`), money as `decimal(10,2)`, `timestamptz` stored in UTC, soft delete via `is_active` (sales use `status` + cancellation fields instead), sale numbers from `sale_number_seq`.
-- Prisma is documented as the DB layer but is not installed and there is no `schema.prisma` or `.env`. There is no migrations folder; do not invent a Prisma workflow without adding the dependency.
-- The API does not query the `users` table yet; the in-memory repository mirrors its fields (including the bcrypt password hash). Products, categories and tags are also in-memory and mirror their tables.
+- The API uses `pg` (no Prisma, no `schema.prisma`, no migrations folder). `src/config/database.ts` owns the pool; `src/scripts/setup-database.ts` creates the database, applies the SQL schema and seeds the admin.
+- Users are read from and written to the `users` table. Products, categories and tags still use in-memory repositories that mirror their tables.
 
 ## Git workflow
 

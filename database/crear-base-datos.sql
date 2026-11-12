@@ -25,6 +25,13 @@
 --
 --   psql -U <usuario> -h <host> -f crear-base-datos.sql
 --
+-- O de forma automática desde la raíz del repositorio:
+--
+--   npm run db:setup -w api
+--
+-- Ese comando crea la base si no existe, aplica este script y siembra el
+-- usuario administrador con un hash bcrypt generado por la aplicación.
+--
 -- En Neon, el host es el que aparece en la cadena de conexión del panel del
 -- proyecto y el usuario es el que se haya configurado al crearlo.
 --
@@ -447,10 +454,9 @@ CREATE TRIGGER trg_products_updated_at
 -- debe generarse desde la aplicación, porque el algoritmo y el formato del hash
 -- dependen de la librería que se use en el backend.
 --
--- Insertar el hash directamente en la base de datos no es recomendable, por lo
--- que la instrucción queda comentada a propósito. Cuando exista el módulo de
--- autenticación, el alta del primer administrador se hará desde la aplicación o
--- desde un script de inicialización que use el mismo código de hash.
+-- Por eso el alta no se hace en este script: `npm run db:setup -w api` aplica
+-- el esquema y después inserta el administrador con bcrypt. Si el usuario ya
+-- existe, no lo modifica.
 --
 --   INSERT INTO users (fullname, username, email, password, role)
 --   VALUES (

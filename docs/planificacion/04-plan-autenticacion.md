@@ -21,23 +21,23 @@ del frontend.
 
 ## 2. Decisiones técnicas
 
-### Persistencia inicial en memoria
+### Persistencia en PostgreSQL
 
-La base de datos PostgreSQL todavía no está conectada: no hay Prisma, ni
-dependencia `pg`, ni credenciales `.env`. Para no bloquear el avance del MVP,
-la primera iteración usa un repositorio en memoria con el usuario `admin`
-sembrado al iniciar la API.
+Los usuarios se persisten en PostgreSQL mediante la dependencia `pg`. La
+conexión se configura con `DATABASE_URL` y el pool vive en
+`apps/api/src/config/database.ts`. `npm run db:setup -w api` crea la base si no
+existe, aplica `database/crear-base-datos.sql` y siembra el usuario `admin`.
 
-El repositorio respeta la separación en tres capas, por lo que el reemplazo
-por PostgreSQL en una iteración posterior solo requiere cambiar
-`repositories/user.repository.ts` y sumar el cliente de base de datos, sin
-tocar controladores ni servicios.
+Los productos, las categorías y las etiquetas siguen en repositorios en memoria
+hasta que se migren sus módulos. El repositorio de usuarios mantiene la
+separación en tres capas, por lo que los servicios y controladores solo cambiaron
+para esperar las operaciones asíncronas.
 
 ### Contraseñas
 
-La contraseña se guarda como hash con `bcryptjs` (nunca en texto plano),
-incluso en el repositorio en memoria. La contraseña por defecto se puede
-sobrescribir con las variables `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
+La contraseña se guarda como hash con `bcryptjs` (nunca en texto plano). La
+contraseña por defecto se puede sobrescribir con las variables
+`ADMIN_USERNAME` y `ADMIN_PASSWORD`.
 
 ### JWT
 
@@ -199,7 +199,7 @@ Cada commit debe dejar el repositorio compilando (`tsc` en la API, `lint` y
 
 ## 8. Trabajo futuro
 
-- Reemplazar el repositorio en memoria por PostgreSQL.
-- Registro de usuarios y administración de roles.
+- Migrar productos, categorías y etiquetas a PostgreSQL.
+- Administración de usuarios (listado, edición y baja lógica).
 - Refresh tokens o sesiones con expiración deslizante.
 - Rate limiting en el endpoint de login.

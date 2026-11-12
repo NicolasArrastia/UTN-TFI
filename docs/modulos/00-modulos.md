@@ -29,13 +29,13 @@ La primera iteración del módulo ya está implementada:
 - Usuario administrador por defecto: `admin` / `admin`, configurable mediante
   las variables `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
 
-Mientras PostgreSQL no esté conectado, los usuarios se mantienen en un
-repositorio en memoria. El reemplazo por la base de datos solo afecta a la capa
-de repositorios, sin cambiar servicios ni controladores.
+Los usuarios se persisten en la tabla `users` de PostgreSQL. La API se conecta
+con `DATABASE_URL` y `npm run db:setup -w api` crea la base, aplica el esquema y
+siembra el administrador.
 
-Pendiente para próximas iteraciones: registro de usuarios (RF-01),
-administración de usuarios y refresh tokens. El detalle del plan se encuentra
-en [Plan de autenticación](../planificacion/04-plan-autenticacion.md).
+Pendiente para próximas iteraciones: administración de usuarios (listado,
+edición y baja lógica) y refresh tokens. El detalle del plan se encuentra en
+[Plan de autenticación](../planificacion/04-plan-autenticacion.md).
 
 ---
 

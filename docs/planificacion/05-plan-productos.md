@@ -24,7 +24,7 @@ Fuera de alcance en esta iteración:
 
 - CRUD de categorías y etiquetas (se implementa en el módulo siguiente).
 - Movimientos de stock e historial de precios.
-- Conexión a PostgreSQL y migraciones de Prisma.
+- Conexión de productos, categorías y etiquetas a PostgreSQL.
 - Carga de imágenes, SKU o código de barras.
 - Integración de la pantalla **Products** del cliente con la API.
 
@@ -32,9 +32,10 @@ Fuera de alcance en esta iteración:
 
 ### Persistencia inicial en memoria
 
-PostgreSQL todavía no está conectado y Prisma no está instalado. Para no
-bloquear el backend, los productos, las categorías y las etiquetas se guardan
-en repositorios en memoria que replican las columnas del modelo relacional.
+PostgreSQL ya está conectado para los usuarios, pero los productos, las
+categorías y las etiquetas todavía se guardan en repositorios en memoria que
+replican las columnas del modelo relacional. Así el módulo de productos puede
+seguir avanzando sin bloquearse por la migración de sus tablas.
 
 La separación se mantiene según la arquitectura de tres capas:
 
@@ -42,7 +43,7 @@ La separación se mantiene según la arquitectura de tres capas:
 - `services/` aplica las reglas de negocio.
 - `controllers/` y `routes/` exponen la API HTTP.
 
-Cuando se conecte PostgreSQL, solo se reemplazan los repositorios.
+Cuando se migren sus tablas, solo se reemplazan los repositorios.
 
 ### Categorías y etiquetas
 
@@ -335,7 +336,7 @@ Pruebas manuales con la API levantada:
 
 ## 10. Trabajo futuro
 
-- Reemplazar los repositorios en memoria por consultas a PostgreSQL.
+- Reemplazar los repositorios en memoria de productos, categorías y etiquetas por consultas a PostgreSQL.
 - Implementar el CRUD de categorías y etiquetas.
 - Incorporar movimientos de stock e historial de precios.
 - Agregar SKU, código de barras e imágenes.

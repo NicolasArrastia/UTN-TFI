@@ -2,7 +2,7 @@
 
 Este documento define el modelo de datos del sistema. Es la fuente de referencia del esquema: cualquier cambio posterior debe verse reflejado acá y aplicarse mediante una migración sobre la base de datos.
 
-La base de datos sobre la que se ejecuta es PostgreSQL, y el acceso se realiza mediante Prisma, según lo definido en `docs/stack-tecnologico/02-decisiones.md`. El esquema se define en formato DBML, en el archivo `dbml.dbml` de esta misma carpeta, y el diagrama del modelo se muestra en la sección siguiente.
+La base de datos sobre la que se ejecuta es PostgreSQL, y el acceso se realiza mediante la dependencia `pg`, según lo definido en `docs/stack-tecnologico/02-decisiones.md`. El esquema se define en formato DBML, en el archivo `dbml.dbml` de esta misma carpeta, y el diagrama del modelo se muestra en la sección siguiente.
 
 ---
 

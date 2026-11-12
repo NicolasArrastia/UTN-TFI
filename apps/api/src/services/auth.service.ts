@@ -36,7 +36,7 @@ const signToken = (user: User): string => {
 
 export const authService = {
   async login(username: string, password: string): Promise<LoginResult> {
-    const user = userRepository.findByUsername(username);
+    const user = await userRepository.findByUsername(username);
 
     if (!user) {
       throw new AppError(
@@ -70,8 +70,8 @@ export const authService = {
     };
   },
 
-  getProfile(userId: number): PublicUser {
-    const user = userRepository.findById(userId);
+  async getProfile(userId: number): Promise<PublicUser> {
+    const user = await userRepository.findById(userId);
 
     if (!user || !user.isActive) {
       throw new AppError("Usuario no encontrado.", 401, "UNAUTHORIZED");
