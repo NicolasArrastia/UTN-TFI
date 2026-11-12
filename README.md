@@ -11,7 +11,7 @@ Repositorio correspondiente al Trabajo Final Integrador de la Tecnicatura Univer
 |---|---|
 | Frontend | React + TypeScript |
 | Backend | Node.js + Express + TypeScript |
-| Base de datos | PostgreSQL alojado en Neon, accedido con `pg` |
+| Base de datos | PostgreSQL alojado en Render, accedido con `pg` |
 | Seguridad | JWT |
 | Comunicación | API REST |
 | Control de versiones | Git + GitHub |
@@ -83,9 +83,48 @@ etiquetada por proceso. Si necesitás verlos por separado, usá
 
 - Cliente: <http://localhost:5173>
 - API: <http://localhost:3000>
-- Vite redirige `/api` hacia la API, por lo que no hace falta configurar CORS.
+- En desarrollo, Vite redirige `/api` hacia la API. En producción el cliente usa
+  `VITE_API_URL` y la API habilita CORS con los orígenes de `CLIENT_URL`.
 
 Variables de entorno de la API: `DATABASE_URL` (por defecto la base local),
-`DATABASE_SSL` (`true` para Neon; se activa sola cuando el host no es local),
-`PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`. En
-el cliente se puede usar `VITE_API_URL` para apuntar a otro backend.
+`DATABASE_SSL` (`true` para bases externas; se activa sola cuando el host no es
+local), `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME`,
+`ADMIN_PASSWORD` y `CLIENT_URL` (orígenes permitidos por CORS, separados por
+comas). En el cliente se usa `VITE_API_URL` para apuntar a otro backend.
+
+## Deploy
+
+El frontend se publica en Vercel y la API y la base de datos en Render.
+
+1. **Render Postgres**: crear la base en la misma región que el Web Service y
+   copiar la *External Database URL*. Aplicar el esquema desde una máquina
+   local, definiendo `ADMIN_PASSWORD` antes del primer seed:
+
+```powershell
+$env:DATABASE_URL = "postgresql://usuario:clave@dpg-xxxx.oregon-postgres.render.com/utn_tfi"
+$env:ADMIN_PASSWORD = "unaClaveLargaYReal"
+npm run db:setup -w api
+```
+
+El SSL se activa solo porque el host no es local. La base gratuita de Render
+expira a los 30 días y no tiene backups.
+
+2. **Render Web Service** (Node 22, root del repo):
+
+- Build Command: `npm install --include=dev && npm run build -w api`
+- Start Command: `npm start -w api`
+- Health Check Path: `/api/health`
+- Variables: `DATABASE_URL` (usar la *Internal Database URL*, solo funciona si
+  la base y el servicio están en la misma región), `JWT_SECRET`,
+  `CLIENT_URL` (dominio de Vercel) y `JWT_EXPIRES_IN=8h`.
+
+3. **Vercel** (Root Directory `apps/client`, framework Vite):
+
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Variable: `VITE_API_URL=https://<servicio>.onrender.com/api`
+
+`apps/client/vercel.json` reescribe todas las rutas a `index.html` para que
+funcionen los enlaces profundos del router. `VITE_API_URL` se incorpora al
+bundle durante el build, así que hay que volver a desplegar el frontend si
+cambia.
