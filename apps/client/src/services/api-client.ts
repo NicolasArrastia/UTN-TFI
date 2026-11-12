@@ -1,7 +1,21 @@
 import type { ApiErrorBody } from "../types/auth.types.ts";
 import { tokenStorage } from "./token-storage.ts";
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "/api";
+const configuredApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+const API_BASE_URL = configuredApiUrl ?? "/api";
+
+/**
+ * Cuando el build de producción no define `VITE_API_URL`, el cliente llama a
+ * `/api` en su propio dominio. Vercel responde 405 a los POST sobre archivos
+ * estáticos, así que el mensaje tiene que explicar la causa real.
+ */
+const describeFailure = (status: number): string => {
+  if (!configuredApiUrl && import.meta.env.PROD) {
+    return `La solicitud falló con el estado ${status}. Falta configurar VITE_API_URL en el deploy del cliente.`;
+  }
+
+  return `La solicitud falló con el estado ${status}.`;
+};
 
 export class ApiError extends Error {
   public readonly code: string;
@@ -49,7 +63,7 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     throw new ApiError(
-      body?.error?.message ?? `La solicitud falló con el estado ${response.status}.`,
+      body?.error?.message ?? describeFailure(response.status),
       body?.error?.code ?? "UNKNOWN_ERROR",
       response.status,
     );
