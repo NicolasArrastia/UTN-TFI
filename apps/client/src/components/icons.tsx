@@ -72,6 +72,15 @@ export function IconStore(props: IconProps) {
   );
 }
 
+export function IconTag(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M20.6 13.4 12 22l-9-9V4a1 1 0 0 1 1-1h9l7.6 7.6a2 2 0 0 1 0 2.8Z" />
+      <circle cx="7.5" cy="7.5" r="1.5" />
+    </Svg>
+  );
+}
+
 export function IconGrid(props: IconProps) {
   return (
     <Svg {...props}>
