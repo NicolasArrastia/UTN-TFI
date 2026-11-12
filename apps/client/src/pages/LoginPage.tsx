@@ -1,10 +1,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import { IconEye, IconEyeOff, IconLock, IconStore, IconUser } from "../components/icons.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { getLoginErrorMessage } from "../services/notifications.ts";
+import { getLoginErrorMessage, notify } from "../services/notifications.ts";
 
 const DEFAULT_USERNAME = "admin";
 const DEFAULT_PASSWORD = "admin";
@@ -22,19 +21,19 @@ export function LoginPage() {
     event.preventDefault();
 
     if (!username.trim() || !password) {
-      toast.error("Ingresá usuario y contraseña.");
+      notify.error("Ingresá usuario y contraseña.");
       return;
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading("Verificando credenciales...");
+    const toastId = notify.loading("Verificando credenciales...");
 
     try {
       const user = await login(username.trim(), password);
-      toast.success(`¡Bienvenido, ${user.fullname}!`, { id: toastId });
+      notify.resolve(toastId, `¡Bienvenido, ${user.fullname}!`);
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      toast.error(getLoginErrorMessage(error), { id: toastId });
+      notify.reject(toastId, getLoginErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -43,7 +42,7 @@ export function LoginPage() {
   const fillDefaultCredentials = () => {
     setUsername(DEFAULT_USERNAME);
     setPassword(DEFAULT_PASSWORD);
-    toast("Credenciales de prueba completadas.", { icon: "🔑" });
+    notify.info("Credenciales de prueba completadas.", "🔑");
   };
 
   return (
