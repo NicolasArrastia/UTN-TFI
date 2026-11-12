@@ -130,6 +130,12 @@ export const productRepository = {
 
   findById,
 
+  countActiveByCategoryId(categoryId: number): number {
+    return products.filter(
+      (product) => product.categoryId === categoryId && product.isActive,
+    ).length;
+  },
+
   create(input: ProductInput): Product {
     const now = new Date().toISOString();
     const product: Product = {
