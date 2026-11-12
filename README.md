@@ -128,3 +128,7 @@ expira a los 30 días y no tiene backups.
 funcionen los enlaces profundos del router. `VITE_API_URL` se incorpora al
 bundle durante el build, así que hay que volver a desplegar el frontend si
 cambia.
+
+`/api/health` responde `200` solo si PostgreSQL está conectado **y** el esquema
+está aplicado. Si devuelve `503`, falta correr `npm run db:setup -w api` contra
+la base del deploy. Sin esquema, el login responde `500`.
