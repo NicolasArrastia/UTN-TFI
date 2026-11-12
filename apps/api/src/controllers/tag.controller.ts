@@ -2,27 +2,29 @@ import type { NextFunction, Request, Response } from "express";
 import { tagService } from "../services/tag.service.ts";
 import { parseIdParam } from "../validators/tag.validator.ts";
 
-export const listTags = (
+export const listTags = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const role = req.auth?.role ?? "employee";
-    res.status(200).json({ tags: tagService.list(req.query, role) });
+    const tags = await tagService.list(req.query, role);
+
+    res.status(200).json({ tags });
   } catch (error) {
     next(error);
   }
 };
 
-export const getTag = (
+export const getTag = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const id = parseIdParam(req.params.id);
-    const tag = tagService.getById(id);
+    const tag = await tagService.getById(id);
 
     res.status(200).json({ tag });
   } catch (error) {
@@ -30,13 +32,13 @@ export const getTag = (
   }
 };
 
-export const createTag = (
+export const createTag = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
-    const tag = tagService.create(req.body);
+    const tag = await tagService.create(req.body);
 
     res.status(201).json({ tag });
   } catch (error) {
@@ -44,14 +46,14 @@ export const createTag = (
   }
 };
 
-export const updateTag = (
+export const updateTag = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const id = parseIdParam(req.params.id);
-    const tag = tagService.update(id, req.body);
+    const tag = await tagService.update(id, req.body);
 
     res.status(200).json({ tag });
   } catch (error) {
@@ -59,14 +61,14 @@ export const updateTag = (
   }
 };
 
-export const deleteTag = (
+export const deleteTag = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const id = parseIdParam(req.params.id);
-    const tag = tagService.remove(id);
+    const tag = await tagService.remove(id);
 
     res.status(200).json({ tag });
   } catch (error) {

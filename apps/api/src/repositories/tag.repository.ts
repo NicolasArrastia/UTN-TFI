@@ -1,128 +1,130 @@
+import type { QueryResultRow } from "pg";
+import { query } from "../config/database.ts";
 import type { Tag, TagInput } from "../types/tag.types.ts";
 
-/**
- * Repositorio en memoria de etiquetas.
- *
- * Replica las columnas de la tabla `tags`. Cuando PostgreSQL esté conectado,
- * este módulo se reemplaza por consultas reales sin modificar servicios ni
- * controladores. El contrato que usan los productos se mantiene: `findById` y
- * `findActiveById` siguen disponibles.
- */
-const SEED_DATE = "2026-01-15T12:00:00.000Z";
+interface TagRow extends QueryResultRow {
+  id: number;
+  name: string;
+  color: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-const tags: Tag[] = [
-  {
-    id: 1,
-    name: "Oferta",
-    color: "#F97316",
-    isActive: true,
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 2,
-    name: "Novedad",
-    color: "#22C55E",
-    isActive: true,
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 3,
-    name: "Sin TACC",
-    color: "#0EA5E9",
-    isActive: true,
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-];
+const TAG_COLUMNS = `
+  id,
+  name,
+  color,
+  is_active AS "isActive",
+  created_at AS "createdAt",
+  updated_at AS "updatedAt"
+`;
 
-let nextId = tags.length + 1;
-
-const normalizeName = (name: string): string =>
-  name.trim().toLocaleLowerCase("es");
-
-const findById = (id: number): Tag | undefined =>
-  tags.find((tag) => tag.id === id);
+const toTag = (row: TagRow): Tag => ({
+  id: row.id,
+  name: row.name,
+  color: row.color,
+  isActive: row.isActive,
+  createdAt: new Date(row.createdAt).toISOString(),
+  updatedAt: new Date(row.updatedAt).toISOString(),
+});
 
 export const tagRepository = {
-  findById,
-
-  findActiveById(id: number): Tag | undefined {
-    const tag = findById(id);
-    return tag?.isActive ? tag : undefined;
-  },
-
-  findByName(name: string): Tag | undefined {
-    const normalized = normalizeName(name);
-    return tags.find((tag) => normalizeName(tag.name) === normalized);
-  },
-
-  findAll(includeInactive: boolean): Tag[] {
-    const filtered = includeInactive
-      ? tags
-      : tags.filter((tag) => tag.isActive);
-
-    return [...filtered].sort((a, b) =>
-      a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+  async findById(id: number): Promise<Tag | undefined> {
+    const result = await query<TagRow>(
+      `SELECT ${TAG_COLUMNS}
+       FROM tags
+       WHERE id = $1
+       LIMIT 1`,
+      [id],
     );
+
+    const row = result.rows[0];
+    return row ? toTag(row) : undefined;
   },
 
-  create(input: TagInput): Tag {
-    const now = new Date().toISOString();
-    const tag: Tag = {
-      id: nextId,
-      name: input.name,
-      color: input.color,
-      isActive: input.isActive,
-      createdAt: now,
-      updatedAt: now,
-    };
+  async findActiveById(id: number): Promise<Tag | undefined> {
+    const result = await query<TagRow>(
+      `SELECT ${TAG_COLUMNS}
+       FROM tags
+       WHERE id = $1 AND is_active = TRUE
+       LIMIT 1`,
+      [id],
+    );
 
-    nextId += 1;
-    tags.push(tag);
-
-    return tag;
+    const row = result.rows[0];
+    return row ? toTag(row) : undefined;
   },
 
-  update(id: number, input: TagInput): Tag | undefined {
-    const index = tags.findIndex((tag) => tag.id === id);
-    const current = tags[index];
+  async findByName(name: string): Promise<Tag | undefined> {
+    const result = await query<TagRow>(
+      `SELECT ${TAG_COLUMNS}
+       FROM tags
+       WHERE LOWER(name) = LOWER($1)
+       LIMIT 1`,
+      [name.trim()],
+    );
 
-    if (!current) {
-      return undefined;
+    const row = result.rows[0];
+    return row ? toTag(row) : undefined;
+  },
+
+  async findAll(includeInactive: boolean): Promise<Tag[]> {
+    const filter = includeInactive ? "" : "WHERE is_active = TRUE";
+    const result = await query<TagRow>(
+      `SELECT ${TAG_COLUMNS}
+       FROM tags
+       ${filter}
+       ORDER BY name ASC`,
+    );
+
+    return result.rows.map(toTag);
+  },
+
+  async create(input: TagInput): Promise<Tag> {
+    const result = await query<TagRow>(
+      `INSERT INTO tags (name, color, is_active)
+       VALUES ($1, $2, $3)
+       RETURNING ${TAG_COLUMNS}`,
+      [input.name, input.color, input.isActive],
+    );
+
+    const created = result.rows[0];
+
+    if (!created) {
+      throw new Error("PostgreSQL no devolvió la etiqueta creada.");
     }
 
-    const updated: Tag = {
-      id: current.id,
-      name: input.name,
-      color: input.color,
-      isActive: input.isActive,
-      createdAt: current.createdAt,
-      updatedAt: new Date().toISOString(),
-    };
-
-    tags[index] = updated;
-
-    return updated;
+    return toTag(created);
   },
 
-  softDelete(id: number): Tag | undefined {
-    const index = tags.findIndex((tag) => tag.id === id);
-    const current = tags[index];
+  async update(id: number, input: TagInput): Promise<Tag | undefined> {
+    const result = await query<TagRow>(
+      `UPDATE tags
+       SET name = $2,
+           color = $3,
+           is_active = $4,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING ${TAG_COLUMNS}`,
+      [id, input.name, input.color, input.isActive],
+    );
 
-    if (!current) {
-      return undefined;
-    }
+    const row = result.rows[0];
+    return row ? toTag(row) : undefined;
+  },
 
-    const updated: Tag = {
-      ...current,
-      isActive: false,
-      updatedAt: new Date().toISOString(),
-    };
+  async softDelete(id: number): Promise<Tag | undefined> {
+    const result = await query<TagRow>(
+      `UPDATE tags
+       SET is_active = FALSE,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING ${TAG_COLUMNS}`,
+      [id],
+    );
 
-    tags[index] = updated;
-
-    return updated;
+    const row = result.rows[0];
+    return row ? toTag(row) : undefined;
   },
 };
