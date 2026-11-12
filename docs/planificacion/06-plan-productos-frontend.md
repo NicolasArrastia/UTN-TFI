@@ -31,7 +31,7 @@ Fuera de alcance en esta iteración:
 
 ### Sin dependencias nuevas
 
-El cliente ya usa React 19, React Router 7 y `react-hot-toast`. La integración
+El cliente ya usa React 19, React Router 7 y `react-toastify`. La integración
 se resuelve con estado local, hooks propios y `fetch`, sin agregar una librería
 de consultas ni un manejador de formularios. Así se mantiene el bundle pequeño y
 el estilo del proyecto.

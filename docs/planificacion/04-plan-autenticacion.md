@@ -50,9 +50,14 @@ sobrescribir con las variables `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
 
 ### Toasts
 
-Se utiliza `react-hot-toast` por ser una dependencia pequeña, sin estilos
-globales obligatorios y con una API simple. Los mensajes se centralizan en un
-helper para mantener consistencia entre pantallas.
+Se utiliza `react-toastify`. Se reemplazó `react-hot-toast` porque no ofrecía
+botón de cierre ni descarte por arrastre: con `react-toastify` cada notificación
+se puede cerrar con una X y descartar deslizándola hacia el costado, tanto con
+mouse como con touch. Además, las notificaciones se muestran abajo a la derecha
+(`position="bottom-right"`), donde no tapan la barra superior ni el contenido
+principal. Los mensajes se centralizan en un helper (`notify`) para mantener
+consistencia entre pantallas; el helper también cubre el flujo de carga que se
+transforma en éxito o error.
 
 ## 3. Backend (`apps/api`)
 
