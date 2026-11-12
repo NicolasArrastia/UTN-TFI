@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { TagManager } from "../../components/tags/TagManager.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
 import { notify } from "../../services/notifications.ts";
 
@@ -70,6 +71,8 @@ export function SettingsPage() {
           </div>
         </form>
       </section>
+
+      {user?.role === "admin" ? <TagManager /> : null}
 
       <section className="card">
         <div className="card__header">
