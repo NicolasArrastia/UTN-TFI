@@ -1,138 +1,130 @@
+import type { QueryResultRow } from "pg";
+import { query } from "../config/database.ts";
 import type { Category, CategoryInput } from "../types/category.types.ts";
 
-/**
- * Repositorio en memoria de categorías.
- *
- * Replica las columnas de la tabla `categories`. Cuando PostgreSQL esté
- * conectado, este módulo se reemplaza por consultas reales sin modificar
- * servicios ni controladores. El contrato que usan los productos se mantiene:
- * `findById` y `findActiveById` siguen disponibles.
- */
-const SEED_DATE = "2026-01-15T12:00:00.000Z";
+interface CategoryRow extends QueryResultRow {
+  id: number;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-const categories: Category[] = [
-  {
-    id: 1,
-    name: "Almacén",
-    description: "Productos secos y de despensa.",
-    isActive: true,
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 2,
-    name: "Bebidas",
-    description: "Bebidas con y sin alcohol.",
-    isActive: true,
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 3,
-    name: "Limpieza",
-    description: "Artículos de limpieza para el hogar.",
-    isActive: true,
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 4,
-    name: "Electrónica",
-    description: "Accesorios y productos electrónicos.",
-    isActive: true,
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-];
+const CATEGORY_COLUMNS = `
+  id,
+  name,
+  description,
+  is_active AS "isActive",
+  created_at AS "createdAt",
+  updated_at AS "updatedAt"
+`;
 
-let nextId = categories.length + 1;
-
-const normalizeName = (name: string): string =>
-  name.trim().toLocaleLowerCase("es");
-
-const findById = (id: number): Category | undefined =>
-  categories.find((category) => category.id === id);
+const toCategory = (row: CategoryRow): Category => ({
+  id: row.id,
+  name: row.name,
+  description: row.description,
+  isActive: row.isActive,
+  createdAt: new Date(row.createdAt).toISOString(),
+  updatedAt: new Date(row.updatedAt).toISOString(),
+});
 
 export const categoryRepository = {
-  findById,
-
-  findActiveById(id: number): Category | undefined {
-    const category = findById(id);
-    return category?.isActive ? category : undefined;
-  },
-
-  findByName(name: string): Category | undefined {
-    const normalized = normalizeName(name);
-    return categories.find(
-      (category) => normalizeName(category.name) === normalized,
+  async findById(id: number): Promise<Category | undefined> {
+    const result = await query<CategoryRow>(
+      `SELECT ${CATEGORY_COLUMNS}
+       FROM categories
+       WHERE id = $1
+       LIMIT 1`,
+      [id],
     );
+
+    const row = result.rows[0];
+    return row ? toCategory(row) : undefined;
   },
 
-  findAll(includeInactive: boolean): Category[] {
-    const filtered = includeInactive
-      ? categories
-      : categories.filter((category) => category.isActive);
-
-    return [...filtered].sort((a, b) =>
-      a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+  async findActiveById(id: number): Promise<Category | undefined> {
+    const result = await query<CategoryRow>(
+      `SELECT ${CATEGORY_COLUMNS}
+       FROM categories
+       WHERE id = $1 AND is_active = TRUE
+       LIMIT 1`,
+      [id],
     );
+
+    const row = result.rows[0];
+    return row ? toCategory(row) : undefined;
   },
 
-  create(input: CategoryInput): Category {
-    const now = new Date().toISOString();
-    const category: Category = {
-      id: nextId,
-      name: input.name,
-      description: input.description,
-      isActive: input.isActive,
-      createdAt: now,
-      updatedAt: now,
-    };
+  async findByName(name: string): Promise<Category | undefined> {
+    const result = await query<CategoryRow>(
+      `SELECT ${CATEGORY_COLUMNS}
+       FROM categories
+       WHERE LOWER(name) = LOWER($1)
+       LIMIT 1`,
+      [name.trim()],
+    );
 
-    nextId += 1;
-    categories.push(category);
-
-    return category;
+    const row = result.rows[0];
+    return row ? toCategory(row) : undefined;
   },
 
-  update(id: number, input: CategoryInput): Category | undefined {
-    const index = categories.findIndex((category) => category.id === id);
-    const current = categories[index];
+  async findAll(includeInactive: boolean): Promise<Category[]> {
+    const filter = includeInactive ? "" : "WHERE is_active = TRUE";
+    const result = await query<CategoryRow>(
+      `SELECT ${CATEGORY_COLUMNS}
+       FROM categories
+       ${filter}
+       ORDER BY name ASC`,
+    );
 
-    if (!current) {
-      return undefined;
+    return result.rows.map(toCategory);
+  },
+
+  async create(input: CategoryInput): Promise<Category> {
+    const result = await query<CategoryRow>(
+      `INSERT INTO categories (name, description, is_active)
+       VALUES ($1, $2, $3)
+       RETURNING ${CATEGORY_COLUMNS}`,
+      [input.name, input.description, input.isActive],
+    );
+
+    const created = result.rows[0];
+
+    if (!created) {
+      throw new Error("PostgreSQL no devolvió la categoría creada.");
     }
 
-    const updated: Category = {
-      id: current.id,
-      name: input.name,
-      description: input.description,
-      isActive: input.isActive,
-      createdAt: current.createdAt,
-      updatedAt: new Date().toISOString(),
-    };
-
-    categories[index] = updated;
-
-    return updated;
+    return toCategory(created);
   },
 
-  softDelete(id: number): Category | undefined {
-    const index = categories.findIndex((category) => category.id === id);
-    const current = categories[index];
+  async update(id: number, input: CategoryInput): Promise<Category | undefined> {
+    const result = await query<CategoryRow>(
+      `UPDATE categories
+       SET name = $2,
+           description = $3,
+           is_active = $4,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING ${CATEGORY_COLUMNS}`,
+      [id, input.name, input.description, input.isActive],
+    );
 
-    if (!current) {
-      return undefined;
-    }
+    const row = result.rows[0];
+    return row ? toCategory(row) : undefined;
+  },
 
-    const updated: Category = {
-      ...current,
-      isActive: false,
-      updatedAt: new Date().toISOString(),
-    };
+  async softDelete(id: number): Promise<Category | undefined> {
+    const result = await query<CategoryRow>(
+      `UPDATE categories
+       SET is_active = FALSE,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING ${CATEGORY_COLUMNS}`,
+      [id],
+    );
 
-    categories[index] = updated;
-
-    return updated;
+    const row = result.rows[0];
+    return row ? toCategory(row) : undefined;
   },
 };

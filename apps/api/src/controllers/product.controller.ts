@@ -2,26 +2,28 @@ import type { NextFunction, Request, Response } from "express";
 import { productService } from "../services/product.service.ts";
 import { parseIdParam } from "../validators/product.validator.ts";
 
-export const listProducts = (
+export const listProducts = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
-    res.status(200).json(productService.list(req.query));
+    const products = await productService.list(req.query);
+
+    res.status(200).json(products);
   } catch (error) {
     next(error);
   }
 };
 
-export const getProduct = (
+export const getProduct = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const id = parseIdParam(req.params.id);
-    const product = productService.getById(id);
+    const product = await productService.getById(id);
 
     res.status(200).json({ product });
   } catch (error) {
@@ -29,13 +31,13 @@ export const getProduct = (
   }
 };
 
-export const createProduct = (
+export const createProduct = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
-    const product = productService.create(req.body);
+    const product = await productService.create(req.body);
 
     res.status(201).json({ product });
   } catch (error) {
@@ -43,14 +45,14 @@ export const createProduct = (
   }
 };
 
-export const updateProduct = (
+export const updateProduct = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const id = parseIdParam(req.params.id);
-    const product = productService.update(id, req.body);
+    const product = await productService.update(id, req.body);
 
     res.status(200).json({ product });
   } catch (error) {
@@ -58,14 +60,14 @@ export const updateProduct = (
   }
 };
 
-export const deleteProduct = (
+export const deleteProduct = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const id = parseIdParam(req.params.id);
-    const product = productService.remove(id);
+    const product = await productService.remove(id);
 
     res.status(200).json({ product });
   } catch (error) {

@@ -2,30 +2,30 @@ import type { NextFunction, Request, Response } from "express";
 import { categoryService } from "../services/category.service.ts";
 import { parseIdParam } from "../validators/category.validator.ts";
 
-export const listCategories = (
+export const listCategories = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const role = req.auth?.role ?? "employee";
-    res
-      .status(200)
-      .json({ categories: categoryService.list(req.query, role) });
+    const categories = await categoryService.list(req.query, role);
+
+    res.status(200).json({ categories });
   } catch (error) {
     next(error);
   }
 };
 
-export const getCategory = (
+export const getCategory = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const role = req.auth?.role ?? "employee";
     const id = parseIdParam(req.params.id);
-    const category = categoryService.getById(id, role);
+    const category = await categoryService.getById(id, role);
 
     res.status(200).json({ category });
   } catch (error) {
@@ -33,14 +33,14 @@ export const getCategory = (
   }
 };
 
-export const createCategory = (
+export const createCategory = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const role = req.auth?.role ?? "employee";
-    const category = categoryService.create(req.body, role);
+    const category = await categoryService.create(req.body, role);
 
     res.status(201).json({ category });
   } catch (error) {
@@ -48,15 +48,15 @@ export const createCategory = (
   }
 };
 
-export const updateCategory = (
+export const updateCategory = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const role = req.auth?.role ?? "employee";
     const id = parseIdParam(req.params.id);
-    const category = categoryService.update(id, req.body, role);
+    const category = await categoryService.update(id, req.body, role);
 
     res.status(200).json({ category });
   } catch (error) {
@@ -64,15 +64,15 @@ export const updateCategory = (
   }
 };
 
-export const deleteCategory = (
+export const deleteCategory = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   try {
     const role = req.auth?.role ?? "employee";
     const id = parseIdParam(req.params.id);
-    const category = categoryService.remove(id, role);
+    const category = await categoryService.remove(id, role);
 
     res.status(200).json({ category });
   } catch (error) {

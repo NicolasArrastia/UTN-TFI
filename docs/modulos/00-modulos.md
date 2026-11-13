@@ -71,12 +71,12 @@ La primera iteración del backend ya está implementada:
 - `POST /api/products`: alta de productos (rol `admin`).
 - `PATCH /api/products/:id`: modificación parcial (rol `admin`).
 - `DELETE /api/products/:id`: baja lógica mediante `is_active` (rol `admin`).
-- Validación de categorías y etiquetas contra repositorios sembrados.
+- Validación de categorías y etiquetas contra PostgreSQL.
 - Rutas protegidas con JWT; las mutaciones requieren rol `admin`.
 
-Los productos, las categorías y las etiquetas se almacenan en memoria hasta
-conectar PostgreSQL. El CRUD de categorías y etiquetas queda para la siguiente
-iteración. El detalle del plan se encuentra en
+Los productos siguen almacenados en memoria. Las categorías y las etiquetas se
+persisten en PostgreSQL y se siembran con `npm run db:setup -w api`. El detalle
+del plan se encuentra en
 [Plan de productos](../planificacion/05-plan-productos.md).
 
 ---
@@ -176,6 +176,25 @@ Funcionalidades:
 Las categorías permiten establecer una clasificación principal de los productos, mientras que las etiquetas permiten una clasificación más flexible.
 
 Se utiliza una relación de una categoría por producto y múltiples etiquetas por producto porque un producto puede pertenecer a una categoría principal pero necesitar varios atributos de clasificación.
+
+### Estado de implementación
+
+El CRUD de categorías y etiquetas ya está implementado en la API y en el
+cliente:
+
+- `GET`, `POST`, `PATCH` y `DELETE` sobre `/api/categories` y `/api/tags`.
+- Listado de activos por defecto; `includeInactive=true` se respeta solo para
+  el rol `admin`.
+- Alta, edición, baja lógica y reactivación con `isActive: true`.
+- Nombres únicos sin distinguir mayúsculas y permisos de escritura exclusivos
+  para `admin`; los empleados solo pueden consultar.
+- Secciones **Etiquetas** y **Categorías** en Settings, visibles solo para
+  administradores.
+- Persistencia en las tablas `categories` y `tags` de PostgreSQL. El seed base
+  usa ids explícitos que coinciden con los productos en memoria.
+
+Los productos continúan en memoria; su paso a PostgreSQL queda para una
+iteración posterior.
 
 ---
 

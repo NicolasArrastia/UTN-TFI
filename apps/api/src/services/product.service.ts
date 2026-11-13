@@ -15,13 +15,18 @@ import {
   parseUpdateProductInput,
 } from "../validators/product.validator.ts";
 
-const toProductResponse = (product: Product): ProductResponse => {
-  const category = categoryRepository.findById(product.categoryId);
+const toProductResponse = async (
+  product: Product,
+): Promise<ProductResponse> => {
+  const category = await categoryRepository.findById(product.categoryId);
 
-  const tags = product.tagIds.flatMap((tagId) => {
-    const tag = tagRepository.findById(tagId);
-    return tag ? [{ id: tag.id, name: tag.name, color: tag.color }] : [];
-  });
+  const tags = await Promise.all(
+    product.tagIds.map((tagId) => tagRepository.findById(tagId)),
+  );
+
+  const tagSummaries = tags.flatMap((tag) =>
+    tag ? [{ id: tag.id, name: tag.name, color: tag.color }] : [],
+  );
 
   return {
     id: product.id,
@@ -35,14 +40,14 @@ const toProductResponse = (product: Product): ProductResponse => {
     minStock: product.minStock,
     lowStock: product.stock <= product.minStock,
     isActive: product.isActive,
-    tags,
+    tags: tagSummaries,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };
 };
 
-const ensureCategoryExists = (categoryId: number): void => {
-  if (!categoryRepository.findActiveById(categoryId)) {
+const ensureCategoryExists = async (categoryId: number): Promise<void> => {
+  if (!(await categoryRepository.findActiveById(categoryId))) {
     throw new AppError(
       "La categoría indicada no existe o está inactiva.",
       400,
@@ -51,9 +56,9 @@ const ensureCategoryExists = (categoryId: number): void => {
   }
 };
 
-const ensureTagsExist = (tagIds: number[]): void => {
+const ensureTagsExist = async (tagIds: number[]): Promise<void> => {
   for (const tagId of tagIds) {
-    if (!tagRepository.findActiveById(tagId)) {
+    if (!(await tagRepository.findActiveById(tagId))) {
       throw new AppError(
         `La etiqueta ${tagId} no existe o está inactiva.`,
         400,
@@ -68,15 +73,15 @@ const ensureTagsExist = (tagIds: number[]): void => {
  * Solo las etiquetas nuevas deben estar activas; las heredadas únicamente
  * tienen que seguir existiendo.
  */
-const ensureAssignableTags = (
+const ensureAssignableTags = async (
   tagIds: number[],
   currentTagIds: number[],
-): void => {
+): Promise<void> => {
   for (const tagId of tagIds) {
     const isRetained = currentTagIds.includes(tagId);
     const tag = isRetained
-      ? tagRepository.findById(tagId)
-      : tagRepository.findActiveById(tagId);
+      ? await tagRepository.findById(tagId)
+      : await tagRepository.findActiveById(tagId);
 
     if (!tag) {
       throw new AppError(
@@ -116,12 +121,12 @@ const buildUpdatedInput = (
 });
 
 export const productService = {
-  list(query: unknown): PaginatedProducts {
+  async list(query: unknown): Promise<PaginatedProducts> {
     const filters = parseProductListQuery(query);
     const { items, total } = productRepository.findAll(filters);
 
     return {
-      products: items.map(toProductResponse),
+      products: await Promise.all(items.map(toProductResponse)),
       pagination: {
         page: filters.page,
         limit: filters.limit,
@@ -131,19 +136,19 @@ export const productService = {
     };
   },
 
-  getById(id: number): ProductResponse {
+  async getById(id: number): Promise<ProductResponse> {
     return toProductResponse(getProductOrThrow(id));
   },
 
-  create(body: unknown): ProductResponse {
+  async create(body: unknown): Promise<ProductResponse> {
     const input = parseCreateProductInput(body);
-    ensureCategoryExists(input.categoryId);
-    ensureTagsExist(input.tagIds);
+    await ensureCategoryExists(input.categoryId);
+    await ensureTagsExist(input.tagIds);
 
     return toProductResponse(productRepository.create(input));
   },
 
-  update(id: number, body: unknown): ProductResponse {
+  async update(id: number, body: unknown): Promise<ProductResponse> {
     const product = getProductOrThrow(id);
     const input = parseUpdateProductInput(body);
 
@@ -151,11 +156,11 @@ export const productService = {
       input.categoryId !== undefined &&
       input.categoryId !== product.categoryId
     ) {
-      ensureCategoryExists(input.categoryId);
+      await ensureCategoryExists(input.categoryId);
     }
 
     if (input.tagIds !== undefined) {
-      ensureAssignableTags(input.tagIds, product.tagIds);
+      await ensureAssignableTags(input.tagIds, product.tagIds);
     }
 
     const updated = productRepository.replace(
@@ -170,7 +175,7 @@ export const productService = {
     return toProductResponse(updated);
   },
 
-  remove(id: number): ProductResponse {
+  async remove(id: number): Promise<ProductResponse> {
     const product = getProductOrThrow(id);
 
     if (!product.isActive) {

@@ -1,4 +1,5 @@
 import { AppError } from "../errors/app-error.ts";
+import { getUniqueViolationConstraint } from "../errors/database-error.ts";
 import { categoryRepository } from "../repositories/category.repository.ts";
 import { productRepository } from "../repositories/product.repository.ts";
 import type { UserRole } from "../types/auth.types.ts";
@@ -11,6 +12,8 @@ import {
   parseCreateCategoryInput,
   parseUpdateCategoryInput,
 } from "../validators/category.validator.ts";
+
+const UNIQUE_NAME_CONSTRAINT = "uq_categories_name";
 
 const toCategoryResponse = (
   category: Category,
@@ -26,8 +29,23 @@ const toCategoryResponse = (
   };
 };
 
-const getCategoryOrThrow = (id: number): Category => {
-  const category = categoryRepository.findById(id);
+const nameTakenError = (name: string): AppError =>
+  new AppError(
+    `Ya existe una categoría con el nombre "${name}".`,
+    409,
+    "CATEGORY_NAME_TAKEN",
+  );
+
+const toNameConflictError = (
+  error: unknown,
+  name: string,
+): AppError | undefined =>
+  getUniqueViolationConstraint(error) === UNIQUE_NAME_CONSTRAINT
+    ? nameTakenError(name)
+    : undefined;
+
+const getCategoryOrThrow = async (id: number): Promise<Category> => {
+  const category = await categoryRepository.findById(id);
 
   if (!category) {
     throw new AppError(
@@ -40,77 +58,92 @@ const getCategoryOrThrow = (id: number): Category => {
   return category;
 };
 
-const ensureNameAvailable = (name: string, excludeId?: number): void => {
-  const existing = categoryRepository.findByName(name);
+const ensureNameAvailable = async (
+  name: string,
+  excludeId?: number,
+): Promise<void> => {
+  const existing = await categoryRepository.findByName(name);
 
   if (existing && existing.id !== excludeId) {
-    throw new AppError(
-      `Ya existe una categoría con el nombre "${name}".`,
-      409,
-      "CATEGORY_NAME_TAKEN",
-    );
+    throw nameTakenError(name);
   }
 };
 
 export const categoryService = {
-  list(query: unknown, role: UserRole): CategoryResponse[] {
+  async list(query: unknown, role: UserRole): Promise<CategoryResponse[]> {
     const filters = parseCategoryListQuery(query);
     const includeInactive = role === "admin" && filters.includeInactive;
+    const categories = await categoryRepository.findAll(includeInactive);
 
-    return categoryRepository
-      .findAll(includeInactive)
-      .map((category) => toCategoryResponse(category, role));
+    return categories.map((category) => toCategoryResponse(category, role));
   },
 
-  getById(id: number, role: UserRole): CategoryResponse {
-    return toCategoryResponse(getCategoryOrThrow(id), role);
+  async getById(id: number, role: UserRole): Promise<CategoryResponse> {
+    return toCategoryResponse(await getCategoryOrThrow(id), role);
   },
 
-  create(body: unknown, role: UserRole): CategoryResponse {
+  async create(body: unknown, role: UserRole): Promise<CategoryResponse> {
     const input = parseCreateCategoryInput(body);
-    ensureNameAvailable(input.name);
+    await ensureNameAvailable(input.name);
 
-    const category = categoryRepository.create({ ...input, isActive: true });
+    try {
+      const category = await categoryRepository.create({
+        ...input,
+        isActive: true,
+      });
 
-    return toCategoryResponse(category, role);
+      return toCategoryResponse(category, role);
+    } catch (error) {
+      throw toNameConflictError(error, input.name) ?? error;
+    }
   },
 
-  update(id: number, body: unknown, role: UserRole): CategoryResponse {
-    const category = getCategoryOrThrow(id);
+  async update(
+    id: number,
+    body: unknown,
+    role: UserRole,
+  ): Promise<CategoryResponse> {
+    const category = await getCategoryOrThrow(id);
     const input = parseUpdateCategoryInput(body);
 
     if (input.name !== undefined) {
-      ensureNameAvailable(input.name, id);
+      await ensureNameAvailable(input.name, id);
     }
 
-    const updated = categoryRepository.update(id, {
+    const next = {
       name: input.name ?? category.name,
       description:
         input.description !== undefined
           ? input.description
           : category.description,
       isActive: input.isActive ?? category.isActive,
-    });
+    };
 
-    if (!updated) {
-      throw new AppError(
-        "Categoría no encontrada.",
-        404,
-        "CATEGORY_NOT_FOUND",
-      );
+    try {
+      const updated = await categoryRepository.update(id, next);
+
+      if (!updated) {
+        throw new AppError(
+          "Categoría no encontrada.",
+          404,
+          "CATEGORY_NOT_FOUND",
+        );
+      }
+
+      return toCategoryResponse(updated, role);
+    } catch (error) {
+      throw toNameConflictError(error, next.name) ?? error;
     }
-
-    return toCategoryResponse(updated, role);
   },
 
-  remove(id: number, role: UserRole): CategoryResponse {
-    const category = getCategoryOrThrow(id);
+  async remove(id: number, role: UserRole): Promise<CategoryResponse> {
+    const category = await getCategoryOrThrow(id);
 
     if (!category.isActive) {
       return toCategoryResponse(category, role);
     }
 
-    const updated = categoryRepository.softDelete(id);
+    const updated = await categoryRepository.softDelete(id);
 
     if (!updated) {
       throw new AppError(
