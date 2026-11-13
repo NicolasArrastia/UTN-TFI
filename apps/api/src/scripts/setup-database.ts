@@ -28,6 +28,7 @@ interface TagSeed {
  * Categorías y etiquetas base. Los productos en memoria referencian estos ids,
  * por eso el seed los inserta de forma explícita e idempotente.
  */
+// TODO: Eliminar si es posible y no afecta al codigo
 const CATEGORY_SEEDS: readonly CategorySeed[] = [
   {
     id: 1,
