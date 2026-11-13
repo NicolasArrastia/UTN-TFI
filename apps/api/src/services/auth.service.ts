@@ -1,4 +1,4 @@
-import { compare } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
 import { env } from "../config/env.ts";
 import { AppError } from "../errors/app-error.ts";
@@ -78,6 +78,47 @@ export const authService = {
     }
 
     return toPublicUser(user);
+  },
+
+  async changePassword(
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await userRepository.findById(userId);
+
+    if (!user || !user.isActive) {
+      throw new AppError("Usuario no encontrado.", 401, "UNAUTHORIZED");
+    }
+
+    const passwordMatches = await compare(currentPassword, user.passwordHash);
+
+    if (!passwordMatches) {
+      throw new AppError(
+        "La contraseña actual es incorrecta.",
+        400,
+        "INVALID_CURRENT_PASSWORD",
+      );
+    }
+
+    if (await compare(newPassword, user.passwordHash)) {
+      throw new AppError(
+        "La nueva contraseña debe ser diferente de la actual.",
+        400,
+        "VALIDATION_ERROR",
+      );
+    }
+
+    const passwordHash = await hash(newPassword, 10);
+    const updated = await userRepository.updatePassword(userId, passwordHash);
+
+    if (!updated) {
+      throw new AppError(
+        "No se pudo actualizar la contraseña.",
+        404,
+        "USER_NOT_FOUND",
+      );
+    }
   },
 
   verifyToken(token: string): AuthTokenPayload {

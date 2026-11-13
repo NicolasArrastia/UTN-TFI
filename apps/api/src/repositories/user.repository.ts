@@ -82,4 +82,15 @@ export const userRepository = {
 
     return created;
   },
+
+  async updatePassword(id: number, passwordHash: string): Promise<boolean> {
+    const result = await query(
+      `UPDATE users
+       SET password = $1
+       WHERE id = $2 AND is_active = TRUE`,
+      [passwordHash, id],
+    );
+
+    return (result.rowCount ?? 0) > 0;
+  },
 };

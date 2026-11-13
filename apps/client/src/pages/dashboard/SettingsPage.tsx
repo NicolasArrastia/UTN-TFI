@@ -9,8 +9,13 @@ import {
   IconUser,
 } from "../../components/icons.tsx";
 import { TagManager } from "../../components/tags/TagManager.tsx";
+import { ChangePasswordForm } from "../../components/users/ChangePasswordForm.tsx";
 import { CreateUserForm } from "../../components/users/CreateUserForm.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
+import {
+  authService,
+  type ChangePasswordPayload,
+} from "../../services/auth.service.ts";
 import { ApiError } from "../../services/api-client.ts";
 import { notify } from "../../services/notifications.ts";
 import {
@@ -47,6 +52,8 @@ export function SettingsPage() {
   const [dailySummary, setDailySummary] = useState(false);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [selectedSection, setSelectedSection] =
     useState<SettingsSectionId | null>(null);
 
@@ -87,6 +94,33 @@ export function SettingsPage() {
       return false;
     } finally {
       setIsCreatingUser(false);
+    }
+  };
+
+  const handleChangePassword = async (
+    payload: ChangePasswordPayload,
+  ): Promise<boolean> => {
+    if (isChangingPassword || !user) {
+      return false;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const response = await authService.changePassword(payload);
+      notify.success(response.message);
+      setIsChangePasswordOpen(false);
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        notify.error(error.message);
+      } else {
+        notify.error("Ocurrió un error inesperado al cambiar la contraseña.");
+      }
+
+      return false;
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -148,6 +182,25 @@ export function SettingsPage() {
           </span>
         </div>
       </form>
+
+      <div className="card__body">
+        <div>
+          <h3 className="card__title">Seguridad de la cuenta</h3>
+          <p className="card__subtitle">
+            Actualizá tu contraseña para proteger tu cuenta.
+          </p>
+        </div>
+
+        <div className="form-actions">
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setIsChangePasswordOpen(true)}
+          >
+            Cambiar contraseña
+          </button>
+        </div>
+      </div>
     </section>
   );
 
@@ -288,10 +341,10 @@ export function SettingsPage() {
             {activeSection.id === "categories" && <CategoryManager />}
             {activeSection.id === "admin" && isAdmin && renderAdmin()}
             {activeSection.id === "preferences" && (
-              <>
+              <div className="settings-preferences-grid">
                 {renderProfile()}
                 {renderPreferences()}
-              </>
+              </div>
             )}
           </div>
         </div>
@@ -307,6 +360,20 @@ export function SettingsPage() {
           <CreateUserForm
             isSubmitting={isCreatingUser}
             onSubmit={handleCreateUser}
+          />
+        </Modal>
+      )}
+
+      {user && isChangePasswordOpen && (
+        <Modal
+          title="Cambiar contraseña"
+          description="Ingresá tu contraseña actual y elegí una nueva."
+          isBusy={isChangingPassword}
+          onClose={() => setIsChangePasswordOpen(false)}
+        >
+          <ChangePasswordForm
+            isSubmitting={isChangingPassword}
+            onSubmit={handleChangePassword}
           />
         </Modal>
       )}

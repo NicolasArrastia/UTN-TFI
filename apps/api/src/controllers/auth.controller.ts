@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../errors/app-error.ts";
 import { authService } from "../services/auth.service.ts";
+import { parseChangePasswordInput } from "../validators/auth.validator.ts";
 
 export const login = async (
   req: Request,
@@ -46,6 +47,32 @@ export const me = async (
     const user = await authService.getProfile(req.auth.sub);
 
     res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const changePassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    if (!req.auth) {
+      throw new AppError("No autenticado.", 401, "UNAUTHORIZED");
+    }
+
+    const { currentPassword, newPassword } = parseChangePasswordInput(req.body);
+
+    await authService.changePassword(
+      req.auth.sub,
+      currentPassword,
+      newPassword,
+    );
+
+    res.status(200).json({
+      message: "La contraseña se actualizó correctamente.",
+    });
   } catch (error) {
     next(error);
   }
