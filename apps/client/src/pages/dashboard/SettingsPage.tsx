@@ -341,10 +341,10 @@ export function SettingsPage() {
             {activeSection.id === "categories" && <CategoryManager />}
             {activeSection.id === "admin" && isAdmin && renderAdmin()}
             {activeSection.id === "preferences" && (
-              <>
+              <div className="settings-preferences-grid">
                 {renderProfile()}
                 {renderPreferences()}
-              </>
+              </div>
             )}
           </div>
         </div>
