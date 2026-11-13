@@ -1,6 +1,6 @@
+import { Link } from "react-router-dom";
 import { IconCart, IconPlus } from "../../components/icons.tsx";
 import { StatCard } from "../../components/StatCard.tsx";
-import { notify } from "../../services/notifications.ts";
 import { formatCurrency } from "../../utils/format.ts";
 import { paymentMethodLabels, saleStatusLabels } from "../../utils/labels.ts";
 
@@ -69,7 +69,12 @@ export function SalesPage() {
           hint="+4% vs. octubre"
           tone="success"
         />
-        <StatCard label="Efectivo" value="52%" hint="Principal medio de pago" tone="brand" />
+        <StatCard
+          label="Efectivo"
+          value="52%"
+          hint="Principal medio de pago"
+          tone="brand"
+        />
         <StatCard label="Anuladas" value="2" hint="Este mes" tone="danger" />
       </section>
 
@@ -82,16 +87,10 @@ export function SalesPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            className="btn btn--primary btn--sm"
-            onClick={() =>
-              notify.info("El registro de ventas estará disponible pronto.")
-            }
-          >
+          <Link to="/dashboard/sales/new" className="btn btn--primary btn--sm">
             <IconPlus width={16} height={16} />
             Registrar venta
-          </button>
+          </Link>
         </div>
 
         <div className="table-wrap">
