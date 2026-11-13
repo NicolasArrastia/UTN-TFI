@@ -1,5 +1,6 @@
 import {
   Pool,
+  type PoolClient,
   type PoolConfig,
   type QueryResult,
   type QueryResultRow,
@@ -24,6 +25,30 @@ export const query = <T extends QueryResultRow>(
   text: string,
   values: unknown[] = [],
 ): Promise<QueryResult<T>> => pool.query<T>(text, values);
+
+export const withTransaction = async <T>(
+  operation: (client: PoolClient) => Promise<T>,
+): Promise<T> => {
+  const client = await pool.connect();
+  let discardConnection = false;
+
+  try {
+    await client.query("BEGIN");
+    const result = await operation(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      discardConnection = true;
+    }
+
+    throw error;
+  } finally {
+    client.release(discardConnection);
+  }
+};
 
 export const verifyDatabaseConnection = async (): Promise<void> => {
   await pool.query("SELECT 1");
