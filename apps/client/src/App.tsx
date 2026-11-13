@@ -10,6 +10,7 @@ import { OverviewPage } from "./pages/dashboard/OverviewPage.tsx";
 import { ProductDetailPage } from "./pages/dashboard/ProductDetailPage.tsx";
 import { ProductFormPage } from "./pages/dashboard/ProductFormPage.tsx";
 import { ProductsPage } from "./pages/dashboard/ProductsPage.tsx";
+import { SaleCreatePage } from "./pages/dashboard/SaleCreatePage.tsx";
 import { SalesPage } from "./pages/dashboard/SalesPage.tsx";
 import { SettingsPage } from "./pages/dashboard/SettingsPage.tsx";
 import { StatsPage } from "./pages/dashboard/StatsPage.tsx";
@@ -55,6 +56,7 @@ function App() {
                 }
               />
               <Route path="sales" element={<SalesPage />} />
+              <Route path="sales/new" element={<SaleCreatePage />} />
               <Route path="stats" element={<StatsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
