@@ -1159,17 +1159,18 @@ p {
   gap: 20px;
 }
 
-/* Settings se apila en una sola columna en todos los tamaños: la navegación
-   interna queda arriba y el contenido debajo, sin vistas lado a lado. */
 .settings-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
 }
 
 /* Navegación interna de Settings: deliberadamente plana y silenciosa para no
    competir con el sidebar principal de la aplicación. */
 .settings-nav {
+  position: sticky;
+  top: 88px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1245,9 +1246,21 @@ p {
   min-width: 0;
 }
 
-/* Los formularios dentro de Settings también van en una sola columna. */
-.settings-content .form-grid {
-  grid-template-columns: minmax(0, 1fr);
+.settings-preferences-grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 20px;
+  align-items: start;
+  > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .settings-preferences-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .card--wide {
@@ -1608,6 +1621,29 @@ p {
   .danger-zone {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .settings-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .settings-nav {
+    position: static;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .settings-nav__label {
+    display: none;
+  }
+
+  .settings-nav__item {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 }
 

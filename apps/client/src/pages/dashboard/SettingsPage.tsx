@@ -22,7 +22,6 @@ import {
   userService,
   type CreateUserPayload,
 } from "../../services/user.service.ts";
-import type { AuthUser } from "../../types/auth.types.ts";
 
 type SettingsSectionId = "tags" | "categories" | "admin" | "preferences";
 
@@ -47,55 +46,85 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   PREFERENCES_SECTION,
 ];
 
-interface SettingsNavProps {
-  sections: SettingsSection[];
-  activeSectionId: SettingsSectionId;
-  onSelect: (id: SettingsSectionId) => void;
-}
+export function SettingsPage() {
+  const { user } = useAuth();
+  const [lowStockAlerts, setLowStockAlerts] = useState(true);
+  const [dailySummary, setDailySummary] = useState(false);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [selectedSection, setSelectedSection] =
+    useState<SettingsSectionId | null>(null);
 
-function SettingsNav({
-  sections,
-  activeSectionId,
-  onSelect,
-}: SettingsNavProps) {
-  return (
-    <nav className="settings-nav" aria-label="Secciones de configuración">
-      <p className="settings-nav__label">Configuración</p>
-
-      {sections.map(({ id, label, icon: Icon }) => {
-        const isActive = activeSectionId === id;
-
-        return (
-          <button
-            key={id}
-            type="button"
-            className={`settings-nav__item${isActive ? " is-active" : ""}`}
-            aria-current={isActive ? "page" : undefined}
-            onClick={() => onSelect(id)}
-          >
-            <Icon width={16} height={16} />
-            <span>{label}</span>
-          </button>
-        );
-      })}
-    </nav>
+  const isAdmin = user?.role === "admin";
+  const visibleSections = SETTINGS_SECTIONS.filter(
+    (section) => !section.adminOnly || isAdmin,
   );
-}
+  const activeSection =
+    visibleSections.find((section) => section.id === selectedSection) ??
+    PREFERENCES_SECTION;
 
-interface ProfileCardProps {
-  user: AuthUser | null;
-  isAdmin: boolean;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onChangePassword: () => void;
-}
+  const handleSave = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    notify.success("Preferencias guardadas (simulación).");
+  };
 
-function ProfileCard({
-  user,
-  isAdmin,
-  onSubmit,
-  onChangePassword,
-}: ProfileCardProps) {
-  return (
+  const handleCreateUser = async (
+    payload: CreateUserPayload,
+  ): Promise<boolean> => {
+    if (isCreatingUser || !isAdmin) {
+      return false;
+    }
+
+    setIsCreatingUser(true);
+
+    try {
+      await userService.create(payload);
+      notify.success("Usuario creado correctamente.");
+      setIsCreateUserOpen(false);
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        notify.error(error.message);
+      } else {
+        notify.error("Ocurrió un error inesperado al crear el usuario.");
+      }
+
+      return false;
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
+  const handleChangePassword = async (
+    payload: ChangePasswordPayload,
+  ): Promise<boolean> => {
+    if (isChangingPassword || !user) {
+      return false;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const response = await authService.changePassword(payload);
+      notify.success(response.message);
+      setIsChangePasswordOpen(false);
+      return true;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        notify.error(error.message);
+      } else {
+        notify.error("Ocurrió un error inesperado al cambiar la contraseña.");
+      }
+
+      return false;
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const renderProfile = () => (
     <section className="card">
       <div className="card__header">
         <div>
@@ -107,7 +136,7 @@ function ProfileCard({
         </span>
       </div>
 
-      <form className="card__body" onSubmit={onSubmit}>
+      <form className="card__body" onSubmit={handleSave}>
         <div className="form-grid">
           <div className="field">
             <label htmlFor="fullname">Nombre completo</label>
@@ -166,7 +195,7 @@ function ProfileCard({
           <button
             type="button"
             className="btn btn--ghost btn--sm"
-            onClick={onChangePassword}
+            onClick={() => setIsChangePasswordOpen(true)}
           >
             Cambiar contraseña
           </button>
@@ -174,55 +203,8 @@ function ProfileCard({
       </div>
     </section>
   );
-}
 
-interface SwitchRowProps {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}
-
-function SwitchRow({
-  label,
-  description,
-  checked,
-  onChange,
-}: SwitchRowProps) {
-  return (
-    <div className="switch-row">
-      <div>
-        <strong>{label}</strong>
-        <p className="card__subtitle">{description}</p>
-      </div>
-      <label className="switch">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(event) => onChange(event.target.checked)}
-        />
-        <span />
-      </label>
-    </div>
-  );
-}
-
-interface PreferencesCardProps {
-  lowStockAlerts: boolean;
-  dailySummary: boolean;
-  onLowStockAlertsChange: (checked: boolean) => void;
-  onDailySummaryChange: (checked: boolean) => void;
-  onSave: () => void;
-}
-
-function PreferencesCard({
-  lowStockAlerts,
-  dailySummary,
-  onLowStockAlertsChange,
-  onDailySummaryChange,
-  onSave,
-}: PreferencesCardProps) {
-  return (
+  const renderPreferences = () => (
     <section className="card">
       <div className="card__header">
         <div>
@@ -232,25 +214,47 @@ function PreferencesCard({
       </div>
 
       <div className="card__body">
-        <SwitchRow
-          label="Avisos de stock bajo"
-          description="Mostrar alertas cuando un producto llegue al mínimo."
-          checked={lowStockAlerts}
-          onChange={onLowStockAlertsChange}
-        />
+        <div className="switch-row">
+          <div>
+            <strong>Avisos de stock bajo</strong>
+            <p className="card__subtitle">
+              Mostrar alertas cuando un producto llegue al mínimo.
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={lowStockAlerts}
+              onChange={(event) => setLowStockAlerts(event.target.checked)}
+            />
+            <span />
+          </label>
+        </div>
 
-        <SwitchRow
-          label="Resumen diario"
-          description="Recibir un cierre de caja al finalizar el día."
-          checked={dailySummary}
-          onChange={onDailySummaryChange}
-        />
+        <div className="switch-row">
+          <div>
+            <strong>Resumen diario</strong>
+            <p className="card__subtitle">
+              Recibir un cierre de caja al finalizar el día.
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={dailySummary}
+              onChange={(event) => setDailySummary(event.target.checked)}
+            />
+            <span />
+          </label>
+        </div>
 
         <div className="form-actions">
           <button
             type="button"
             className="btn btn--ghost btn--sm"
-            onClick={onSave}
+            onClick={() =>
+              notify.success("Preferencias guardadas (simulación).")
+            }
           >
             Guardar preferencias
           </button>
@@ -258,18 +262,8 @@ function PreferencesCard({
       </div>
     </section>
   );
-}
 
-interface AdminSectionProps {
-  onCreateUser: () => void;
-  onCloseAllSessions: () => void;
-}
-
-function AdminSection({
-  onCreateUser,
-  onCloseAllSessions,
-}: AdminSectionProps) {
-  return (
+  const renderAdmin = () => (
     <>
       <section className="card">
         <div className="card__header">
@@ -291,7 +285,7 @@ function AdminSection({
             <button
               type="button"
               className="btn btn--primary btn--sm"
-              onClick={onCreateUser}
+              onClick={() => setIsCreateUserOpen(true)}
             >
               Crear usuario
             </button>
@@ -309,136 +303,48 @@ function AdminSection({
         <button
           type="button"
           className="btn btn--ghost btn--sm"
-          onClick={onCloseAllSessions}
+          onClick={() =>
+            notify.info("La gestión de sesiones estará disponible pronto.")
+          }
         >
           Cerrar todas las sesiones
         </button>
       </section>
     </>
   );
-}
-
-export function SettingsPage() {
-  const { user } = useAuth();
-  const [lowStockAlerts, setLowStockAlerts] = useState(true);
-  const [dailySummary, setDailySummary] = useState(false);
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
-  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
-  const [selectedSection, setSelectedSection] =
-    useState<SettingsSectionId | null>(null);
-
-  const isAdmin = user?.role === "admin";
-  const visibleSections = SETTINGS_SECTIONS.filter(
-    (section) => !section.adminOnly || isAdmin,
-  );
-  const activeSection =
-    visibleSections.find((section) => section.id === selectedSection) ??
-    PREFERENCES_SECTION;
-
-  const handleSaveProfile = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    notify.success("Preferencias guardadas (simulación).");
-  };
-
-  const handleSavePreferences = () => {
-    notify.success("Preferencias guardadas (simulación).");
-  };
-
-  const handleCloseAllSessions = () => {
-    notify.info("La gestión de sesiones estará disponible pronto.");
-  };
-
-  const handleCreateUser = async (
-    payload: CreateUserPayload,
-  ): Promise<boolean> => {
-    if (isCreatingUser || !isAdmin) {
-      return false;
-    }
-
-    setIsCreatingUser(true);
-
-    try {
-      await userService.create(payload);
-      notify.success("Usuario creado correctamente.");
-      setIsCreateUserOpen(false);
-      return true;
-    } catch (error) {
-      if (error instanceof ApiError) {
-        notify.error(error.message);
-      } else {
-        notify.error("Ocurrió un error inesperado al crear el usuario.");
-      }
-
-      return false;
-    } finally {
-      setIsCreatingUser(false);
-    }
-  };
-
-  const handleChangePassword = async (
-    payload: ChangePasswordPayload,
-  ): Promise<boolean> => {
-    if (isChangingPassword || !user) {
-      return false;
-    }
-
-    setIsChangingPassword(true);
-
-    try {
-      const response = await authService.changePassword(payload);
-      notify.success(response.message);
-      setIsChangePasswordOpen(false);
-      return true;
-    } catch (error) {
-      if (error instanceof ApiError) {
-        notify.error(error.message);
-      } else {
-        notify.error("Ocurrió un error inesperado al cambiar la contraseña.");
-      }
-
-      return false;
-    } finally {
-      setIsChangingPassword(false);
-    }
-  };
 
   return (
     <>
       <div className="settings-layout">
         <div className="settings-shell">
-          <SettingsNav
-            sections={visibleSections}
-            activeSectionId={activeSection.id}
-            onSelect={setSelectedSection}
-          />
+          <nav className="settings-nav" aria-label="Secciones de configuración">
+            <p className="settings-nav__label">Configuración</p>
+
+            {visibleSections.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                className={`settings-nav__item${
+                  activeSection.id === id ? " is-active" : ""
+                }`}
+                aria-current={activeSection.id === id ? "page" : undefined}
+                onClick={() => setSelectedSection(id)}
+              >
+                <Icon width={16} height={16} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
 
           <div className="settings-content">
             {activeSection.id === "tags" && <TagManager />}
             {activeSection.id === "categories" && <CategoryManager />}
-            {activeSection.id === "admin" && isAdmin && (
-              <AdminSection
-                onCreateUser={() => setIsCreateUserOpen(true)}
-                onCloseAllSessions={handleCloseAllSessions}
-              />
-            )}
+            {activeSection.id === "admin" && isAdmin && renderAdmin()}
             {activeSection.id === "preferences" && (
-              <>
-                <ProfileCard
-                  user={user}
-                  isAdmin={isAdmin}
-                  onSubmit={handleSaveProfile}
-                  onChangePassword={() => setIsChangePasswordOpen(true)}
-                />
-                <PreferencesCard
-                  lowStockAlerts={lowStockAlerts}
-                  dailySummary={dailySummary}
-                  onLowStockAlertsChange={setLowStockAlerts}
-                  onDailySummaryChange={setDailySummary}
-                  onSave={handleSavePreferences}
-                />
-              </>
+              <div className="settings-preferences-grid">
+                {renderProfile()}
+                {renderPreferences()}
+              </div>
             )}
           </div>
         </div>
