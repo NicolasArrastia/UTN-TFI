@@ -19,7 +19,12 @@ const NAV_ITEMS = [
   { to: "/dashboard", label: "Resumen", icon: IconGrid, end: true },
   { to: "/dashboard/products", label: "Productos", icon: IconBox, end: false },
   { to: "/dashboard/sales", label: "Ventas", icon: IconCart, end: false },
-  { to: "/dashboard/stats", label: "Estadísticas", icon: IconChart, end: false },
+  {
+    to: "/dashboard/stats",
+    label: "Estadísticas",
+    icon: IconChart,
+    end: false,
+  },
   {
     to: "/dashboard/settings",
     label: "Settings",
@@ -51,9 +56,7 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   },
 };
 
-const getPageMeta = (
-  pathname: string,
-): { title: string; subtitle: string } => {
+const getPageMeta = (pathname: string): { title: string; subtitle: string } => {
   if (pathname === "/dashboard/products/new") {
     return {
       title: "Nuevo producto",
@@ -142,12 +145,6 @@ export function DashboardLayout() {
             </NavLink>
           ))}
         </nav>
-
-        <div className="sidebar__footer">
-          <p className="sidebar__footer-title">Sesión activa</p>
-          <p>{user?.fullname}</p>
-          <p className="sidebar__footer-role">{roleLabel}</p>
-        </div>
       </aside>
 
       <button
@@ -185,7 +182,9 @@ export function DashboardLayout() {
             </button>
 
             <div className="user-chip">
-              <span className="user-chip__avatar">{getInitials(user?.fullname ?? "U")}</span>
+              <span className="user-chip__avatar">
+                {getInitials(user?.fullname ?? "U")}
+              </span>
               <span className="user-chip__info">
                 <strong>{user?.fullname}</strong>
                 <small>{roleLabel}</small>
