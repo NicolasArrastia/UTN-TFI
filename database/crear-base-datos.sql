@@ -455,17 +455,9 @@ CREATE TRIGGER trg_products_updated_at
 -- dependen de la librería que se use en el backend.
 --
 -- Por eso el alta no se hace en este script: `npm run db:setup -w api` aplica
--- el esquema y después inserta el administrador con bcrypt. Si el usuario ya
--- existe, no lo modifica.
---
---   INSERT INTO users (fullname, username, email, password, role)
---   VALUES (
---       'Administrador',
---       'admin',
---       'admin@ejemplo.com',
---       '<hash bcrypt generado por la aplicación>',
---       'admin'
---   );
+-- el esquema y después inserta el administrador con bcrypt usando las
+-- variables ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_FULLNAME y ADMIN_EMAIL. Si
+-- el usuario ya existe, no lo modifica.
 --
 -- El resto de los datos son los que va registrando el usuario durante el uso
 -- del sistema: categorías, etiquetas, productos y ventas. No se incluyen aquí.

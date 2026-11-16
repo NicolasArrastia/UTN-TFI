@@ -18,10 +18,11 @@ Documentación organizada por etapas y componentes del sistema.
 12. [Plan de productos](planificacion/05-plan-productos.md)
 13. [Plan de integración del frontend de productos](planificacion/06-plan-productos-frontend.md)
 14. [Plan de etiquetas y categorías](planificacion/07-plan-tags-categorias.md)
-15. [Uso de IA](ia/01-uso-de-ia.md)
-16. [Arquitectura](arquitectura/01-arquitectura-general.md)
-17. [Módulos](modulos/00-modulos.md)
-18. [Requisitos](requisitos/00-requisitos.md)
+15. [Plan de eliminación de datos hardcodeados](planificacion/08-plan-datos-reales.md)
+16. [Uso de IA](ia/01-uso-de-ia.md)
+17. [Arquitectura](arquitectura/01-arquitectura-general.md)
+18. [Módulos](modulos/00-modulos.md)
+19. [Requisitos](requisitos/00-requisitos.md)
 
 ## Nota sobre la base de datos
 
