@@ -523,7 +523,9 @@ p {
   color: #c7d2fe;
 }
 
-.sidebar__close {
+/* Solo visibles en mobile: el selector con .icon-btn evita que
+   display: inline-flex de .icon-btn los muestre en desktop. */
+.icon-btn.sidebar__close {
   display: none;
   margin-left: auto;
   color: #94a3b8;
@@ -637,7 +639,7 @@ p {
   gap: 10px;
 }
 
-.topbar__menu {
+.icon-btn.topbar__menu {
   display: none;
 }
 
@@ -1549,7 +1551,7 @@ p {
     transform: translateX(0);
   }
 
-  .sidebar__close {
+  .icon-btn.sidebar__close {
     display: inline-flex;
   }
 
@@ -1567,7 +1569,7 @@ p {
     display: block;
   }
 
-  .topbar__menu {
+  .icon-btn.topbar__menu {
     display: inline-flex;
   }
 }
