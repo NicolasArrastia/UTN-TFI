@@ -26,6 +26,21 @@ const initialValues: FormValues = {
   role: "employee",
 };
 
+const FORM_GRID = "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4";
+const FIELD = "flex flex-col gap-[7px]";
+const LABEL = "text-[13px] font-semibold text-ink-soft";
+const INPUT =
+  "w-full rounded-field border border-line bg-white px-[13px] py-[11px] text-sm text-ink focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/13 disabled:bg-slate-50 disabled:text-muted aria-[invalid=true]:border-red-300 aria-[invalid=true]:bg-[#fff7f7]";
+const SELECT = `${INPUT} cursor-pointer`;
+
+const FORM_ACTIONS = "mt-[22px] flex flex-wrap items-center gap-3.5";
+const FORM_HINT = "text-[12px] text-muted";
+
+const PRIMARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
+
+const SPINNER = "size-4 animate-spin rounded-full border-2 border-white/35 border-t-white";
+
 function validateForm(values: FormValues): FormErrors {
   const errors: FormErrors = {};
 
@@ -66,7 +81,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   }
 
   return (
-    <p className="field__error" id={id}>
+    <p className="text-[12px] font-medium text-danger" id={id}>
       {message}
     </p>
   );
@@ -126,10 +141,13 @@ export function CreateUserForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div className="form-grid">
-        <div className="field field--full">
-          <label htmlFor="new-user-fullname">Nombre completo *</label>
+      <div className={FORM_GRID}>
+        <div className={`${FIELD} col-span-full`}>
+          <label className={LABEL} htmlFor="new-user-fullname">
+            Nombre completo *
+          </label>
           <input
+            className={INPUT}
             id="new-user-fullname"
             type="text"
             value={values.fullname}
@@ -144,9 +162,12 @@ export function CreateUserForm({
           <FieldError id="new-user-fullname-error" message={errors.fullname} />
         </div>
 
-        <div className="field">
-          <label htmlFor="new-user-username">Nombre de usuario *</label>
+        <div className={FIELD}>
+          <label className={LABEL} htmlFor="new-user-username">
+            Nombre de usuario *
+          </label>
           <input
+            className={INPUT}
             id="new-user-username"
             type="text"
             value={values.username}
@@ -161,9 +182,12 @@ export function CreateUserForm({
           <FieldError id="new-user-username-error" message={errors.username} />
         </div>
 
-        <div className="field">
-          <label htmlFor="new-user-email">Correo electrónico *</label>
+        <div className={FIELD}>
+          <label className={LABEL} htmlFor="new-user-email">
+            Correo electrónico *
+          </label>
           <input
+            className={INPUT}
             id="new-user-email"
             type="email"
             value={values.email}
@@ -176,9 +200,12 @@ export function CreateUserForm({
           <FieldError id="new-user-email-error" message={errors.email} />
         </div>
 
-        <div className="field">
-          <label htmlFor="new-user-password">Contraseña *</label>
+        <div className={FIELD}>
+          <label className={LABEL} htmlFor="new-user-password">
+            Contraseña *
+          </label>
           <input
+            className={INPUT}
             id="new-user-password"
             type="password"
             value={values.password}
@@ -194,9 +221,12 @@ export function CreateUserForm({
           <FieldError id="new-user-password-error" message={errors.password} />
         </div>
 
-        <div className="field">
-          <label htmlFor="new-user-role">Rol *</label>
+        <div className={FIELD}>
+          <label className={LABEL} htmlFor="new-user-role">
+            Rol *
+          </label>
           <select
+            className={SELECT}
             id="new-user-role"
             value={values.role}
             onChange={(event) =>
@@ -211,16 +241,16 @@ export function CreateUserForm({
         </div>
       </div>
 
-      <div className="form-actions">
+      <div className={FORM_ACTIONS}>
         <button
           type="submit"
-          className="btn btn--primary btn--sm"
+          className={PRIMARY_BUTTON}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <span className="spinner" /> : null}
+          {isSubmitting ? <span className={SPINNER} /> : null}
           {isSubmitting ? "Creando usuario..." : "Crear usuario"}
         </button>
-        <span className="form-hint">
+        <span className={FORM_HINT}>
           El usuario podrá iniciar sesión con las credenciales asignadas.
         </span>
       </div>

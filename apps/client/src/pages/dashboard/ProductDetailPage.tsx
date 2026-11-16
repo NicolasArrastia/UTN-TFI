@@ -29,6 +29,46 @@ const parseProductId = (value: string | undefined): number | null => {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
+const BACK_LINK =
+  "inline-flex w-fit items-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-brand";
+
+const PAGE_SHELL = "grid gap-3.5";
+
+const CARD =
+  "overflow-hidden rounded-card border border-line bg-white shadow-card";
+
+const BADGE =
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold";
+
+const BADGE_TONES = {
+  success: "bg-success-soft text-green-700",
+  warning: "bg-warning-soft text-amber-700",
+  danger: "bg-danger-soft text-red-700",
+  neutral: "bg-slate-100 text-slate-600",
+};
+
+type BadgeTone = keyof typeof BADGE_TONES;
+
+const PRIMARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
+
+const GHOST_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field border border-line px-3.5 py-2 text-[13px] font-semibold text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-65";
+
+const TOOLBAR = "flex flex-wrap items-center gap-2.5";
+
+const STATE_ROW =
+  "flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted";
+
+const LARGE_SPINNER =
+  "size-8 animate-spin rounded-full border-[3px] border-line border-t-brand";
+
+const getStockTone = (stock: number, lowStock: boolean): BadgeTone => {
+  if (stock === 0) return "danger";
+  if (lowStock) return "warning";
+  return "success";
+};
+
 const getInitials = (name: string): string =>
   name
     .split(" ")
@@ -36,12 +76,6 @@ const getInitials = (name: string): string =>
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
-
-const getStockTone = (stock: number, lowStock: boolean): string => {
-  if (stock === 0) return "danger";
-  if (lowStock) return "warning";
-  return "success";
-};
 
 const getMarginHint = (price: number, cost: number): string => {
   if (price <= 0) {
@@ -87,17 +121,17 @@ export function ProductDetailPage() {
 
   if (id === null) {
     return (
-      <div className="detail-page">
-        <Link to={listPath} className="back-link">
+      <div className={PAGE_SHELL}>
+        <Link to={listPath} className={BACK_LINK}>
           <IconChevronLeft width={16} height={16} />
           Volver al listado
         </Link>
-        <section className="card">
+        <section className={CARD}>
           <StateCard
             title="Producto no encontrado"
             message="El identificador del producto no es válido."
             action={
-              <Link to={listPath} className="btn btn--ghost btn--sm">
+              <Link to={listPath} className={GHOST_BUTTON}>
                 Ir al listado
               </Link>
             }
@@ -109,14 +143,14 @@ export function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="detail-page">
-        <Link to={listPath} className="back-link">
+      <div className={PAGE_SHELL}>
+        <Link to={listPath} className={BACK_LINK}>
           <IconChevronLeft width={16} height={16} />
           Volver al listado
         </Link>
-        <section className="card">
-          <div className="table-state">
-            <span className="spinner spinner--lg" />
+        <section className={CARD}>
+          <div className={STATE_ROW}>
+            <span className={LARGE_SPINNER} />
             <span>Cargando producto...</span>
           </div>
         </section>
@@ -126,24 +160,24 @@ export function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <div className="detail-page">
-        <Link to={listPath} className="back-link">
+      <div className={PAGE_SHELL}>
+        <Link to={listPath} className={BACK_LINK}>
           <IconChevronLeft width={16} height={16} />
           Volver al listado
         </Link>
-        <section className="card">
+        <section className={CARD}>
           <StateCard
             title="No pudimos cargar el producto"
             message={error ?? "El producto no existe."}
             tone="error"
             action={
-              <div className="toolbar toolbar--end">
-                <Link to={listPath} className="btn btn--ghost btn--sm">
+              <div className={`${TOOLBAR} justify-end`}>
+                <Link to={listPath} className={GHOST_BUTTON}>
                   Ir al listado
                 </Link>
                 <button
                   type="button"
-                  className="btn btn--primary btn--sm"
+                  className={PRIMARY_BUTTON}
                   onClick={reload}
                 >
                   Reintentar
@@ -159,29 +193,33 @@ export function ProductDetailPage() {
   const margin = product.price - product.cost;
 
   return (
-    <div className="detail-page">
-      <Link to={listPath} className="back-link">
+    <div className={PAGE_SHELL}>
+      <Link to={listPath} className={BACK_LINK}>
         <IconChevronLeft width={16} height={16} />
         Volver al listado
       </Link>
 
-      <section className="card">
-        <div className="card__header card__header--stack">
-          <div className="detail-heading">
-            <span className="detail-avatar">{getInitials(product.name)}</span>
+      <section className={CARD}>
+        <div className="flex flex-wrap items-start justify-between gap-4 px-[22px] pb-1 pt-5 max-md:px-4">
+          <div className="flex items-center gap-3.5 max-md:items-start">
+            <span className="grid size-[52px] flex-none place-items-center rounded-[14px] bg-brand-soft text-base font-bold text-brand-dark">
+              {getInitials(product.name)}
+            </span>
             <div>
-              <h2 className="detail-title">{product.name}</h2>
-              <p className="card__subtitle">
+              <h2 className="text-xl tracking-[-0.02em] max-md:text-lg">
+                {product.name}
+              </h2>
+              <p className="mt-[3px] text-[12.5px] text-muted">
                 Producto #{product.id} ·{" "}
                 {product.category?.name ?? "Sin categoría"}
               </p>
             </div>
           </div>
 
-          <div className="toolbar">
+          <div className={TOOLBAR}>
             <span
-              className={`badge ${
-                product.isActive ? "badge--success" : "badge--neutral"
+              className={`${BADGE} ${
+                product.isActive ? BADGE_TONES.success : BADGE_TONES.neutral
               }`}
             >
               {product.isActive ? "Activo" : "Inactivo"}
@@ -192,7 +230,7 @@ export function ProductDetailPage() {
                 <Link
                   to={`/dashboard/products/${product.id}/edit`}
                   state={{ from: listPath }}
-                  className="btn btn--primary btn--sm"
+                  className={PRIMARY_BUTTON}
                 >
                   <IconEdit width={16} height={16} />
                   Editar
@@ -200,7 +238,7 @@ export function ProductDetailPage() {
                 {product.isActive ? (
                   <button
                     type="button"
-                    className="btn btn--ghost btn--sm"
+                    className={GHOST_BUTTON}
                     onClick={() => setIsConfirmingDelete(true)}
                   >
                     <IconTrash width={16} height={16} />
@@ -212,36 +250,47 @@ export function ProductDetailPage() {
           </div>
         </div>
 
-        <div className="card__body">
-          <div className="detail-stats">
-            <div className="detail-stat">
-              <p className="detail-stat__label">Precio de venta</p>
-              <p className="detail-stat__value">
+        <div className="px-[22px] py-5">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3.5">
+            <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
+                Precio de venta
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
                 {formatCurrency(product.price)}
               </p>
-              <p className="detail-stat__hint">IVA incluido</p>
+              <p className="mt-1 text-xs text-muted">IVA incluido</p>
             </div>
-            <div className="detail-stat">
-              <p className="detail-stat__label">Costo</p>
-              <p className="detail-stat__value">{formatCurrency(product.cost)}</p>
-              <p className="detail-stat__hint">Costo de reposición</p>
+            <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
+                Costo
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
+                {formatCurrency(product.cost)}
+              </p>
+              <p className="mt-1 text-xs text-muted">Costo de reposición</p>
             </div>
-            <div className="detail-stat">
-              <p className="detail-stat__label">Margen bruto</p>
-              <p className="detail-stat__value">{formatCurrency(margin)}</p>
-              <p className="detail-stat__hint">
+            <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
+                Margen bruto
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
+                {formatCurrency(margin)}
+              </p>
+              <p className="mt-1 text-xs text-muted">
                 {getMarginHint(product.price, product.cost)}
               </p>
             </div>
-            <div className="detail-stat">
-              <p className="detail-stat__label">Stock disponible</p>
-              <p className="detail-stat__value">
+            <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
+                Stock disponible
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
                 {product.stock} u.
                 <span
-                  className={`badge badge--${getStockTone(
-                    product.stock,
-                    product.lowStock,
-                  )} detail-stat__badge`}
+                  className={`${BADGE} text-[10.5px] ${
+                    BADGE_TONES[getStockTone(product.stock, product.lowStock)]
+                  }`}
                 >
                   {product.stock === 0
                     ? "Sin stock"
@@ -250,44 +299,55 @@ export function ProductDetailPage() {
                       : "Stock OK"}
                 </span>
               </p>
-              <p className="detail-stat__hint">
+              <p className="mt-1 text-xs text-muted">
                 Mínimo configurado: {product.minStock} u.
               </p>
             </div>
           </div>
 
-          <div className="detail-grid">
-            <div className="detail-panel">
-              <h3>Descripción</h3>
-              <p className="detail-description">
+          <div className="mt-[22px] grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] gap-[22px] max-[900px]:grid-cols-1">
+            <div>
+              <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+                Descripción
+              </h3>
+              <p className="whitespace-pre-line text-sm leading-[1.6] text-ink-soft">
                 {product.description ?? "Este producto no tiene descripción."}
               </p>
 
               {!product.isActive ? (
-                <p className="detail-note">
+                <p className="mt-[18px] rounded-field bg-warning-soft px-3.5 py-3 text-[13px] leading-normal text-amber-800">
                   Este producto está dado de baja. Podés reactivarlo desde
                   Editar y marcando el estado como activo.
                 </p>
               ) : null}
             </div>
 
-            <div className="detail-panel">
-              <h3>Información</h3>
-              <dl className="detail-list">
-                <div>
-                  <dt>Categoría</dt>
-                  <dd>{product.category?.name ?? "Sin categoría"}</dd>
+            <div>
+              <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted">
+                Información
+              </h3>
+              <dl className="grid gap-[11px]">
+                <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-2.5">
+                  <dt className="text-[12.5px] text-muted">Categoría</dt>
+                  <dd className="text-right text-[13px] font-semibold">
+                    {product.category?.name ?? "Sin categoría"}
+                  </dd>
                 </div>
-                <div>
-                  <dt>Etiquetas</dt>
-                  <dd className="detail-tags">
+                <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-2.5">
+                  <dt className="text-[12.5px] text-muted">Etiquetas</dt>
+                  <dd className="flex flex-wrap justify-end gap-1.5 text-right text-[13px] font-semibold">
                     {product.tags.length === 0 ? (
-                      <span className="cell-muted">Sin etiquetas</span>
+                      <span className="text-[12.5px] text-muted">
+                        Sin etiquetas
+                      </span>
                     ) : (
                       product.tags.map((tag) => (
-                        <span className="badge badge--neutral" key={tag.id}>
+                        <span
+                          className={`${BADGE} ${BADGE_TONES.neutral}`}
+                          key={tag.id}
+                        >
                           <span
-                            className="tag-dot"
+                            className="inline-block size-2 rounded-full"
                             style={{ backgroundColor: tag.color }}
                           />
                           {tag.name}
@@ -296,17 +356,25 @@ export function ProductDetailPage() {
                     )}
                   </dd>
                 </div>
-                <div>
-                  <dt>Stock mínimo</dt>
-                  <dd>{product.minStock} u.</dd>
+                <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-2.5">
+                  <dt className="text-[12.5px] text-muted">Stock mínimo</dt>
+                  <dd className="text-right text-[13px] font-semibold">
+                    {product.minStock} u.
+                  </dd>
                 </div>
-                <div>
-                  <dt>Creado</dt>
-                  <dd>{formatDateTime(product.createdAt)}</dd>
+                <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-2.5">
+                  <dt className="text-[12.5px] text-muted">Creado</dt>
+                  <dd className="text-right text-[13px] font-semibold">
+                    {formatDateTime(product.createdAt)}
+                  </dd>
                 </div>
-                <div>
-                  <dt>Última modificación</dt>
-                  <dd>{formatDateTime(product.updatedAt)}</dd>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-[12.5px] text-muted">
+                    Última modificación
+                  </dt>
+                  <dd className="text-right text-[13px] font-semibold">
+                    {formatDateTime(product.updatedAt)}
+                  </dd>
                 </div>
               </dl>
             </div>

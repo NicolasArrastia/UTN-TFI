@@ -36,13 +36,63 @@ const validateForm = (form: TagFormState): TagFormErrors => {
   return errors;
 };
 
+const CARD =
+  "overflow-hidden rounded-card border border-line bg-white shadow-card";
+const CARD_HEADER =
+  "flex flex-wrap items-start justify-between gap-4 px-[22px] pt-5 pb-1";
+const CARD_TITLE = "text-[15px] font-bold tracking-[-0.01em]";
+const CARD_SUBTITLE = "mt-[3px] text-[12.5px] text-muted";
+const CARD_BODY = "px-[22px] py-5";
+
+const BADGE =
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold";
+const BADGE_SUCCESS = `${BADGE} bg-success-soft text-green-700`;
+const BADGE_NEUTRAL = `${BADGE} bg-slate-100 text-slate-600`;
+
+const PRIMARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
+
+const GHOST_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field border border-line px-3.5 py-2 text-[13px] font-semibold text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-65";
+
+const ICON_BUTTON =
+  "inline-flex size-[38px] items-center justify-center rounded-field border border-line bg-white text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-ink";
+
+const ICON_BUTTON_SM =
+  "inline-flex size-8 items-center justify-center rounded-lg border border-line bg-white text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-ink";
+
+const ICON_BUTTON_DANGER =
+  "hover:border-red-200 hover:bg-danger-soft hover:text-red-700";
+
+const FORM_GRID = "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4";
+const FIELD = "flex flex-col gap-[7px]";
+const LABEL = "text-[13px] font-semibold text-ink-soft";
+const INPUT =
+  "w-full rounded-field border border-line bg-white px-[13px] py-[11px] text-sm text-ink focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/13 disabled:bg-slate-50 disabled:text-muted aria-[invalid=true]:border-red-300 aria-[invalid=true]:bg-[#fff7f7]";
+
+const COLOR_FIELD = "flex min-h-11 items-center gap-3";
+const COLOR_INPUT =
+  "h-10 w-[52px] cursor-pointer rounded-field border border-line bg-white p-[3px] focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/13";
+const COLOR_VALUE =
+  "text-[13px] font-semibold tracking-[0.04em] text-ink-soft tabular-nums";
+
+const FORM_ACTIONS = "mt-[22px] flex flex-wrap items-center gap-3.5";
+const FORM_HINT = "text-[12px] text-muted";
+
+const TH =
+  "whitespace-nowrap border-b border-line px-[22px] py-2.5 text-left text-[11px] font-bold uppercase tracking-[0.07em] text-muted max-md:px-4";
+const TD =
+  "whitespace-nowrap border-b border-slate-100 px-[22px] py-[13px] align-middle max-md:px-4";
+
+const SPINNER = "size-4 animate-spin rounded-full border-2 border-white/35 border-t-white";
+
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) {
     return null;
   }
 
   return (
-    <p className="field__error" id={id}>
+    <p className="text-[12px] font-medium text-danger" id={id}>
       {message}
     </p>
   );
@@ -178,19 +228,20 @@ export function TagManager() {
   };
 
   return (
-    <section className="card card--wide">
-      <div className="card__header card__header--stack">
+    <section className={CARD}>
+      <div className={CARD_HEADER}>
         <div>
-          <h2 className="card__title">Etiquetas</h2>
-          <p className="card__subtitle">
+          <h2 className={CARD_TITLE}>Etiquetas</h2>
+          <p className={CARD_SUBTITLE}>
             Administrá las etiquetas del catálogo. Solo los administradores
             pueden crearlas, modificarlas o darlas de baja.
           </p>
         </div>
 
-        <div className="toolbar">
-          <label className="check-inline">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <label className="inline-flex cursor-pointer select-none items-center gap-2 text-[13px] font-medium text-ink-soft">
             <input
+              className="size-4 cursor-pointer accent-brand"
               type="checkbox"
               checked={includeInactive}
               onChange={(event) => setIncludeInactive(event.target.checked)}
@@ -200,7 +251,7 @@ export function TagManager() {
 
           <button
             type="button"
-            className="btn btn--primary btn--sm"
+            className={PRIMARY_BUTTON}
             onClick={openCreate}
           >
             <IconPlus width={16} height={16} />
@@ -209,7 +260,7 @@ export function TagManager() {
 
           <button
             type="button"
-            className="icon-btn"
+            className={ICON_BUTTON}
             onClick={reload}
             aria-label="Actualizar listado"
             title="Actualizar listado"
@@ -220,11 +271,14 @@ export function TagManager() {
       </div>
 
       {form ? (
-        <form className="card__body" onSubmit={handleSubmit} noValidate>
-          <div className="form-grid">
-            <div className="field">
-              <label htmlFor="tag-name">Nombre *</label>
+        <form className={CARD_BODY} onSubmit={handleSubmit} noValidate>
+          <div className={FORM_GRID}>
+            <div className={FIELD}>
+              <label className={LABEL} htmlFor="tag-name">
+                Nombre *
+              </label>
               <input
+                className={INPUT}
                 id="tag-name"
                 type="text"
                 value={form.name}
@@ -237,10 +291,13 @@ export function TagManager() {
               <FieldError id="tag-name-error" message={errors.name} />
             </div>
 
-            <div className="field">
-              <label htmlFor="tag-color">Color *</label>
-              <div className="color-field">
+            <div className={FIELD}>
+              <label className={LABEL} htmlFor="tag-color">
+                Color *
+              </label>
+              <div className={COLOR_FIELD}>
                 <input
+                  className={COLOR_INPUT}
                   id="tag-color"
                   type="color"
                   value={form.color}
@@ -250,33 +307,31 @@ export function TagManager() {
                     errors.color ? "tag-color-error" : undefined
                   }
                 />
-                <span className="color-field__value">
-                  {form.color.toUpperCase()}
-                </span>
+                <span className={COLOR_VALUE}>{form.color.toUpperCase()}</span>
               </div>
               <FieldError id="tag-color-error" message={errors.color} />
             </div>
           </div>
 
-          <div className="form-actions">
+          <div className={FORM_ACTIONS}>
             <button
               type="submit"
-              className="btn btn--primary btn--sm"
+              className={PRIMARY_BUTTON}
               disabled={isSubmitting}
             >
-              {isSubmitting ? <span className="spinner" /> : null}
+              {isSubmitting ? <span className={SPINNER} /> : null}
               {editingTag ? "Guardar cambios" : "Crear etiqueta"}
             </button>
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className={GHOST_BUTTON}
               onClick={closeForm}
               disabled={isSubmitting}
             >
               Cancelar
             </button>
             {editingTag ? (
-              <span className="form-hint">Editando “{editingTag.name}”.</span>
+              <span className={FORM_HINT}>Editando “{editingTag.name}”.</span>
             ) : null}
           </div>
         </form>
@@ -288,32 +343,31 @@ export function TagManager() {
           message={error}
           tone="error"
           action={
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={reload}
-            >
+            <button type="button" className={GHOST_BUTTON} onClick={reload}>
               Reintentar
             </button>
           }
         />
       ) : (
-        <div className="table-wrap">
-          <table className="table">
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full border-collapse text-[13.5px]">
             <thead>
               <tr>
-                <th>Etiqueta</th>
-                <th>Color</th>
-                <th>Estado</th>
-                <th>Acciones</th>
+                <th className={TH}>Etiqueta</th>
+                <th className={TH}>Color</th>
+                <th className={TH}>Estado</th>
+                <th className={TH}>Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="[&>tr:last-child>td]:border-b-0 [&>tr:hover]:bg-slate-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4}>
-                    <div className="table-state">
-                      <span className="spinner spinner--lg" />
+                  <td className={TD} colSpan={4}>
+                    <div className="flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted">
+                      <span
+                        className="size-8 animate-spin rounded-full border-[3px] border-line border-t-brand"
+                        aria-hidden="true"
+                      />
                       <span>Cargando etiquetas...</span>
                     </div>
                   </td>
@@ -322,8 +376,8 @@ export function TagManager() {
 
               {!isLoading && tags.length === 0 ? (
                 <tr>
-                  <td colSpan={4}>
-                    <div className="table-state">
+                  <td className={TD} colSpan={4}>
+                    <div className="flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted">
                       {includeInactive
                         ? "Todavía no hay etiquetas cargadas."
                         : "No hay etiquetas activas. Creá una nueva o activá la opción de mostrar inactivas."}
@@ -335,32 +389,32 @@ export function TagManager() {
               {!isLoading
                 ? tags.map((tag) => (
                     <tr key={tag.id}>
-                      <td className="cell-strong">{tag.name}</td>
-                      <td>
-                        <span className="tag-color">
+                      <td className={`${TD} font-semibold text-ink`}>
+                        {tag.name}
+                      </td>
+                      <td className={TD}>
+                        <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-ink-soft tabular-nums">
                           <span
-                            className="tag-dot"
+                            className="inline-block size-3.5 rounded-full border border-ink/12"
                             style={{ backgroundColor: tag.color }}
                           />
                           {tag.color}
                         </span>
                       </td>
-                      <td>
+                      <td className={TD}>
                         <span
-                          className={`badge ${
-                            tag.isActive
-                              ? "badge--success"
-                              : "badge--neutral"
-                          }`}
+                          className={
+                            tag.isActive ? BADGE_SUCCESS : BADGE_NEUTRAL
+                          }
                         >
                           {tag.isActive ? "Activa" : "Inactiva"}
                         </span>
                       </td>
-                      <td>
-                        <div className="table__actions">
+                      <td className={TD}>
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
-                            className="icon-btn icon-btn--sm"
+                            className={ICON_BUTTON_SM}
                             title="Editar etiqueta"
                             aria-label={`Editar ${tag.name}`}
                             onClick={() => openEdit(tag)}
@@ -371,7 +425,7 @@ export function TagManager() {
                           {tag.isActive ? (
                             <button
                               type="button"
-                              className="icon-btn icon-btn--sm icon-btn--danger"
+                              className={`${ICON_BUTTON_SM} ${ICON_BUTTON_DANGER}`}
                               title="Dar de baja"
                               aria-label={`Dar de baja ${tag.name}`}
                               onClick={() => setTagToDeactivate(tag)}
@@ -381,12 +435,12 @@ export function TagManager() {
                           ) : (
                             <button
                               type="button"
-                              className="btn btn--ghost btn--sm"
+                              className={GHOST_BUTTON}
                               onClick={() => handleReactivate(tag)}
                               disabled={reactivatingId === tag.id}
                             >
                               {reactivatingId === tag.id ? (
-                                <span className="spinner" />
+                                <span className={SPINNER} />
                               ) : null}
                               Reactivar
                             </button>

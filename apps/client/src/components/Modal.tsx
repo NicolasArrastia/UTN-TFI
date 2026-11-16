@@ -78,7 +78,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="modal-backdrop"
+      className="fixed inset-0 z-[80] grid place-items-center bg-ink/55 p-3 sm:p-5"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !isBusy) {
@@ -88,20 +88,20 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className="modal modal--form"
+        className="max-h-[calc(100dvh-1.5rem)] w-full max-w-[520px] overflow-y-auto rounded-card bg-white p-[18px] shadow-soft sm:max-h-[calc(100dvh-2.5rem)] sm:p-[22px]"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
       >
-        <div className="modal-form__header">
+        <div className="flex items-start justify-between gap-3 border-b border-line pb-5 sm:gap-5">
           <div>
-            <h2 className="modal__title" id={titleId}>
+            <h2 className="text-lg font-bold tracking-[-0.01em]" id={titleId}>
               {title}
             </h2>
             {description && (
-              <p className="modal__text" id={descriptionId}>
+              <p className="mt-1.5 text-sm leading-[1.55] text-muted" id={descriptionId}>
                 {description}
               </p>
             )}
@@ -109,7 +109,7 @@ export function Modal({
 
           <button
             type="button"
-            className="btn btn--ghost btn--sm"
+            className="inline-flex items-center justify-center rounded-field border border-line px-3.5 py-2 text-[13px] font-semibold text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-65"
             onClick={onClose}
             disabled={isBusy}
             aria-label="Cerrar ventana"
@@ -118,7 +118,7 @@ export function Modal({
           </button>
         </div>
 
-        <div className="modal-form__body">{children}</div>
+        <div className="pt-[22px]">{children}</div>
       </div>
     </div>,
     document.body,

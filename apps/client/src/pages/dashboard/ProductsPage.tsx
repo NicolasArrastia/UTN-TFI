@@ -25,6 +25,15 @@ import type {
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 350;
 
+const PRIMARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
+
+const GHOST_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field border border-line px-3.5 py-2 text-[13px] font-semibold text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-65";
+
+const ICON_BUTTON =
+  "inline-flex size-[38px] items-center justify-center rounded-field border border-line bg-white text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-ink";
+
 const parseCategoryId = (value: string | null): number | null => {
   if (!value) {
     return null;
@@ -205,23 +214,22 @@ export function ProductsPage() {
   };
 
   return (
-    <section className="card">
-      <div className="card__header card__header--stack">
+    <section className="overflow-hidden rounded-card border border-line bg-white shadow-card">
+      <div className="flex flex-wrap items-start justify-between gap-4 px-[22px] pb-1 pt-5 max-md:px-4">
         <div>
-          <h2 className="card__title">Catálogo de productos</h2>
-          <p className="card__subtitle">
+          <h2 className="text-[15px] font-bold tracking-[-0.01em]">
+            Catálogo de productos
+          </h2>
+          <p className="mt-[3px] text-[12.5px] text-muted">
             {error
               ? "No se pudo cargar el catálogo"
               : `${getResultLabel(pagination, isLoading)} · precios en ARS`}
           </p>
         </div>
 
-        <div className="toolbar">
+        <div className="flex flex-wrap items-center gap-2.5">
           {canManage ? (
-            <Link
-              to="/dashboard/products/new"
-              className="btn btn--primary btn--sm"
-            >
+            <Link to="/dashboard/products/new" className={PRIMARY_BUTTON}>
               <IconPlus width={16} height={16} />
               Nuevo producto
             </Link>
@@ -229,7 +237,7 @@ export function ProductsPage() {
 
           <button
             type="button"
-            className="icon-btn"
+            className={ICON_BUTTON}
             onClick={reload}
             aria-label="Actualizar listado"
             title="Actualizar listado"
@@ -260,7 +268,7 @@ export function ProductsPage() {
           action={
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className={GHOST_BUTTON}
               onClick={reload}
             >
               Reintentar

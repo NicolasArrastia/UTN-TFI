@@ -23,6 +23,12 @@ const parseProductId = (value: string | undefined): number | null => {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
+const PRIMARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
+
+const GHOST_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field border border-line px-3.5 py-2 text-[13px] font-semibold text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-65";
+
 interface FormShellProps {
   backTo: string;
   backLabel: string;
@@ -39,20 +45,23 @@ function FormShell({
   children,
 }: FormShellProps) {
   return (
-    <div className="detail-page">
-      <Link to={backTo} className="back-link">
+    <div className="grid gap-3.5">
+      <Link
+        to={backTo}
+        className="inline-flex w-fit items-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-brand"
+      >
         <IconChevronLeft width={16} height={16} />
         {backLabel}
       </Link>
 
-      <section className="card">
-        <div className="card__header">
+      <section className="rounded-card border border-line bg-white shadow-card">
+        <div className="flex items-start justify-between gap-4 px-[22px] pt-5 max-md:px-4">
           <div>
-            <h2 className="card__title">{title}</h2>
-            <p className="card__subtitle">{subtitle}</p>
+            <h2 className="text-[15px] font-bold tracking-[-0.01em]">{title}</h2>
+            <p className="mt-[3px] text-[12.5px] text-muted">{subtitle}</p>
           </div>
         </div>
-        <div className="card__body">{children}</div>
+        <div className="px-[22px] py-5">{children}</div>
       </section>
     </div>
   );
@@ -139,7 +148,7 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
           message="El producto que intentás editar no existe o el enlace es incorrecto."
           tone="error"
           action={
-            <Link to={listPath} className="btn btn--ghost btn--sm">
+            <Link to={listPath} className={GHOST_BUTTON}>
               Ir al listado
             </Link>
           }
@@ -156,8 +165,8 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
         title={pageTitle}
         subtitle={pageSubtitle}
       >
-        <div className="table-state">
-          <span className="spinner spinner--lg" />
+        <div className="flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted">
+          <span className="size-8 animate-spin rounded-full border-[3px] border-line border-t-brand" />
           <span>Cargando información...</span>
         </div>
       </FormShell>
@@ -177,13 +186,13 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
           message={productError ?? "El producto no existe."}
           tone="error"
           action={
-            <div className="toolbar toolbar--end">
-              <Link to={listPath} className="btn btn--ghost btn--sm">
+            <div className="flex flex-wrap items-center justify-end gap-2.5">
+              <Link to={listPath} className={GHOST_BUTTON}>
                 Ir al listado
               </Link>
               <button
                 type="button"
-                className="btn btn--primary btn--sm"
+                className={PRIMARY_BUTTON}
                 onClick={reloadProduct}
               >
                 Reintentar
@@ -208,13 +217,13 @@ export function ProductFormPage({ mode }: ProductFormPageProps) {
           message={catalogError}
           tone="error"
           action={
-            <div className="toolbar toolbar--end">
-              <Link to={listPath} className="btn btn--ghost btn--sm">
+            <div className="flex flex-wrap items-center justify-end gap-2.5">
+              <Link to={listPath} className={GHOST_BUTTON}>
                 Ir al listado
               </Link>
               <button
                 type="button"
-                className="btn btn--primary btn--sm"
+                className={PRIMARY_BUTTON}
                 onClick={reloadCatalog}
               >
                 Reintentar

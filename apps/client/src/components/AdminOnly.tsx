@@ -12,12 +12,15 @@ export function AdminOnly({ children }: AdminOnlyProps) {
 
   if (user?.role !== "admin") {
     return (
-      <section className="card">
+      <section className="rounded-card border border-line bg-white shadow-card">
         <StateCard
           title="Acceso restringido"
           message="Solo los administradores pueden crear, editar o dar de baja productos."
           action={
-            <Link to="/dashboard/products" className="btn btn--ghost btn--sm">
+            <Link
+              to="/dashboard/products"
+              className="inline-flex items-center justify-center gap-2 rounded-field border border-line px-3.5 py-2 text-[13px] font-semibold text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50"
+            >
               Volver al listado
             </Link>
           }
