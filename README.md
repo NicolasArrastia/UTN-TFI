@@ -53,14 +53,22 @@ Artefactos asociados:
 1. Copiar `.env.example` a `.env` en la raíz y ajustar los valores si hace
    falta. El archivo `.env` no se versiona. Si se usa la base local por defecto
    no hace falta cambiar `DATABASE_URL`.
-2. Instalar dependencias y preparar la base de datos:
+2. Instalar dependencias, levantar PostgreSQL local y preparar la base de datos:
 
 ```bash
 npm install
+npm run db:up
 npm run db:setup -w api
 ```
 
-El script crea la base si no existe, aplica
+`npm run db:up` (o `pnpm db:up`) levanta PostgreSQL 17 con Docker Compose
+usando `docker-compose.yml`, con el usuario, la contraseña y el puerto que
+espera `DATABASE_URL` por defecto. Requiere Docker Desktop iniciado y los datos
+quedan en el volumen `utn-tfi-pgdata`; para detener la base usá `npm run db:down`.
+Si ya tenés un PostgreSQL propio, podés saltear este paso y apuntar
+`DATABASE_URL` a tu instancia.
+
+El script de setup crea la base si no existe, aplica
 [crear-base-datos.sql](database/crear-base-datos.sql) y siembra el usuario
 administrador. Es idempotente: se puede volver a ejecutar sin perder datos.
 
@@ -77,6 +85,16 @@ O con npm:
 npm install
 npm run dev
 ```
+
+La API necesita PostgreSQL disponible al arrancar: si la base no está levantada,
+el proceso de la API termina con `ECONNREFUSED` y `pnpm dev` cierra también al
+cliente.
+
+Para trabajar sin PostgreSQL local ni Docker, copiá `.env.example` a `.env` y
+poné en `DATABASE_URL` la *External Database URL* de Render (la *Internal* solo
+resuelve dentro de la red de Render). El SSL se activa solo porque el host no es
+local, así que `pnpm dev` levanta la API directo contra la base desplegada. Las
+variables del `.env` no pisan las que ya existan en el entorno.
 
 Ambos comandos levantan la API y el cliente en paralelo, con la salida
 etiquetada por proceso. Si necesitás verlos por separado, usá
