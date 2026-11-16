@@ -2,7 +2,7 @@ import { Router } from "express";
 import { createUser } from "../controllers/user.controller.ts";
 import { authenticate, authorize } from "../middlewares/auth.middleware.ts";
 
-const router = Router();
+const router: Router = Router();
 
 router.post("/", authenticate, authorize("admin"), createUser);
 

@@ -1,5 +1,5 @@
 import cors from "cors";
-import express from "express";
+import express, { type Express } from "express";
 import { env } from "./config/env.ts";
 import {
   errorHandler,
@@ -13,7 +13,7 @@ import saleRouter from "./routes/sale.routes.ts";
 import tagRouter from "./routes/tag.routes.ts";
 import userRouter from "./routes/user.routes.ts";
 
-const app = express();
+const app: Express = express();
 
 app.disable("x-powered-by");
 app.use(cors({ origin: env.clientOrigins }));

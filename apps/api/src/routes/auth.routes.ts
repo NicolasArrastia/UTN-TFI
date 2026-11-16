@@ -2,7 +2,7 @@ import { Router } from "express";
 import { changePassword, login, me } from "../controllers/auth.controller.ts";
 import { authenticate } from "../middlewares/auth.middleware.ts";
 
-const router = Router();
+const router: Router = Router();
 
 router.post("/login", login);
 router.get("/me", authenticate, me);
