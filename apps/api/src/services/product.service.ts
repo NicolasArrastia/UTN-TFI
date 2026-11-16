@@ -93,8 +93,8 @@ const ensureAssignableTags = async (
   }
 };
 
-const getProductOrThrow = (id: number): Product => {
-  const product = productRepository.findById(id);
+const getProductOrThrow = async (id: number): Promise<Product> => {
+  const product = await productRepository.findById(id);
 
   if (!product) {
     throw new AppError("Producto no encontrado.", 404, "PRODUCT_NOT_FOUND");
@@ -123,7 +123,7 @@ const buildUpdatedInput = (
 export const productService = {
   async list(query: unknown): Promise<PaginatedProducts> {
     const filters = parseProductListQuery(query);
-    const { items, total } = productRepository.findAll(filters);
+    const { items, total } = await productRepository.findAll(filters);
 
     return {
       products: await Promise.all(items.map(toProductResponse)),
@@ -137,7 +137,7 @@ export const productService = {
   },
 
   async getById(id: number): Promise<ProductResponse> {
-    return toProductResponse(getProductOrThrow(id));
+    return toProductResponse(await getProductOrThrow(id));
   },
 
   async create(body: unknown): Promise<ProductResponse> {
@@ -145,11 +145,11 @@ export const productService = {
     await ensureCategoryExists(input.categoryId);
     await ensureTagsExist(input.tagIds);
 
-    return toProductResponse(productRepository.create(input));
+    return toProductResponse(await productRepository.create(input));
   },
 
   async update(id: number, body: unknown): Promise<ProductResponse> {
-    const product = getProductOrThrow(id);
+    const product = await getProductOrThrow(id);
     const input = parseUpdateProductInput(body);
 
     if (
@@ -163,7 +163,7 @@ export const productService = {
       await ensureAssignableTags(input.tagIds, product.tagIds);
     }
 
-    const updated = productRepository.replace(
+    const updated = await productRepository.replace(
       id,
       buildUpdatedInput(product, input),
     );
@@ -176,13 +176,13 @@ export const productService = {
   },
 
   async remove(id: number): Promise<ProductResponse> {
-    const product = getProductOrThrow(id);
+    const product = await getProductOrThrow(id);
 
     if (!product.isActive) {
       return toProductResponse(product);
     }
 
-    const updated = productRepository.deactivate(id);
+    const updated = await productRepository.deactivate(id);
 
     if (!updated) {
       throw new AppError("Producto no encontrado.", 404, "PRODUCT_NOT_FOUND");

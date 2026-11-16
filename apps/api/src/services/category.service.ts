@@ -15,17 +15,19 @@ import {
 
 const UNIQUE_NAME_CONSTRAINT = "uq_categories_name";
 
-const toCategoryResponse = (
+const toCategoryResponse = async (
   category: Category,
   role: UserRole,
-): CategoryResponse => {
+): Promise<CategoryResponse> => {
   if (role !== "admin") {
     return category;
   }
 
   return {
     ...category,
-    activeProductCount: productRepository.countActiveByCategoryId(category.id),
+    activeProductCount: await productRepository.countActiveByCategoryId(
+      category.id,
+    ),
   };
 };
 
@@ -75,7 +77,9 @@ export const categoryService = {
     const includeInactive = role === "admin" && filters.includeInactive;
     const categories = await categoryRepository.findAll(includeInactive);
 
-    return categories.map((category) => toCategoryResponse(category, role));
+    return Promise.all(
+      categories.map((category) => toCategoryResponse(category, role)),
+    );
   },
 
   async getById(id: number, role: UserRole): Promise<CategoryResponse> {
@@ -92,7 +96,7 @@ export const categoryService = {
         isActive: true,
       });
 
-      return toCategoryResponse(category, role);
+      return await toCategoryResponse(category, role);
     } catch (error) {
       throw toNameConflictError(error, input.name) ?? error;
     }
@@ -130,7 +134,7 @@ export const categoryService = {
         );
       }
 
-      return toCategoryResponse(updated, role);
+      return await toCategoryResponse(updated, role);
     } catch (error) {
       throw toNameConflictError(error, next.name) ?? error;
     }

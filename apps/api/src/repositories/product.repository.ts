@@ -1,201 +1,288 @@
+import type { PoolClient, QueryResultRow } from "pg";
+import { query, withTransaction } from "../config/database.ts";
 import type {
   Product,
   ProductInput,
   ProductListQuery,
 } from "../types/product.types.ts";
 
-/**
- * Repositorio en memoria de productos.
- *
- * Replica las columnas de la tabla `products` y la relación `product_tags`.
- * Cuando PostgreSQL esté conectado, este módulo se reemplaza por consultas
- * reales sin modificar servicios ni controladores.
- */
-const SEED_DATE = "2026-01-15T12:00:00.000Z";
+interface ProductRow extends QueryResultRow {
+  id: number;
+  categoryId: number;
+  name: string;
+  description: string | null;
+  price: string;
+  cost: string;
+  stock: number;
+  minStock: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  tagIds: number[];
+}
 
-const products: Product[] = [
-  {
-    id: 1,
-    categoryId: 1,
-    name: "Yerba mate compuesta 1 kg",
-    description: "Yerba mate con hierbas serranas.",
-    price: 4500,
-    cost: 3200,
-    stock: 40,
-    minStock: 10,
-    isActive: true,
-    tagIds: [1],
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 2,
-    categoryId: 2,
-    name: "Gaseosa cola 2.25 L",
-    description: "Botella retornable.",
-    price: 2800,
-    cost: 1900,
-    stock: 24,
-    minStock: 6,
-    isActive: true,
-    tagIds: [2],
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 3,
-    categoryId: 3,
-    name: "Detergente 750 ml",
-    description: "Detergente concentrado con aroma a limón.",
-    price: 2100,
-    cost: 1400,
-    stock: 5,
-    minStock: 8,
-    isActive: true,
-    tagIds: [1],
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-  {
-    id: 4,
-    categoryId: 4,
-    name: "Auriculares inalámbricos",
-    description: "Auriculares Bluetooth con estuche de carga.",
-    price: 35000,
-    cost: 24000,
-    stock: 12,
-    minStock: 3,
-    isActive: true,
-    tagIds: [2],
-    createdAt: SEED_DATE,
-    updatedAt: SEED_DATE,
-  },
-];
+interface IdRow extends QueryResultRow {
+  id: number;
+}
 
-let nextId = products.length + 1;
+const PRODUCT_COLUMNS = `
+  p.id,
+  p.category_id AS "categoryId",
+  p.name,
+  p.description,
+  p.price::text AS price,
+  p.cost::text AS cost,
+  p.stock,
+  p.min_stock AS "minStock",
+  p.is_active AS "isActive",
+  p.created_at AS "createdAt",
+  p.updated_at AS "updatedAt",
+  COALESCE(
+    array_agg(pt.tag_id ORDER BY pt.tag_id) FILTER (WHERE pt.tag_id IS NOT NULL),
+    '{}'
+  ) AS "tagIds"
+`;
 
-const matchesFilters = (
-  product: Product,
-  filters: ProductListQuery,
-): boolean => {
-  if (filters.isActive !== "all" && product.isActive !== filters.isActive) {
-    return false;
+const PRODUCT_SELECT = `
+  SELECT ${PRODUCT_COLUMNS}
+  FROM public.products AS p
+  LEFT JOIN public.product_tags AS pt ON pt.product_id = p.id
+`;
+
+const toProduct = (row: ProductRow): Product => ({
+  id: row.id,
+  categoryId: row.categoryId,
+  name: row.name,
+  description: row.description,
+  price: Number(row.price),
+  cost: Number(row.cost),
+  stock: row.stock,
+  minStock: row.minStock,
+  isActive: row.isActive,
+  tagIds: row.tagIds,
+  createdAt: new Date(row.createdAt).toISOString(),
+  updatedAt: new Date(row.updatedAt).toISOString(),
+});
+
+interface FilterClause {
+  conditions: string[];
+  values: unknown[];
+}
+
+const buildFilterClause = (filters: ProductListQuery): FilterClause => {
+  const conditions: string[] = [];
+  const values: unknown[] = [];
+
+  const addCondition = (condition: (placeholder: string) => string, value: unknown) => {
+    values.push(value);
+    conditions.push(condition(`$${values.length}`));
+  };
+
+  if (filters.isActive !== "all") {
+    addCondition((placeholder) => `p.is_active = ${placeholder}`, filters.isActive);
   }
 
-  if (
-    filters.categoryId !== undefined &&
-    product.categoryId !== filters.categoryId
-  ) {
-    return false;
+  if (filters.categoryId !== undefined) {
+    addCondition(
+      (placeholder) => `p.category_id = ${placeholder}`,
+      filters.categoryId,
+    );
   }
 
-  if (filters.tagId !== undefined && !product.tagIds.includes(filters.tagId)) {
-    return false;
+  if (filters.tagId !== undefined) {
+    addCondition(
+      (placeholder) =>
+        `EXISTS (
+           SELECT 1
+           FROM public.product_tags AS filter_tags
+           WHERE filter_tags.product_id = p.id
+             AND filter_tags.tag_id = ${placeholder}
+         )`,
+      filters.tagId,
+    );
   }
 
-  if (filters.lowStock && product.stock > product.minStock) {
-    return false;
+  if (filters.lowStock) {
+    conditions.push("p.stock <= p.min_stock");
   }
 
   if (filters.search !== undefined) {
-    const search = filters.search.toLowerCase();
-    if (!product.name.toLowerCase().includes(search)) {
-      return false;
-    }
+    addCondition(
+      (placeholder) => `strpos(lower(p.name), lower(${placeholder})) > 0`,
+      filters.search,
+    );
   }
 
-  return true;
+  return { conditions, values };
 };
 
-const findById = (id: number): Product | undefined =>
-  products.find((product) => product.id === id);
+const toWhereClause = (conditions: string[]): string =>
+  conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+const findById = async (id: number): Promise<Product | undefined> => {
+  const { rows } = await query<ProductRow>(
+    `${PRODUCT_SELECT}
+     WHERE p.id = $1
+     GROUP BY p.id
+     LIMIT 1`,
+    [id],
+  );
+
+  const row = rows[0];
+  return row ? toProduct(row) : undefined;
+};
+
+const insertTags = async (
+  client: PoolClient,
+  productId: number,
+  tagIds: number[],
+): Promise<void> => {
+  if (tagIds.length === 0) {
+    return;
+  }
+
+  await client.query(
+    `INSERT INTO public.product_tags (product_id, tag_id)
+     SELECT $1, unnest($2::integer[])`,
+    [productId, tagIds],
+  );
+};
 
 export const productRepository = {
-  findAll(filters: ProductListQuery): { items: Product[]; total: number } {
-    const filtered = products.filter((product) =>
-      matchesFilters(product, filters),
-    );
-
-    const sorted = [...filtered].sort((a, b) =>
-      a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
-    );
-
+  async findAll(
+    filters: ProductListQuery,
+  ): Promise<{ items: Product[]; total: number }> {
+    const { conditions, values } = buildFilterClause(filters);
+    const where = toWhereClause(conditions);
     const offset = (filters.page - 1) * filters.limit;
 
+    const [products, count] = await Promise.all([
+      query<ProductRow>(
+        `${PRODUCT_SELECT}
+         ${where}
+         GROUP BY p.id
+         ORDER BY lower(p.name) ASC, p.id ASC
+         LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+        [...values, filters.limit, offset],
+      ),
+      query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total
+         FROM public.products AS p
+         ${where}`,
+        values,
+      ),
+    ]);
+
     return {
-      items: sorted.slice(offset, offset + filters.limit),
-      total: filtered.length,
+      items: products.rows.map(toProduct),
+      total: count.rows[0]?.total ?? 0,
     };
   },
 
   findById,
 
-  countActiveByCategoryId(categoryId: number): number {
-    return products.filter(
-      (product) => product.categoryId === categoryId && product.isActive,
-    ).length;
+  async countActiveByCategoryId(categoryId: number): Promise<number> {
+    const { rows } = await query<{ total: number }>(
+      `SELECT COUNT(*)::int AS total
+       FROM public.products
+       WHERE category_id = $1 AND is_active = TRUE`,
+      [categoryId],
+    );
+
+    return rows[0]?.total ?? 0;
   },
 
-  create(input: ProductInput): Product {
-    const now = new Date().toISOString();
-    const product: Product = {
-      id: nextId,
-      ...input,
-      tagIds: [...input.tagIds],
-      createdAt: now,
-      updatedAt: now,
-    };
+  async create(input: ProductInput): Promise<Product> {
+    const id = await withTransaction(async (client) => {
+      const { rows } = await client.query<IdRow>(
+        `INSERT INTO public.products
+           (category_id, name, description, price, cost, stock, min_stock, is_active)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING id`,
+        [
+          input.categoryId,
+          input.name,
+          input.description,
+          input.price,
+          input.cost,
+          input.stock,
+          input.minStock,
+          input.isActive,
+        ],
+      );
 
-    nextId += 1;
-    products.push(product);
+      const created = rows[0];
+
+      if (!created) {
+        throw new Error("PostgreSQL no devolvió el producto creado.");
+      }
+
+      await insertTags(client, created.id, input.tagIds);
+      return created.id;
+    });
+
+    const product = await findById(id);
+
+    if (!product) {
+      throw new Error("PostgreSQL no devolvió el producto creado.");
+    }
 
     return product;
   },
 
-  replace(id: number, input: ProductInput): Product | undefined {
-    const index = products.findIndex((product) => product.id === id);
-    const current = products[index];
+  async replace(id: number, input: ProductInput): Promise<Product | undefined> {
+    const updated = await withTransaction(async (client) => {
+      const result = await client.query(
+        `UPDATE public.products
+         SET category_id = $2,
+             name = $3,
+             description = $4,
+             price = $5,
+             cost = $6,
+             stock = $7,
+             min_stock = $8,
+             is_active = $9,
+             updated_at = NOW()
+         WHERE id = $1`,
+        [
+          id,
+          input.categoryId,
+          input.name,
+          input.description,
+          input.price,
+          input.cost,
+          input.stock,
+          input.minStock,
+          input.isActive,
+        ],
+      );
 
-    if (!current) {
-      return undefined;
-    }
+      if ((result.rowCount ?? 0) === 0) {
+        return false;
+      }
 
-    const updated: Product = {
-      id: current.id,
-      categoryId: input.categoryId,
-      name: input.name,
-      description: input.description,
-      price: input.price,
-      cost: input.cost,
-      stock: input.stock,
-      minStock: input.minStock,
-      isActive: input.isActive,
-      tagIds: [...input.tagIds],
-      createdAt: current.createdAt,
-      updatedAt: new Date().toISOString(),
-    };
+      await client.query(
+        "DELETE FROM public.product_tags WHERE product_id = $1",
+        [id],
+      );
+      await insertTags(client, id, input.tagIds);
 
-    products[index] = updated;
+      return true;
+    });
 
-    return updated;
+    return updated ? findById(id) : undefined;
   },
 
-  deactivate(id: number): Product | undefined {
-    const index = products.findIndex((product) => product.id === id);
-    const current = products[index];
+  async deactivate(id: number): Promise<Product | undefined> {
+    const { rows } = await query<IdRow>(
+      `UPDATE public.products
+       SET is_active = FALSE,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING id`,
+      [id],
+    );
 
-    if (!current) {
-      return undefined;
-    }
-
-    const updated: Product = {
-      ...current,
-      isActive: false,
-      updatedAt: new Date().toISOString(),
-    };
-
-    products[index] = updated;
-
-    return updated;
+    return rows[0] ? findById(id) : undefined;
   },
 };
