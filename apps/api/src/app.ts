@@ -1,5 +1,5 @@
 import cors from "cors";
-import express from "express";
+import express, { type Express } from "express";
 import { env } from "./config/env.ts";
 import {
   errorHandler,
@@ -10,10 +10,11 @@ import categoryRouter from "./routes/category.routes.ts";
 import healthRouter from "./routes/health.routes.ts";
 import productRouter from "./routes/product.routes.ts";
 import saleRouter from "./routes/sale.routes.ts";
+import statsRouter from "./routes/stats.routes.ts";
 import tagRouter from "./routes/tag.routes.ts";
 import userRouter from "./routes/user.routes.ts";
 
-const app = express();
+const app: Express = express();
 
 app.disable("x-powered-by");
 app.use(cors({ origin: env.clientOrigins }));
@@ -25,6 +26,7 @@ app.use("/api/categories", categoryRouter);
 app.use("/api/tags", tagRouter);
 app.use("/api/products", productRouter);
 app.use("/api/sales", saleRouter);
+app.use("/api/stats", statsRouter);
 app.use("/api/users", userRouter);
 
 app.use(notFoundHandler);

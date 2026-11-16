@@ -8,7 +8,7 @@ import {
 } from "../controllers/product.controller.ts";
 import { authenticate, authorize } from "../middlewares/auth.middleware.ts";
 
-const router = Router();
+const router: Router = Router();
 
 router.use(authenticate);
 

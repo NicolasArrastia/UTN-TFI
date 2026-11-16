@@ -42,11 +42,13 @@ Artefactos asociados:
 - Login en la raíz de la aplicación y panel protegido en `/dashboard`.
 - Sección **Productos** conectada a la API: listado con filtros y paginación,
   detalle, alta, edición y baja lógica.
-- **Settings** incluye la gestión de etiquetas y el alta de usuarios (solo
-  `admin`). El perfil y las preferencias siguen simulados.
-- Los usuarios se persisten en PostgreSQL. El usuario administrador por defecto
-  es `admin` / `admin` y se crea al preparar la base de datos.
-- **Ventas** y **Estadísticas** siguen mockeadas.
+- **Settings** incluye la gestión de etiquetas, categorías y el alta de usuarios
+  (solo `admin`). El perfil y las preferencias siguen simulados.
+- Los usuarios, productos, categorías, etiquetas y ventas se persisten en
+  PostgreSQL. El usuario administrador de arranque se crea al preparar la base
+  de datos a partir de las variables `ADMIN_*`.
+- **Ventas** y **Estadísticas** consumen datos reales de la API
+  (`/api/sales`, `/api/stats`), al igual que el panel principal.
 
 ## Puesta en marcha
 
@@ -69,8 +71,9 @@ Si ya tenés un PostgreSQL propio, podés saltear este paso y apuntar
 `DATABASE_URL` a tu instancia.
 
 El script de setup crea la base si no existe, aplica
-[crear-base-datos.sql](database/crear-base-datos.sql) y siembra el usuario
-administrador. Es idempotente: se puede volver a ejecutar sin perder datos.
+[crear-base-datos.sql](database/crear-base-datos.sql) y siembra únicamente el
+usuario administrador. No carga productos, categorías, etiquetas ni ventas de
+demostración. Es idempotente: se puede volver a ejecutar sin perder datos.
 
 3. Ejecutar la API y el cliente con pnpm:
 
@@ -108,8 +111,9 @@ etiquetada por proceso. Si necesitás verlos por separado, usá
 Variables de entorno de la API: `DATABASE_URL` (por defecto la base local),
 `DATABASE_SSL` (`true` para bases externas; se activa sola cuando el host no es
 local), `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME`,
-`ADMIN_PASSWORD` y `CLIENT_URL` (orígenes permitidos por CORS, separados por
-comas). En el cliente se usa `VITE_API_URL` para apuntar a otro backend.
+`ADMIN_PASSWORD`, `ADMIN_FULLNAME`, `ADMIN_EMAIL` y `CLIENT_URL` (orígenes
+permitidos por CORS, separados por comas). En el cliente se usa `VITE_API_URL`
+para apuntar a otro backend.
 
 ## Deploy
 

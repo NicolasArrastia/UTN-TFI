@@ -96,7 +96,7 @@ export const categoryService = {
         isActive: true,
       });
 
-      return toCategoryResponse(category, role);
+      return await toCategoryResponse(category, role);
     } catch (error) {
       throw toNameConflictError(error, input.name) ?? error;
     }
@@ -134,7 +134,7 @@ export const categoryService = {
         );
       }
 
-      return toCategoryResponse(updated, role);
+      return await toCategoryResponse(updated, role);
     } catch (error) {
       throw toNameConflictError(error, next.name) ?? error;
     }

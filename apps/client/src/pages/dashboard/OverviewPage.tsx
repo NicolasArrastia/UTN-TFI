@@ -1,99 +1,125 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { StatCard } from "../../components/StatCard.tsx";
+import { StateCard } from "../../components/StateCard.tsx";
 import {
   IconCart,
   IconTrendUp,
   IconWarning,
   IconBox,
 } from "../../components/icons.tsx";
-import { formatCurrency, formatNumber } from "../../utils/format.ts";
+import { statsService } from "../../services/stats.service.ts";
+import { paymentMethodLabels, saleStatusLabels } from "../../utils/labels.ts";
+import {
+  formatCurrency,
+  formatDateTime,
+  formatMonthLabel,
+  formatNumber,
+} from "../../utils/format.ts";
+import type { OverviewStats } from "../../types/stats.types.ts";
 
-const salesByMonth = [
-  { month: "Jun", total: 980_000 },
-  { month: "Jul", total: 1_240_000 },
-  { month: "Ago", total: 1_110_000 },
-  { month: "Sep", total: 1_520_000 },
-  { month: "Oct", total: 1_680_000 },
-  { month: "Nov", total: 640_000 },
-];
+type OverviewState =
+  | { key: string; status: "loading" }
+  | { key: string; status: "error"; message: string }
+  | { key: string; status: "ready"; data: OverviewStats };
 
-const maxTotal = Math.max(...salesByMonth.map((item) => item.total));
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "No se pudo cargar el panel.";
 
-const recentSales = [
-  {
-    number: "V-000142",
-    date: "Hoy · 10:24",
-    items: 3,
-    total: 18_400,
-    method: "cash",
-    status: "completed",
-  },
-  {
-    number: "V-000141",
-    date: "Hoy · 09:51",
-    items: 5,
-    total: 32_750,
-    method: "card",
-    status: "completed",
-  },
-  {
-    number: "V-000140",
-    date: "Ayer · 18:12",
-    items: 2,
-    total: 8_900,
-    method: "transfer",
-    status: "completed",
-  },
-  {
-    number: "V-000139",
-    date: "Ayer · 17:40",
-    items: 1,
-    total: 4_200,
-    method: "cash",
-    status: "cancelled",
-  },
-];
-
-const lowStock = [
-  { name: "Yerba mate 1 kg", stock: 8, minStock: 12 },
-  { name: "Detergente 750 ml", stock: 0, minStock: 6 },
-  { name: "Azúcar 1 kg", stock: 4, minStock: 10 },
-];
-
-const methodLabels: Record<string, string> = {
-  cash: "Efectivo",
-  transfer: "Transferencia",
-  card: "Tarjeta",
-};
+const saleNumber = (number: number): string =>
+  `V-${String(number).padStart(6, "0")}`;
 
 export function OverviewPage() {
+  const [state, setState] = useState<OverviewState>({
+    key: "",
+    status: "loading",
+  });
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const requestKey = String(reloadKey);
+  const current = state.key === requestKey ? state : null;
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    statsService
+      .getOverview({ signal: controller.signal })
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setState({ key: requestKey, status: "ready", data });
+        }
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setState({
+            key: requestKey,
+            status: "error",
+            message: errorMessage(error),
+          });
+        }
+      });
+
+    return () => controller.abort();
+  }, [requestKey]);
+
+  if (!current || current.status === "loading") {
+    return (
+      <StateCard
+        title="Cargando panel"
+        message="Consultando los indicadores del comercio."
+      />
+    );
+  }
+
+  if (current.status === "error") {
+    return (
+      <StateCard
+        title="No pudimos cargar el panel"
+        message={current.message}
+        tone="error"
+        action={
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setReloadKey((current) => current + 1)}
+          >
+            Reintentar
+          </button>
+        }
+      />
+    );
+  }
+
+  const { data } = current;
+  const maxTotal = Math.max(0, ...data.monthlyRevenue.map((item) => Number(item.total)));
+
   return (
     <>
       <section className="stat-grid" aria-label="Indicadores principales">
         <StatCard
           label="Ventas del mes"
-          value={formatNumber(128)}
-          hint="+12% respecto al mes anterior"
+          value={formatNumber(data.sales.count)}
+          hint="Operaciones completadas"
           tone="brand"
           icon={<IconCart width={18} height={18} />}
         />
         <StatCard
           label="Facturación"
-          value={formatCurrency(1_684_000)}
-          hint="Noviembre en curso"
+          value={formatCurrency(Number(data.sales.revenue))}
+          hint="Mes en curso"
           tone="success"
           icon={<IconTrendUp width={18} height={18} />}
         />
         <StatCard
           label="Ticket promedio"
-          value={formatCurrency(13_156)}
-          hint="Sobre 128 operaciones"
+          value={formatCurrency(Number(data.sales.averageTicket))}
+          hint="Sobre las operaciones del mes"
           tone="brand"
           icon={<IconBox width={18} height={18} />}
         />
         <StatCard
           label="Stock bajo"
-          value={formatNumber(3)}
+          value={formatNumber(data.lowStockCount)}
           hint="Productos que necesitan reposición"
           tone="warning"
           icon={<IconWarning width={18} height={18} />}
@@ -105,25 +131,37 @@ export function OverviewPage() {
           <div className="card__header">
             <div>
               <h2 className="card__title">Facturación mensual</h2>
-              <p className="card__subtitle">Últimos seis meses (datos mock)</p>
+              <p className="card__subtitle">Últimos seis meses</p>
             </div>
             <span className="badge badge--brand">ARS</span>
           </div>
           <div className="card__body">
-            <div className="bar-chart" role="img" aria-label="Facturación por mes">
-              {salesByMonth.map((item) => (
-                <div className="bar-chart__item" key={item.month}>
-                  <div
-                    className="bar-chart__bar"
-                    style={{
-                      height: `${Math.round((item.total / maxTotal) * 100)}%`,
-                    }}
-                    title={formatCurrency(item.total)}
-                  />
-                  <span className="bar-chart__label">{item.month}</span>
-                </div>
-              ))}
-            </div>
+            {maxTotal === 0 ? (
+              <p className="card__subtitle">
+                Todavía no hay ventas completadas para graficar.
+              </p>
+            ) : (
+              <div
+                className="bar-chart"
+                role="img"
+                aria-label="Facturación por mes"
+              >
+                {data.monthlyRevenue.map((item) => (
+                  <div className="bar-chart__item" key={item.month}>
+                    <div
+                      className="bar-chart__bar"
+                      style={{
+                        height: `${Math.round((Number(item.total) / maxTotal) * 100)}%`,
+                      }}
+                      title={formatCurrency(Number(item.total))}
+                    />
+                    <span className="bar-chart__label">
+                      {formatMonthLabel(item.month)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -135,24 +173,30 @@ export function OverviewPage() {
             </div>
           </div>
           <div className="card__body">
-            <ul className="alert-list">
-              {lowStock.map((item) => (
-                <li className="alert-item" key={item.name}>
-                  <span className="alert-item__icon">
-                    <IconWarning width={16} height={16} />
-                  </span>
-                  <div className="alert-item__text">
-                    <strong>{item.name}</strong>
-                    <span>
-                      {item.stock} de {item.minStock} unidades mínimas
+            {data.lowStockProducts.length === 0 ? (
+              <p className="card__subtitle">
+                No hay productos por debajo del stock mínimo.
+              </p>
+            ) : (
+              <ul className="alert-list">
+                {data.lowStockProducts.map((item) => (
+                  <li className="alert-item" key={item.id}>
+                    <span className="alert-item__icon">
+                      <IconWarning width={16} height={16} />
                     </span>
-                  </div>
-                  <Link className="alert-item__link" to="/dashboard/products">
-                    Ver
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                    <div className="alert-item__text">
+                      <strong>{item.name}</strong>
+                      <span>
+                        {item.stock} de {item.minStock} unidades mínimas
+                      </span>
+                    </div>
+                    <Link className="alert-item__link" to="/dashboard/products">
+                      Ver
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </section>
       </div>
@@ -168,44 +212,57 @@ export function OverviewPage() {
           </Link>
         </div>
         <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Número</th>
-                <th>Fecha</th>
-                <th>Productos</th>
-                <th>Total</th>
-                <th>Pago</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentSales.map((sale) => (
-                <tr key={sale.number}>
-                  <td className="cell-strong">{sale.number}</td>
-                  <td className="cell-muted">{sale.date}</td>
-                  <td>{sale.items}</td>
-                  <td className="cell-strong">{formatCurrency(sale.total)}</td>
-                  <td>
-                    <span className="badge badge--neutral">
-                      {methodLabels[sale.method]}
-                    </span>
-                  </td>
-                  <td>
-                    <span
-                      className={`badge ${
-                        sale.status === "completed"
-                          ? "badge--success"
-                          : "badge--danger"
-                      }`}
-                    >
-                      {sale.status === "completed" ? "Completada" : "Anulada"}
-                    </span>
-                  </td>
+          {data.recentSales.length === 0 ? (
+            <div className="card__body">
+              <p className="card__subtitle">
+                Las ventas registradas van a aparecer acá.
+              </p>
+            </div>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Fecha</th>
+                  <th>Productos</th>
+                  <th>Total</th>
+                  <th>Pago</th>
+                  <th>Estado</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.recentSales.map((sale) => (
+                  <tr key={sale.id}>
+                    <td className="cell-strong">{saleNumber(sale.number)}</td>
+                    <td className="cell-muted">
+                      {formatDateTime(sale.createdAt)}
+                    </td>
+                    <td>{sale.itemCount}</td>
+                    <td className="cell-strong">
+                      {formatCurrency(Number(sale.total))}
+                    </td>
+                    <td>
+                      <span className="badge badge--neutral">
+                        {paymentMethodLabels[sale.paymentMethod] ??
+                          sale.paymentMethod}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`badge ${
+                          sale.status === "completed"
+                            ? "badge--success"
+                            : "badge--danger"
+                        }`}
+                      >
+                        {saleStatusLabels[sale.status] ?? sale.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </section>
     </>

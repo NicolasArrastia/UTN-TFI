@@ -430,38 +430,6 @@ p {
   padding: 13px 18px;
 }
 
-.demo-credentials {
-  margin-top: 28px;
-  padding: 16px 18px;
-  border: 1px dashed #cbd5e1;
-  border-radius: var(--radius);
-  background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.demo-credentials strong {
-  display: block;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.demo-credentials p {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.demo-credentials code {
-  background: #eef2ff;
-  color: var(--brand-dark);
-  border-radius: 5px;
-  padding: 1px 6px;
-  font-size: 12.5px;
-  font-weight: 600;
-}
-
 @media (max-width: 960px) {
   .login-page {
     grid-template-columns: 1fr;
@@ -480,11 +448,6 @@ p {
   .login-panel {
     padding: 32px 18px;
     align-items: start;
-  }
-
-  .demo-credentials {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 
