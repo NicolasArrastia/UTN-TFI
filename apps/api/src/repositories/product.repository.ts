@@ -4,6 +4,7 @@ import type {
   Product,
   ProductInput,
   ProductListQuery,
+  UpdateProductInput,
 } from "../types/product.types.ts";
 
 interface ProductRow extends QueryResultRow {
@@ -16,13 +17,17 @@ interface ProductRow extends QueryResultRow {
   stock: number;
   minStock: number;
   isActive: boolean;
+  tagIds: number[];
   createdAt: Date;
   updatedAt: Date;
-  tagIds: number[];
 }
 
-interface IdRow extends QueryResultRow {
+interface ProductIdRow extends QueryResultRow {
   id: number;
+}
+
+interface CountRow extends QueryResultRow {
+  total: string;
 }
 
 const PRODUCT_COLUMNS = `
@@ -35,18 +40,14 @@ const PRODUCT_COLUMNS = `
   p.stock,
   p.min_stock AS "minStock",
   p.is_active AS "isActive",
+  ARRAY(
+    SELECT pt.tag_id
+    FROM public.product_tags AS pt
+    WHERE pt.product_id = p.id
+    ORDER BY pt.tag_id
+  ) AS "tagIds",
   p.created_at AS "createdAt",
-  p.updated_at AS "updatedAt",
-  COALESCE(
-    array_agg(pt.tag_id ORDER BY pt.tag_id) FILTER (WHERE pt.tag_id IS NOT NULL),
-    '{}'
-  ) AS "tagIds"
-`;
-
-const PRODUCT_SELECT = `
-  SELECT ${PRODUCT_COLUMNS}
-  FROM public.products AS p
-  LEFT JOIN public.product_tags AS pt ON pt.product_id = p.id
+  p.updated_at AS "updatedAt"
 `;
 
 const toProduct = (row: ProductRow): Product => ({
@@ -64,41 +65,72 @@ const toProduct = (row: ProductRow): Product => ({
   updatedAt: new Date(row.updatedAt).toISOString(),
 });
 
-interface FilterClause {
-  conditions: string[];
-  values: unknown[];
-}
+const findByIdWithClient = async (
+  client: PoolClient,
+  id: number,
+): Promise<Product | undefined> => {
+  const result = await client.query<ProductRow>(
+    `SELECT ${PRODUCT_COLUMNS}
+     FROM public.products AS p
+     WHERE p.id = $1
+     LIMIT 1`,
+    [id],
+  );
 
-const buildFilterClause = (filters: ProductListQuery): FilterClause => {
+  const row = result.rows[0];
+  return row ? toProduct(row) : undefined;
+};
+
+const replaceTags = async (
+  client: PoolClient,
+  productId: number,
+  tagIds: number[],
+): Promise<void> => {
+  await client.query(
+    "DELETE FROM public.product_tags WHERE product_id = $1",
+    [productId],
+  );
+
+  if (tagIds.length === 0) {
+    return;
+  }
+
+  await client.query(
+    `INSERT INTO public.product_tags (product_id, tag_id)
+     SELECT $1, tag_id
+     FROM unnest($2::integer[]) AS tag_id`,
+    [productId, tagIds],
+  );
+};
+
+const buildFilters = (
+  filters: ProductListQuery,
+): { where: string; values: unknown[] } => {
   const conditions: string[] = [];
   const values: unknown[] = [];
 
-  const addCondition = (condition: (placeholder: string) => string, value: unknown) => {
+  const addValue = (value: unknown): string => {
     values.push(value);
-    conditions.push(condition(`$${values.length}`));
+    return `$${values.length}`;
   };
 
   if (filters.isActive !== "all") {
-    addCondition((placeholder) => `p.is_active = ${placeholder}`, filters.isActive);
+    conditions.push(`p.is_active = ${addValue(filters.isActive)}`);
   }
 
   if (filters.categoryId !== undefined) {
-    addCondition(
-      (placeholder) => `p.category_id = ${placeholder}`,
-      filters.categoryId,
-    );
+    conditions.push(`p.category_id = ${addValue(filters.categoryId)}`);
   }
 
   if (filters.tagId !== undefined) {
-    addCondition(
-      (placeholder) =>
-        `EXISTS (
-           SELECT 1
-           FROM public.product_tags AS filter_tags
-           WHERE filter_tags.product_id = p.id
-             AND filter_tags.tag_id = ${placeholder}
-         )`,
-      filters.tagId,
+    const placeholder = addValue(filters.tagId);
+    conditions.push(
+      `EXISTS (
+        SELECT 1
+        FROM public.product_tags AS filtered_tags
+        WHERE filtered_tags.product_id = p.id
+          AND filtered_tags.tag_id = ${placeholder}
+      )`,
     );
   }
 
@@ -107,66 +139,49 @@ const buildFilterClause = (filters: ProductListQuery): FilterClause => {
   }
 
   if (filters.search !== undefined) {
-    addCondition(
-      (placeholder) => `strpos(lower(p.name), lower(${placeholder})) > 0`,
-      filters.search,
-    );
+    const placeholder = addValue(filters.search);
+    conditions.push(`strpos(lower(p.name), lower(${placeholder})) > 0`);
   }
 
-  return { conditions, values };
+  return {
+    where: conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "",
+    values,
+  };
 };
 
-const toWhereClause = (conditions: string[]): string =>
-  conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-const findById = async (id: number): Promise<Product | undefined> => {
-  const { rows } = await query<ProductRow>(
-    `${PRODUCT_SELECT}
-     WHERE p.id = $1
-     GROUP BY p.id
-     LIMIT 1`,
-    [id],
-  );
-
-  const row = rows[0];
-  return row ? toProduct(row) : undefined;
-};
-
-const insertTags = async (
-  client: PoolClient,
-  productId: number,
-  tagIds: number[],
-): Promise<void> => {
-  if (tagIds.length === 0) {
-    return;
-  }
-
-  await client.query(
-    `INSERT INTO public.product_tags (product_id, tag_id)
-     SELECT $1, unnest($2::integer[])`,
-    [productId, tagIds],
-  );
+const updateFields: {
+  [K in Exclude<keyof UpdateProductInput, "tagIds">]: string;
+} = {
+  categoryId: "category_id",
+  name: "name",
+  description: "description",
+  price: "price",
+  cost: "cost",
+  stock: "stock",
+  minStock: "min_stock",
+  isActive: "is_active",
 };
 
 export const productRepository = {
   async findAll(
     filters: ProductListQuery,
   ): Promise<{ items: Product[]; total: number }> {
-    const { conditions, values } = buildFilterClause(filters);
-    const where = toWhereClause(conditions);
+    const { where, values } = buildFilters(filters);
     const offset = (filters.page - 1) * filters.limit;
+    const limitPlaceholder = `$${values.length + 1}`;
+    const offsetPlaceholder = `$${values.length + 2}`;
 
-    const [products, count] = await Promise.all([
+    const [productsResult, countResult] = await Promise.all([
       query<ProductRow>(
-        `${PRODUCT_SELECT}
+        `SELECT ${PRODUCT_COLUMNS}
+         FROM public.products AS p
          ${where}
-         GROUP BY p.id
-         ORDER BY lower(p.name) ASC, p.id ASC
-         LIMIT $${values.length + 1} OFFSET $${values.length + 2}`,
+         ORDER BY lower(p.name), p.id
+         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
         [...values, filters.limit, offset],
       ),
-      query<{ total: number }>(
-        `SELECT COUNT(*)::int AS total
+      query<CountRow>(
+        `SELECT COUNT(*)::text AS total
          FROM public.products AS p
          ${where}`,
         values,
@@ -174,27 +189,38 @@ export const productRepository = {
     ]);
 
     return {
-      items: products.rows.map(toProduct),
-      total: count.rows[0]?.total ?? 0,
+      items: productsResult.rows.map(toProduct),
+      total: Number(countResult.rows[0]?.total ?? 0),
     };
   },
 
-  findById,
+  async findById(id: number): Promise<Product | undefined> {
+    const result = await query<ProductRow>(
+      `SELECT ${PRODUCT_COLUMNS}
+       FROM public.products AS p
+       WHERE p.id = $1
+       LIMIT 1`,
+      [id],
+    );
+
+    const row = result.rows[0];
+    return row ? toProduct(row) : undefined;
+  },
 
   async countActiveByCategoryId(categoryId: number): Promise<number> {
-    const { rows } = await query<{ total: number }>(
-      `SELECT COUNT(*)::int AS total
+    const result = await query<CountRow>(
+      `SELECT COUNT(*)::text AS total
        FROM public.products
        WHERE category_id = $1 AND is_active = TRUE`,
       [categoryId],
     );
 
-    return rows[0]?.total ?? 0;
+    return Number(result.rows[0]?.total ?? 0);
   },
 
   async create(input: ProductInput): Promise<Product> {
-    const id = await withTransaction(async (client) => {
-      const { rows } = await client.query<IdRow>(
+    return withTransaction(async (client) => {
+      const result = await client.query<ProductIdRow>(
         `INSERT INTO public.products
            (category_id, name, description, price, cost, stock, min_stock, is_active)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -211,78 +237,83 @@ export const productRepository = {
         ],
       );
 
-      const created = rows[0];
+      const created = result.rows[0];
 
       if (!created) {
         throw new Error("PostgreSQL no devolvió el producto creado.");
       }
 
-      await insertTags(client, created.id, input.tagIds);
-      return created.id;
-    });
+      await replaceTags(client, created.id, input.tagIds);
 
-    const product = await findById(id);
+      const product = await findByIdWithClient(client, created.id);
 
-    if (!product) {
-      throw new Error("PostgreSQL no devolvió el producto creado.");
-    }
-
-    return product;
-  },
-
-  async replace(id: number, input: ProductInput): Promise<Product | undefined> {
-    const updated = await withTransaction(async (client) => {
-      const result = await client.query(
-        `UPDATE public.products
-         SET category_id = $2,
-             name = $3,
-             description = $4,
-             price = $5,
-             cost = $6,
-             stock = $7,
-             min_stock = $8,
-             is_active = $9,
-             updated_at = NOW()
-         WHERE id = $1`,
-        [
-          id,
-          input.categoryId,
-          input.name,
-          input.description,
-          input.price,
-          input.cost,
-          input.stock,
-          input.minStock,
-          input.isActive,
-        ],
-      );
-
-      if ((result.rowCount ?? 0) === 0) {
-        return false;
+      if (!product) {
+        throw new Error("No se pudo recuperar el producto creado.");
       }
 
-      await client.query(
-        "DELETE FROM public.product_tags WHERE product_id = $1",
-        [id],
-      );
-      await insertTags(client, id, input.tagIds);
-
-      return true;
+      return product;
     });
+  },
 
-    return updated ? findById(id) : undefined;
+  async update(
+    id: number,
+    input: UpdateProductInput,
+  ): Promise<Product | undefined> {
+    return withTransaction(async (client) => {
+      const assignments: string[] = [];
+      const values: unknown[] = [id];
+
+      for (const key of Object.keys(updateFields) as Array<
+        keyof typeof updateFields
+      >) {
+        const value = input[key];
+
+        if (value === undefined) {
+          continue;
+        }
+
+        values.push(value);
+        assignments.push(`${updateFields[key]} = $${values.length}`);
+      }
+
+      assignments.push("updated_at = NOW()");
+
+      const result = await client.query<ProductIdRow>(
+        `UPDATE public.products
+         SET ${assignments.join(", ")}
+         WHERE id = $1
+         RETURNING id`,
+        values,
+      );
+
+      if (!result.rows[0]) {
+        return undefined;
+      }
+
+      if (input.tagIds !== undefined) {
+        await replaceTags(client, id, input.tagIds);
+      }
+
+      return findByIdWithClient(client, id);
+    });
   },
 
   async deactivate(id: number): Promise<Product | undefined> {
-    const { rows } = await query<IdRow>(
-      `UPDATE public.products
-       SET is_active = FALSE,
-           updated_at = NOW()
-       WHERE id = $1
-       RETURNING id`,
-      [id],
-    );
+    return withTransaction(async (client) => {
+      const result = await client.query<ProductIdRow>(
+        `UPDATE public.products
+         SET is_active = FALSE,
+             updated_at = NOW()
+         WHERE id = $1
+         RETURNING id`,
+        [id],
+      );
 
-    return rows[0] ? findById(id) : undefined;
+      if (!result.rows[0]) {
+        return undefined;
+      }
+
+      return findByIdWithClient(client, id);
+    });
   },
 };

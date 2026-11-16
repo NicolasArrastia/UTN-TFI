@@ -5,9 +5,7 @@ import { tagRepository } from "../repositories/tag.repository.ts";
 import type {
   PaginatedProducts,
   Product,
-  ProductInput,
   ProductResponse,
-  UpdateProductInput,
 } from "../types/product.types.ts";
 import {
   parseCreateProductInput,
@@ -103,23 +101,6 @@ const getProductOrThrow = async (id: number): Promise<Product> => {
   return product;
 };
 
-const buildUpdatedInput = (
-  product: Product,
-  input: UpdateProductInput,
-): ProductInput => ({
-  categoryId: input.categoryId ?? product.categoryId,
-  name: input.name ?? product.name,
-  description:
-    input.description !== undefined ? input.description : product.description,
-  price: input.price ?? product.price,
-  cost: input.cost ?? product.cost,
-  stock: input.stock ?? product.stock,
-  minStock: input.minStock ?? product.minStock,
-  isActive: input.isActive ?? product.isActive,
-  tagIds:
-    input.tagIds !== undefined ? [...input.tagIds] : [...product.tagIds],
-});
-
 export const productService = {
   async list(query: unknown): Promise<PaginatedProducts> {
     const filters = parseProductListQuery(query);
@@ -163,10 +144,7 @@ export const productService = {
       await ensureAssignableTags(input.tagIds, product.tagIds);
     }
 
-    const updated = await productRepository.replace(
-      id,
-      buildUpdatedInput(product, input),
-    );
+    const updated = await productRepository.update(id, input);
 
     if (!updated) {
       throw new AppError("Producto no encontrado.", 404, "PRODUCT_NOT_FOUND");
