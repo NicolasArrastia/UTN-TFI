@@ -5,9 +5,6 @@ import { IconEye, IconEyeOff, IconLock, IconStore, IconUser } from "../component
 import { useAuth } from "../hooks/useAuth.ts";
 import { getLoginErrorMessage, notify } from "../services/notifications.ts";
 
-const DEFAULT_USERNAME = "admin";
-const DEFAULT_PASSWORD = "admin";
-
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -37,12 +34,6 @@ export function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const fillDefaultCredentials = () => {
-    setUsername(DEFAULT_USERNAME);
-    setPassword(DEFAULT_PASSWORD);
-    notify.info("Credenciales de prueba completadas.", "🔑");
   };
 
   return (
@@ -100,7 +91,6 @@ export function LoginPage() {
                   name="username"
                   type="text"
                   autoComplete="username"
-                  placeholder="admin"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
                   disabled={isSubmitting}
@@ -154,23 +144,6 @@ export function LoginPage() {
               )}
             </button>
           </form>
-
-          <div className="demo-credentials">
-            <div>
-              <strong>Acceso de prueba</strong>
-              <p>
-                Usuario <code>admin</code> · Contraseña <code>admin</code>
-              </p>
-            </div>
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={fillDefaultCredentials}
-              disabled={isSubmitting}
-            >
-              Completar
-            </button>
-          </div>
         </div>
       </section>
     </main>
