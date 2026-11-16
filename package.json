@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently --kill-others-on-fail --names api,client --prefix-colors blue,magenta \"npm run dev:api\" \"npm run dev:client\"",
     "dev:api": "npm run dev -w api",
-    "dev:client": "npm run dev -w client"
+    "dev:client": "npm run dev -w client",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down"
   },
   "workspaces": [
     "apps/api",
