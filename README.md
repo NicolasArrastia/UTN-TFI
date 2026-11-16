@@ -90,6 +90,12 @@ La API necesita PostgreSQL disponible al arrancar: si la base no está levantada
 el proceso de la API termina con `ECONNREFUSED` y `pnpm dev` cierra también al
 cliente.
 
+Para trabajar sin PostgreSQL local ni Docker, copiá `.env.example` a `.env` y
+poné en `DATABASE_URL` la *External Database URL* de Render (la *Internal* solo
+resuelve dentro de la red de Render). El SSL se activa solo porque el host no es
+local, así que `pnpm dev` levanta la API directo contra la base desplegada. Las
+variables del `.env` no pisan las que ya existan en el entorno.
+
 Ambos comandos levantan la API y el cliente en paralelo, con la salida
 etiquetada por proceso. Si necesitás verlos por separado, usá
 `npm run dev -w api` y `npm run dev -w client` en terminales distintas.
