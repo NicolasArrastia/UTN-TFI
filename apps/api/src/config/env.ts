@@ -35,6 +35,9 @@ const DEFAULT_DATABASE_URL =
 
 const DEFAULT_CLIENT_URL = "http://localhost:5173";
 
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "admin";
+
 /**
  * Orígenes permitidos para CORS. Acepta una lista separada por comas para
  * cubrir, por ejemplo, el dominio de producción y los previews de Vercel.
@@ -53,12 +56,16 @@ const isLocalDatabase = /(^|[@/])(localhost|127\.0\.0\.1|\[::1\])(:|\/)/.test(
   databaseUrl,
 );
 
+const adminUsername = process.env.ADMIN_USERNAME ?? DEFAULT_ADMIN_USERNAME;
+
 export const env = {
   port: toNumber(process.env.PORT, 3000),
   jwtSecret: process.env.JWT_SECRET ?? "dev-secret-change-me",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "8h",
-  adminUsername: process.env.ADMIN_USERNAME ?? "admin",
-  adminPassword: process.env.ADMIN_PASSWORD ?? "admin",
+  adminUsername,
+  adminPassword: process.env.ADMIN_PASSWORD ?? DEFAULT_ADMIN_PASSWORD,
+  adminFullname: process.env.ADMIN_FULLNAME ?? adminUsername,
+  adminEmail: process.env.ADMIN_EMAIL ?? `${adminUsername}@example.com`,
   databaseUrl,
   databaseSsl: toBoolean(process.env.DATABASE_SSL, !isLocalDatabase),
   clientOrigins: toOriginList(process.env.CLIENT_URL),
