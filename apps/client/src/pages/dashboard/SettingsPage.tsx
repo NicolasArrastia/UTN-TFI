@@ -292,24 +292,6 @@ export function SettingsPage() {
           </div>
         </div>
       </section>
-
-      <section className="card danger-zone">
-        <div>
-          <h2 className="card__title">Zona sensible</h2>
-          <p className="card__subtitle">
-            Acciones que afectan a todas las sesiones del comercio.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          onClick={() =>
-            notify.info("La gestión de sesiones estará disponible pronto.")
-          }
-        >
-          Cerrar todas las sesiones
-        </button>
-      </section>
     </>
   );
 
