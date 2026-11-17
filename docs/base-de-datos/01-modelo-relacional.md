@@ -143,9 +143,12 @@ Detalle de una venta: los productos que la componen y la cantidad vendida de cad
 | product_name | varchar(150)  | Nombre del producto en el momento de la venta         |
 | quantity     | int           | Cantidad vendida                                      |
 | unit_price   | decimal(10,2) | Precio unitario aplicado en la venta                  |
+| unit_cost    | decimal(10,2) | Costo unitario del producto en el momento de la venta |
 | subtotal     | decimal(10,2) | Resultado de multiplicar cantidad por precio unitario |
 
-`product_name` y `unit_price` son copias de los valores que tenía el producto al momento de la venta, y no referencias a los valores actuales. Esto es intencional: si mañana se renombra un producto o se le cambia el precio, el historial de ventas anteriores debe seguir mostrando lo que realmente se cobró y lo que realmente se vendió.
+`product_name`, `unit_price` y `unit_cost` son copias de los valores que tenía el producto al momento de la venta, y no referencias a los valores actuales. Esto es intencional: si mañana se renombra un producto o se le cambian el precio o el costo, el historial de ventas anteriores debe seguir mostrando lo que realmente se cobró y lo que realmente se vendió.
+
+`unit_cost` se guarda para que la ganancia y el margen de las estadísticas se calculen con el costo vigente al momento de cada venta. Si se usara `products.cost`, modificar el costo actual reescribiría la ganancia histórica de todas las ventas anteriores. En las ventas registradas antes de incorporar esta columna, el valor se completa con el costo vigente al aplicar la migración, que es el mejor dato disponible.
 
 `subtotal` también se almacena en lugar de recalcularse, por el mismo motivo: el total de una venta histórica no debe cambiar aunque se ajusten los datos del producto.
 
@@ -166,6 +169,7 @@ ALTER TABLE products ADD CONSTRAINT chk_products_min_stock CHECK (min_stock >= 0
 
 -- Una venta solo puede contener cantidades positivas
 ALTER TABLE sale_products ADD CONSTRAINT chk_sale_products_quantity CHECK (quantity > 0);
+ALTER TABLE sale_products ADD CONSTRAINT chk_sale_products_unit_cost CHECK (unit_cost >= 0);
 ALTER TABLE sale_products ADD CONSTRAINT chk_sale_products_subtotal CHECK (subtotal >= 0);
 ALTER TABLE sales ADD CONSTRAINT chk_sales_total CHECK (total >= 0);
 ```
