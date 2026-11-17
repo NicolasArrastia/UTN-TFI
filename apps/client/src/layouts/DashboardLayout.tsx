@@ -16,20 +16,40 @@ import { useAuth } from "../hooks/useAuth.ts";
 import { notify } from "../services/notifications.ts";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Resumen", icon: IconGrid, end: true },
-  { to: "/dashboard/products", label: "Productos", icon: IconBox, end: false },
-  { to: "/dashboard/sales", label: "Ventas", icon: IconCart, end: false },
+  {
+    to: "/dashboard",
+    label: "Resumen",
+    icon: IconGrid,
+    end: true,
+    adminOnly: true,
+  },
+  {
+    to: "/dashboard/products",
+    label: "Productos",
+    icon: IconBox,
+    end: false,
+    adminOnly: false,
+  },
+  {
+    to: "/dashboard/sales",
+    label: "Ventas",
+    icon: IconCart,
+    end: false,
+    adminOnly: false,
+  },
   {
     to: "/dashboard/stats",
     label: "Estadísticas",
     icon: IconChart,
     end: false,
+    adminOnly: true,
   },
   {
     to: "/dashboard/settings",
     label: "Settings",
     icon: IconSettings,
     end: false,
+    adminOnly: false,
   },
 ];
 
@@ -113,6 +133,10 @@ export function DashboardLayout() {
 
   const roleLabel = user?.role === "admin" ? "Administrador" : "Empleado";
 
+  const navItems = NAV_ITEMS.filter(
+    ({ adminOnly }) => !adminOnly || user?.role === "admin",
+  );
+
   const handleLogout = () => {
     logout();
     notify.success("Sesión cerrada correctamente.");
@@ -147,7 +171,7 @@ export function DashboardLayout() {
           <p className="mx-3 mb-2 mt-2.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-500">
             Panel
           </p>
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+          {navItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}

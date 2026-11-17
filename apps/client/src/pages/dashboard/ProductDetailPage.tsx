@@ -190,7 +190,7 @@ export function ProductDetailPage() {
     );
   }
 
-  const margin = product.price - product.cost;
+  const { cost } = product;
 
   return (
     <div className={PAGE_SHELL}>
@@ -261,26 +261,32 @@ export function ProductDetailPage() {
               </p>
               <p className="mt-1 text-xs text-muted">IVA incluido</p>
             </div>
-            <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
-                Costo
-              </p>
-              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
-                {formatCurrency(product.cost)}
-              </p>
-              <p className="mt-1 text-xs text-muted">Costo de reposición</p>
-            </div>
-            <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
-                Margen bruto
-              </p>
-              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
-                {formatCurrency(margin)}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {getMarginHint(product.price, product.cost)}
-              </p>
-            </div>
+            {cost === undefined ? null : (
+              <>
+                <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
+                    Costo
+                  </p>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
+                    {formatCurrency(cost)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    Costo de reposición
+                  </p>
+                </div>
+                <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
+                    Margen bruto
+                  </p>
+                  <p className="mt-1.5 flex flex-wrap items-center gap-2 text-[19px] font-bold tracking-[-0.01em]">
+                    {formatCurrency(product.price - cost)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    {getMarginHint(product.price, cost)}
+                  </p>
+                </div>
+              </>
+            )}
             <div className="rounded-xl border border-line bg-[#fbfcfe] px-[18px] py-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted">
                 Stock disponible
