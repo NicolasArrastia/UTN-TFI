@@ -111,15 +111,16 @@ export const saleRepository = {
     };
   },
 
-  async list(page: number, limit: number) {
+  async list(page: number, limit: number, userId: number | null) {
     const offset = (page - 1) * limit;
 
     const { rows } = await query<SaleRow>(
       `SELECT ${saleColumns}
        FROM public.sales
+       WHERE ($1::integer IS NULL OR user_id = $1)
        ORDER BY created_at DESC, id DESC
-       LIMIT $1 OFFSET $2`,
-      [limit + 1, offset],
+       LIMIT $2 OFFSET $3`,
+      [userId, limit + 1, offset],
     );
 
     return {
@@ -128,14 +129,14 @@ export const saleRepository = {
     };
   },
 
-  async findById(id: number) {
+  async findById(id: number, userId: number | null) {
     const {
       rows: [sale],
     } = await query<SaleRow>(
       `SELECT ${saleColumns}
        FROM public.sales
-       WHERE id = $1`,
-      [id],
+       WHERE id = $1 AND ($2::integer IS NULL OR user_id = $2)`,
+      [id, userId],
     );
 
     if (!sale) {
