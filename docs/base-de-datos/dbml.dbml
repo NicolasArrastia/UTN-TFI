@@ -81,7 +81,7 @@ Table sale_products {
   product_name varchar(150) [not null]
   quantity int [not null]
   unit_price decimal(10,2) [not null]
-  unit_cost decimal(10,2) [not null, note: 'Copia del costo unitario al momento de la venta, para calcular la ganancia histórica']
+  unit_cost decimal(10,2) [not null]
   subtotal decimal(10,2) [not null]
 
   indexes {
