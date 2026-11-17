@@ -59,6 +59,17 @@ const parseCatalogSearch = (value: unknown): string => {
   return value.trim();
 };
 
+/**
+ * Los administradores ven todas las ventas; los empleados solo las propias.
+ */
+const getSalesOwnerFilter = (req: Request): number | null => {
+  if (!req.auth) {
+    throw new AppError("No autenticado.", 401, "UNAUTHORIZED");
+  }
+
+  return req.auth.role === "admin" ? null : req.auth.sub;
+};
+
 export const listSaleCatalog = async (
   req: Request,
   res: Response,
@@ -83,7 +94,9 @@ export const listSales = async (
   try {
     const { page, limit } = parsePagination(req);
 
-    res.status(200).json(await saleRepository.list(page, limit));
+    res
+      .status(200)
+      .json(await saleRepository.list(page, limit, getSalesOwnerFilter(req)));
   } catch (error) {
     next(error);
   }
@@ -96,7 +109,7 @@ export const getSale = async (
 ): Promise<void> => {
   try {
     const id = parsePositiveInteger(req.params.id, "El ID de la venta", MAX_ID);
-    const sale = await saleRepository.findById(id);
+    const sale = await saleRepository.findById(id, getSalesOwnerFilter(req));
 
     if (!sale) {
       throw new AppError("Venta no encontrada.", 404, "SALE_NOT_FOUND");
