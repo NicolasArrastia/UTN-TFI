@@ -1,6 +1,6 @@
 import type { QueryResultRow } from "pg";
 import { query } from "../config/database.ts";
-import type { User, UserRole } from "../types/auth.types.ts";
+import type { PublicUser, User, UserRole } from "../types/auth.types.ts";
 
 interface UserRow extends QueryResultRow {
   id: number;
@@ -8,6 +8,22 @@ interface UserRow extends QueryResultRow {
   username: string;
   email: string;
   passwordHash: string;
+  role: UserRole;
+  isActive: boolean;
+}
+
+interface PublicUserRow extends QueryResultRow {
+  id: number;
+  fullname: string;
+  username: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+}
+
+export interface UpdateUserRecord {
+  fullname: string;
+  email: string;
   role: UserRole;
   isActive: boolean;
 }
@@ -22,7 +38,37 @@ const USER_COLUMNS = `
   is_active AS "isActive"
 `;
 
+const PUBLIC_USER_COLUMNS = `
+  id,
+  fullname,
+  username,
+  email,
+  role,
+  is_active AS "isActive"
+`;
+
+const toPublicUser = (row: PublicUserRow): PublicUser => ({
+  id: row.id,
+  fullname: row.fullname,
+  username: row.username,
+  email: row.email,
+  role: row.role,
+  isActive: row.isActive,
+});
+
 export const userRepository = {
+  async findAll(includeInactive: boolean): Promise<PublicUser[]> {
+    const filter = includeInactive ? "" : "WHERE is_active = TRUE";
+    const result = await query<PublicUserRow>(
+      `SELECT ${PUBLIC_USER_COLUMNS}
+       FROM users
+       ${filter}
+       ORDER BY fullname ASC, username ASC`,
+    );
+
+    return result.rows.map(toPublicUser);
+  },
+
   async findByUsername(username: string): Promise<User | undefined> {
     const result = await query<UserRow>(
       `SELECT ${USER_COLUMNS}
@@ -81,6 +127,40 @@ export const userRepository = {
     }
 
     return created;
+  },
+
+  async update(
+    id: number,
+    user: UpdateUserRecord,
+  ): Promise<PublicUser | undefined> {
+    const result = await query<PublicUserRow>(
+      `UPDATE users
+       SET fullname = $2,
+           email = $3,
+           role = $4,
+           is_active = $5,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING ${PUBLIC_USER_COLUMNS}`,
+      [id, user.fullname, user.email, user.role, user.isActive],
+    );
+
+    const row = result.rows[0];
+    return row ? toPublicUser(row) : undefined;
+  },
+
+  async softDelete(id: number): Promise<PublicUser | undefined> {
+    const result = await query<PublicUserRow>(
+      `UPDATE users
+       SET is_active = FALSE,
+           updated_at = NOW()
+       WHERE id = $1
+       RETURNING ${PUBLIC_USER_COLUMNS}`,
+      [id],
+    );
+
+    const row = result.rows[0];
+    return row ? toPublicUser(row) : undefined;
   },
 
   async updatePassword(id: number, passwordHash: string): Promise<boolean> {
