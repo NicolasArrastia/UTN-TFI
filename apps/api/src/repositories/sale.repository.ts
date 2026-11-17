@@ -41,6 +41,7 @@ interface SaleProductRow {
   id: number;
   name: string;
   price_in_cents: string;
+  cost_in_cents: string;
   stock: number;
   is_active: boolean;
 }
@@ -165,6 +166,7 @@ export const saleRepository = {
     return withTransaction(async (client) => {
       const { rows: products } = await client.query<SaleProductRow>(
         `SELECT id, name, (price * 100)::bigint::text AS price_in_cents,
+                (cost * 100)::bigint::text AS cost_in_cents,
                 stock, is_active
          FROM public.products
          WHERE id = ANY($1::integer[])
@@ -176,7 +178,7 @@ export const saleRepository = {
       const productsById = new Map(
         products.map((product) => [product.id, product] as const),
       );
-      const items: SaleItemResponse[] = [];
+      const items: Array<{ item: SaleItemResponse; unitCost: string }> = [];
       let totalInCents = 0n;
 
       for (const [productId, quantity] of quantities) {
@@ -207,6 +209,7 @@ export const saleRepository = {
         }
 
         const unitPriceInCents = BigInt(product.price_in_cents);
+        const unitCostInCents = BigInt(product.cost_in_cents);
         const subtotalInCents = unitPriceInCents * BigInt(quantity);
         totalInCents += subtotalInCents;
 
@@ -219,11 +222,14 @@ export const saleRepository = {
         }
 
         items.push({
-          productId,
-          productName: product.name,
-          quantity,
-          unitPrice: toDecimal(unitPriceInCents),
-          subtotal: toDecimal(subtotalInCents),
+          item: {
+            productId,
+            productName: product.name,
+            quantity,
+            unitPrice: toDecimal(unitPriceInCents),
+            subtotal: toDecimal(subtotalInCents),
+          },
+          unitCost: toDecimal(unitCostInCents),
         });
       }
 
@@ -241,17 +247,18 @@ export const saleRepository = {
         throw new AppError("No se pudo registrar la venta.");
       }
 
-      for (const item of items) {
+      for (const { item, unitCost } of items) {
         await client.query(
           `INSERT INTO public.sale_products
-             (sale_id, product_id, product_name, quantity, unit_price, subtotal)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+             (sale_id, product_id, product_name, quantity, unit_price, unit_cost, subtotal)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
             sale.id,
             item.productId,
             item.productName,
             item.quantity,
             item.unitPrice,
+            unitCost,
             item.subtotal,
           ],
         );
@@ -272,7 +279,7 @@ export const saleRepository = {
         total,
         status: "completed",
         createdAt: sale.created_at.toISOString(),
-        items,
+        items: items.map(({ item }) => item),
       };
     });
   },
