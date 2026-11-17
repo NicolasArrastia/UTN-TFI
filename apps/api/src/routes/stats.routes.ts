@@ -4,7 +4,7 @@ import { authenticate, authorize } from "../middlewares/auth.middleware.ts";
 
 const router: Router = Router();
 
-router.use(authenticate, authorize("admin", "employee"));
+router.use(authenticate, authorize("admin"));
 
 router.get("/", getStats);
 router.get("/overview", getOverview);
