@@ -202,6 +202,28 @@ const findTopProducts = async (
   return rows;
 };
 
+const findTopRevenueProduct = async (
+  period: StatsPeriod,
+): Promise<TopProductRow | undefined> => {
+  const { rows } = await query<TopProductRow>(
+    `WITH bounds AS (SELECT date_trunc($1, NOW()) AS start)
+     SELECT sale_products.product_id AS "productId",
+            sale_products.product_name AS name,
+            SUM(sale_products.quantity)::int AS units,
+            SUM(sale_products.subtotal)::text AS revenue
+     FROM public.sale_products
+     JOIN public.sales ON sales.id = sale_products.sale_id, bounds
+     WHERE sales.status = 'completed'
+       AND sales.created_at >= bounds.start
+     GROUP BY sale_products.product_id, sale_products.product_name
+     ORDER BY SUM(sale_products.subtotal) DESC, SUM(sale_products.quantity) DESC
+     LIMIT 1`,
+    [PERIOD_INTERVALS[period].trunc],
+  );
+
+  return rows[0];
+};
+
 const findBestMarginProduct = async (
   period: StatsPeriod,
 ): Promise<BestMarginRow | undefined> => {
@@ -282,6 +304,7 @@ export const statsRepository = {
       cancelled,
       monthlyRevenue,
       topProducts,
+      topRevenueProduct,
       bestMargin,
     ] = await Promise.all([
       findCurrentPeriodTotals(period),
@@ -291,6 +314,7 @@ export const statsRepository = {
       findCancelledTotals(period),
       findMonthlyRevenue(),
       findTopProducts(period),
+      findTopRevenueProduct(period),
       findBestMarginProduct(period),
     ]);
 
@@ -302,6 +326,7 @@ export const statsRepository = {
       cancelled,
       monthlyRevenue,
       topProducts,
+      topRevenueProduct,
       bestMargin,
     };
   },

@@ -185,6 +185,16 @@ export function StatsPage() {
                 tone="brand"
               />
               <StatCard
+                label="Mayor facturación"
+                value={data.topRevenueProduct?.name ?? "Sin ventas"}
+                hint={
+                  data.topRevenueProduct
+                    ? `${formatCurrency(Number(data.topRevenueProduct.revenue))} · ${formatNumber(data.topRevenueProduct.units)} unidades`
+                    : "Todavía no hay ventas en el período"
+                }
+                tone="success"
+              />
+              <StatCard
                 label="Mayor rentabilidad"
                 value={data.bestMarginProduct?.name ?? "Sin datos"}
                 hint={
