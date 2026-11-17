@@ -127,6 +127,34 @@ export function getCategoryErrorMessage(error: unknown): string {
 }
 
 /**
+ * Traduce los errores del módulo de usuarios a mensajes entendibles.
+ * El backend devuelve el detalle de duplicados y validaciones.
+ */
+export function getUserErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    switch (error.code) {
+      case "NETWORK_ERROR":
+        return "No se pudo conectar con el servidor. Verificá que la API esté en ejecución.";
+      case "UNAUTHORIZED":
+        return "Tu sesión expiró. Iniciá sesión nuevamente.";
+      case "FORBIDDEN":
+        return "No tenés permisos para administrar usuarios.";
+      case "USER_NOT_FOUND":
+        return "El usuario no existe o fue eliminado.";
+      case "CANNOT_MODIFY_SELF":
+      case "USERNAME_ALREADY_EXISTS":
+      case "EMAIL_ALREADY_EXISTS":
+      case "VALIDATION_ERROR":
+        return error.message;
+      default:
+        return error.message;
+    }
+  }
+
+  return "Ocurrió un error inesperado. Intentá nuevamente.";
+}
+
+/**
  * Traduce los errores del módulo de productos a mensajes entendibles.
  * Los errores de validación conservan el detalle devuelto por la API.
  */

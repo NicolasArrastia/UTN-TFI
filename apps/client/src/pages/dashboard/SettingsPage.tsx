@@ -10,7 +10,7 @@ import {
 } from "../../components/icons.tsx";
 import { TagManager } from "../../components/tags/TagManager.tsx";
 import { ChangePasswordForm } from "../../components/users/ChangePasswordForm.tsx";
-import { CreateUserForm } from "../../components/users/CreateUserForm.tsx";
+import { UserManager } from "../../components/users/UserManager.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
 import {
   authService,
@@ -18,10 +18,6 @@ import {
 } from "../../services/auth.service.ts";
 import { ApiError } from "../../services/api-client.ts";
 import { notify } from "../../services/notifications.ts";
-import {
-  userService,
-  type CreateUserPayload,
-} from "../../services/user.service.ts";
 
 type SettingsSectionId = "tags" | "categories" | "admin" | "preferences";
 
@@ -87,8 +83,6 @@ export function SettingsPage() {
   const { user } = useAuth();
   const [lowStockAlerts, setLowStockAlerts] = useState(true);
   const [dailySummary, setDailySummary] = useState(false);
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
-  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [selectedSection, setSelectedSection] =
@@ -105,33 +99,6 @@ export function SettingsPage() {
   const handleSave = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     notify.success("Preferencias guardadas (simulación).");
-  };
-
-  const handleCreateUser = async (
-    payload: CreateUserPayload,
-  ): Promise<boolean> => {
-    if (isCreatingUser || !isAdmin) {
-      return false;
-    }
-
-    setIsCreatingUser(true);
-
-    try {
-      await userService.create(payload);
-      notify.success("Usuario creado correctamente.");
-      setIsCreateUserOpen(false);
-      return true;
-    } catch (error) {
-      if (error instanceof ApiError) {
-        notify.error(error.message);
-      } else {
-        notify.error("Ocurrió un error inesperado al crear el usuario.");
-      }
-
-      return false;
-    } finally {
-      setIsCreatingUser(false);
-    }
   };
 
   const handleChangePassword = async (
@@ -318,37 +285,7 @@ export function SettingsPage() {
     </section>
   );
 
-  const renderAdmin = () => (
-    <>
-      <section className={CARD}>
-        <div className={CARD_HEADER}>
-          <div>
-            <h2 className={CARD_TITLE}>Gestión de usuarios</h2>
-            <p className={CARD_SUBTITLE}>
-              Administrá las cuentas y accesos del comercio.
-            </p>
-          </div>
-        </div>
-
-        <div className={CARD_BODY}>
-          <p className={CARD_SUBTITLE}>
-            Creá cuentas para administradores y empleados con los permisos
-            correspondientes.
-          </p>
-
-          <div className={FORM_ACTIONS}>
-            <button
-              type="button"
-              className={PRIMARY_BUTTON}
-              onClick={() => setIsCreateUserOpen(true)}
-            >
-              Crear usuario
-            </button>
-          </div>
-        </div>
-      </section>
-    </>
-  );
+  const renderAdmin = () => <UserManager />;
 
   return (
     <>
@@ -393,20 +330,6 @@ export function SettingsPage() {
           </div>
         </div>
       </div>
-
-      {isAdmin && isCreateUserOpen && (
-        <Modal
-          title="Nuevo usuario"
-          description="Completá los datos para registrar una nueva cuenta."
-          isBusy={isCreatingUser}
-          onClose={() => setIsCreateUserOpen(false)}
-        >
-          <CreateUserForm
-            isSubmitting={isCreatingUser}
-            onSubmit={handleCreateUser}
-          />
-        </Modal>
-      )}
 
       {user && isChangePasswordOpen && (
         <Modal
