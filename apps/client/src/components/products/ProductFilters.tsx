@@ -1,5 +1,5 @@
 import { IconSearch } from "../icons.tsx";
-import type { Category } from "../../types/catalog.types.ts";
+import type { Category, Tag } from "../../types/catalog.types.ts";
 import type { ProductStatusFilter } from "../../types/product.types.ts";
 
 interface ProductFiltersProps {
@@ -11,6 +11,9 @@ interface ProductFiltersProps {
   categories: Category[];
   isCatalogLoading: boolean;
   onCategoryChange: (categoryId: number | null) => void;
+  tagId: number | null;
+  tags: Tag[];
+  onTagChange: (tagId: number | null) => void;
   lowStock: boolean;
   onLowStockChange: (value: boolean) => void;
 }
@@ -33,6 +36,9 @@ export function ProductFilters({
   categories,
   isCatalogLoading,
   onCategoryChange,
+  tagId,
+  tags,
+  onTagChange,
   lowStock,
   onLowStockChange,
 }: ProductFiltersProps) {
@@ -85,6 +91,25 @@ export function ProductFilters({
         {categories.map((category) => (
           <option key={category.id} value={category.id}>
             {category.name}
+          </option>
+        ))}
+      </select>
+
+      <select
+        className={FILTER_SELECT}
+        value={tagId ?? ""}
+        onChange={(event) =>
+          onTagChange(
+            event.target.value === "" ? null : Number(event.target.value),
+          )
+        }
+        aria-label="Filtrar por etiqueta"
+        disabled={isCatalogLoading}
+      >
+        <option value="">Todas las etiquetas</option>
+        {tags.map((tag) => (
+          <option key={tag.id} value={tag.id}>
+            {tag.name}
           </option>
         ))}
       </select>
