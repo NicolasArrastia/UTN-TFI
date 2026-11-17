@@ -34,7 +34,7 @@ const GHOST_BUTTON =
 const ICON_BUTTON =
   "inline-flex size-[38px] items-center justify-center rounded-field border border-line bg-white text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-ink";
 
-const parseCategoryId = (value: string | null): number | null => {
+const parsePositiveId = (value: string | null): number | null => {
   if (!value) {
     return null;
   }
@@ -82,25 +82,27 @@ export function ProductsPage() {
 
   const search = searchParams.get("search") ?? "";
   const status = parseStatus(searchParams.get("isActive"));
-  const categoryId = parseCategoryId(searchParams.get("categoryId"));
+  const categoryId = parsePositiveId(searchParams.get("categoryId"));
+  const tagId = parsePositiveId(searchParams.get("tagId"));
   const lowStock = searchParams.get("lowStock") === "true";
   const page = parsePage(searchParams.get("page"));
 
   const [searchInput, setSearchInput] = useState(search);
   const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
 
-  const { categories, isLoading: isCatalogLoading } = useCatalog();
+  const { categories, tags, isLoading: isCatalogLoading } = useCatalog();
 
   const params = useMemo<ProductListParams>(
     () => ({
       search: search || undefined,
       categoryId: categoryId ?? undefined,
+      tagId: tagId ?? undefined,
       isActive: status,
       lowStock,
       page,
       limit: PAGE_SIZE,
     }),
-    [search, categoryId, status, lowStock, page],
+    [search, categoryId, tagId, status, lowStock, page],
   );
 
   const { products, pagination, isLoading, error, reload } =
@@ -181,6 +183,12 @@ export function ProductsPage() {
     });
   };
 
+  const handleTagChange = (value: number | null) => {
+    applyFilters({
+      tagId: value === null ? null : String(value),
+    });
+  };
+
   const handleLowStockChange = (value: boolean) => {
     applyFilters({ lowStock: value ? "true" : null });
   };
@@ -256,6 +264,9 @@ export function ProductsPage() {
         categories={categories}
         isCatalogLoading={isCatalogLoading}
         onCategoryChange={handleCategoryChange}
+        tagId={tagId}
+        tags={tags}
+        onTagChange={handleTagChange}
         lowStock={lowStock}
         onLowStockChange={handleLowStockChange}
       />
