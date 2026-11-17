@@ -10,6 +10,17 @@ const MAX_MONEY = 99_999_999.99;
 const MONEY_PATTERN = /^\d+(?:\.\d{1,2})?$/;
 const INTEGER_PATTERN = /^\d+$/;
 
+const INPUT_CLASS =
+  "w-full rounded-field border border-line bg-white px-[13px] py-[11px] text-sm text-ink focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/13 disabled:bg-slate-50 disabled:text-muted aria-[invalid=true]:border-red-300 aria-[invalid=true]:bg-[#fff7f7]";
+
+const LABEL_CLASS = "text-[13px] font-semibold text-ink-soft";
+
+const PRIMARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
+
+const GHOST_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field border border-line px-3.5 py-2 text-[13px] font-semibold text-ink-soft transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-65";
+
 interface FormValues {
   name: string;
   categoryId: string;
@@ -180,7 +191,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   }
 
   return (
-    <p className="field__error" id={id}>
+    <p className="text-xs font-medium text-danger" id={id}>
       {message}
     </p>
   );
@@ -286,9 +297,11 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div className="form-grid">
-        <div className="field field--full">
-          <label htmlFor="product-name">Nombre *</label>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+        <div className="col-span-full flex flex-col gap-[7px]">
+          <label htmlFor="product-name" className={LABEL_CLASS}>
+            Nombre *
+          </label>
           <input
             id="product-name"
             type="text"
@@ -298,12 +311,15 @@ export function ProductForm({
             maxLength={MAX_NAME_LENGTH}
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? "product-name-error" : undefined}
+            className={INPUT_CLASS}
           />
           <FieldError id="product-name-error" message={errors.name} />
         </div>
 
-        <div className="field">
-          <label htmlFor="product-category">Categoría *</label>
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="product-category" className={LABEL_CLASS}>
+            Categoría *
+          </label>
           <select
             id="product-category"
             value={values.categoryId}
@@ -313,6 +329,7 @@ export function ProductForm({
               errors.categoryId ? "product-category-error" : undefined
             }
             disabled={!hasCategories}
+            className={INPUT_CLASS}
           >
             <option value="">Seleccioná una categoría</option>
             {categoryOptions.map((category) => (
@@ -329,22 +346,25 @@ export function ProductForm({
           />
         </div>
 
-        <div className="field">
-          <span className="field__label">Estado</span>
-          <label className="check-inline check-inline--boxed">
+        <div className="flex flex-col gap-[7px]">
+          <span className={LABEL_CLASS}>Estado</span>
+          <label className="flex min-h-11 cursor-pointer select-none items-center gap-2 rounded-field border border-line bg-white px-[13px] py-[11px] text-[13px] font-medium text-ink-soft">
             <input
               type="checkbox"
               checked={values.isActive}
               onChange={(event) =>
                 updateField("isActive", event.target.checked)
               }
+              className="size-4 cursor-pointer accent-brand"
             />
             {values.isActive ? "Producto activo" : "Producto inactivo"}
           </label>
         </div>
 
-        <div className="field">
-          <label htmlFor="product-price">Precio de venta *</label>
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="product-price" className={LABEL_CLASS}>
+            Precio de venta *
+          </label>
           <input
             id="product-price"
             type="number"
@@ -356,12 +376,15 @@ export function ProductForm({
             placeholder="0.00"
             aria-invalid={Boolean(errors.price)}
             aria-describedby={errors.price ? "product-price-error" : undefined}
+            className={INPUT_CLASS}
           />
           <FieldError id="product-price-error" message={errors.price} />
         </div>
 
-        <div className="field">
-          <label htmlFor="product-cost">Costo *</label>
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="product-cost" className={LABEL_CLASS}>
+            Costo *
+          </label>
           <input
             id="product-cost"
             type="number"
@@ -373,12 +396,15 @@ export function ProductForm({
             placeholder="0.00"
             aria-invalid={Boolean(errors.cost)}
             aria-describedby={errors.cost ? "product-cost-error" : undefined}
+            className={INPUT_CLASS}
           />
           <FieldError id="product-cost-error" message={errors.cost} />
         </div>
 
-        <div className="field">
-          <label htmlFor="product-stock">Stock actual *</label>
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="product-stock" className={LABEL_CLASS}>
+            Stock actual *
+          </label>
           <input
             id="product-stock"
             type="number"
@@ -389,12 +415,15 @@ export function ProductForm({
             onChange={(event) => updateField("stock", event.target.value)}
             aria-invalid={Boolean(errors.stock)}
             aria-describedby={errors.stock ? "product-stock-error" : undefined}
+            className={INPUT_CLASS}
           />
           <FieldError id="product-stock-error" message={errors.stock} />
         </div>
 
-        <div className="field">
-          <label htmlFor="product-min-stock">Stock mínimo *</label>
+        <div className="flex flex-col gap-[7px]">
+          <label htmlFor="product-min-stock" className={LABEL_CLASS}>
+            Stock mínimo *
+          </label>
           <input
             id="product-min-stock"
             type="number"
@@ -407,6 +436,7 @@ export function ProductForm({
             aria-describedby={
               errors.minStock ? "product-min-stock-error" : undefined
             }
+            className={INPUT_CLASS}
           />
           <FieldError
             id="product-min-stock-error"
@@ -414,8 +444,10 @@ export function ProductForm({
           />
         </div>
 
-        <div className="field field--full">
-          <label htmlFor="product-description">Descripción</label>
+        <div className="col-span-full flex flex-col gap-[7px]">
+          <label htmlFor="product-description" className={LABEL_CLASS}>
+            Descripción
+          </label>
           <textarea
             id="product-description"
             value={values.description}
@@ -429,6 +461,7 @@ export function ProductForm({
             aria-describedby={
               errors.description ? "product-description-error" : undefined
             }
+            className={`${INPUT_CLASS} min-h-[104px] resize-y leading-normal`}
           />
           <FieldError
             id="product-description-error"
@@ -436,34 +469,39 @@ export function ProductForm({
           />
         </div>
 
-        <div className="field field--full">
-          <span className="field__label">Etiquetas</span>
+        <div className="col-span-full flex flex-col gap-[7px]">
+          <span className={LABEL_CLASS}>Etiquetas</span>
           {tagOptions.length === 0 ? (
-            <p className="form-hint">No hay etiquetas disponibles.</p>
+            <p className="text-xs text-muted">No hay etiquetas disponibles.</p>
           ) : (
-            <div className="tag-picker">
+            <div className="flex flex-wrap gap-2">
               {tagOptions.map((tag) => {
                 const isSelected = values.tagIds.includes(tag.id);
 
                 return (
                   <label
                     key={tag.id}
-                    className={`tag-option${
-                      isSelected ? " is-selected" : ""
+                    className={`relative inline-flex cursor-pointer items-center gap-2 rounded-full border px-[13px] py-2 text-[13px] font-semibold transition-colors focus-within:ring-[3px] focus-within:ring-brand/20 ${
+                      isSelected
+                        ? "border-indigo-200 bg-brand-soft text-brand-dark"
+                        : "border-line bg-white text-ink-soft hover:border-slate-300"
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleTag(tag.id)}
+                      className="absolute size-0 opacity-0"
                     />
                     <span
-                      className="tag-dot"
+                      className="inline-block size-2 rounded-full"
                       style={{ backgroundColor: tag.color }}
                     />
                     {tag.name}
                     {tag.isActive ? null : (
-                      <span className="badge badge--neutral">Inactiva</span>
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-[11.5px] font-semibold text-slate-600">
+                        Inactiva
+                      </span>
                     )}
                   </label>
                 );
@@ -474,35 +512,40 @@ export function ProductForm({
       </div>
 
       {hasCategories ? null : (
-        <p className="form-warning">
+        <p className="mt-4 rounded-field border border-amber-200 bg-amber-50 px-3.5 py-3 text-[13px] leading-normal text-amber-800">
           No hay categorías activas disponibles. Un administrador debe crear
           una categoría antes de registrar productos.
         </p>
       )}
 
-      <div className="form-actions">
+      <div className="mt-[22px] flex flex-wrap items-center gap-3.5">
         <button
           type="submit"
-          className="btn btn--primary btn--sm"
+          className={PRIMARY_BUTTON}
           disabled={isSubmitting || !hasCategories}
         >
-          {isSubmitting ? <span className="spinner" /> : null}
+          {isSubmitting ? (
+            <span
+              className="size-4 animate-spin rounded-full border-2 border-white/35 border-t-white"
+              aria-hidden="true"
+            />
+          ) : null}
           {mode === "create" ? "Crear producto" : "Guardar cambios"}
         </button>
         <button
           type="button"
-          className="btn btn--ghost btn--sm"
+          className={GHOST_BUTTON}
           onClick={onCancel}
           disabled={isSubmitting}
         >
           Cancelar
         </button>
         {hasMargin ? (
-          <span className="form-hint">
+          <span className="text-xs text-muted">
             Margen estimado: {formatCurrency(priceValue - costValue)}
           </span>
         ) : (
-          <span className="form-hint">
+          <span className="text-xs text-muted">
             Los precios se expresan en pesos argentinos (ARS).
           </span>
         )}

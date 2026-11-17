@@ -3,7 +3,7 @@
 ## Project state
 
 - UTN final project: Spanish-language commercial management system (products, sales, stock, stats).
-- npm workspaces monorepo: `apps/api` (Express 5 + TS) and `apps/client` (React 19 + Vite 8).
+- npm workspaces monorepo: `apps/api` (Express 5 + TS) and `apps/client` (React 19 + Vite 8). The client is styled with Tailwind CSS v4 through `@tailwindcss/vite`; `apps/client/src/styles/global.css` only declares the `@theme` design tokens and the base layer, while components use utility classes.
 - Auth, products, tags/categories, sales and statistics are implemented in the API (JWT login, `/api/auth/me`, role middleware, `/api/products`, `/api/tags`, `/api/categories`, `/api/sales`, `/api/stats`). The client has a login screen plus a protected dashboard; **Productos** is connected to the API (list, detail, create, edit and soft delete), **Ventas** covers the live history, sale creation, catalog and cancellation, and **Estadisticas** plus the dashboard overview read real aggregates from `/api/stats`. **Settings** includes admin-only tags and categories managers plus user creation, while profile/preferences in Settings remain simulated.
 - Users, categories, tags, products, product-tag relations and sales are persisted in PostgreSQL through `pg`. `npm run db:setup -w api` seeds only the bootstrap admin from the `ADMIN_*` environment variables; it does not insert demo categories, tags, products or sales.
 - Docs and SQL comments are in Spanish; code identifiers are in English.

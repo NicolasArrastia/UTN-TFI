@@ -21,6 +21,20 @@ const initialValues: FormValues = {
   confirmPassword: "",
 };
 
+const FORM_GRID = "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4";
+const FIELD = "flex flex-col gap-[7px]";
+const LABEL = "text-[13px] font-semibold text-ink-soft";
+const INPUT =
+  "w-full rounded-field border border-line bg-white px-[13px] py-[11px] text-sm text-ink focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/13 disabled:bg-slate-50 disabled:text-muted aria-[invalid=true]:border-red-300 aria-[invalid=true]:bg-[#fff7f7]";
+
+const FORM_ACTIONS = "mt-[22px] flex flex-wrap items-center gap-3.5";
+const FORM_HINT = "text-[12px] text-muted";
+
+const PRIMARY_BUTTON =
+  "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
+
+const SPINNER = "size-4 animate-spin rounded-full border-2 border-white/35 border-t-white";
+
 function validateForm(values: FormValues): FormErrors {
   const errors: FormErrors = {};
 
@@ -55,7 +69,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   }
 
   return (
-    <p className="field__error" id={id}>
+    <p className="text-[12px] font-medium text-danger" id={id}>
       {message}
     </p>
   );
@@ -112,10 +126,13 @@ export function ChangePasswordForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div className="form-grid">
-        <div className="field field--full">
-          <label htmlFor="change-current-password">Contraseña actual *</label>
+      <div className={FORM_GRID}>
+        <div className={`${FIELD} col-span-full`}>
+          <label className={LABEL} htmlFor="change-current-password">
+            Contraseña actual *
+          </label>
           <input
+            className={INPUT}
             id="change-current-password"
             type="password"
             value={values.currentPassword}
@@ -136,9 +153,12 @@ export function ChangePasswordForm({
           />
         </div>
 
-        <div className="field field--full">
-          <label htmlFor="change-new-password">Nueva contraseña *</label>
+        <div className={`${FIELD} col-span-full`}>
+          <label className={LABEL} htmlFor="change-new-password">
+            Nueva contraseña *
+          </label>
           <input
+            className={INPUT}
             id="change-new-password"
             type="password"
             value={values.newPassword}
@@ -156,11 +176,12 @@ export function ChangePasswordForm({
           />
         </div>
 
-        <div className="field field--full">
-          <label htmlFor="change-confirm-password">
+        <div className={`${FIELD} col-span-full`}>
+          <label className={LABEL} htmlFor="change-confirm-password">
             Confirmar nueva contraseña *
           </label>
           <input
+            className={INPUT}
             id="change-confirm-password"
             type="password"
             value={values.confirmPassword}
@@ -182,16 +203,16 @@ export function ChangePasswordForm({
         </div>
       </div>
 
-      <div className="form-actions">
+      <div className={FORM_ACTIONS}>
         <button
           type="submit"
-          className="btn btn--primary btn--sm"
+          className={PRIMARY_BUTTON}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <span className="spinner" /> : null}
+          {isSubmitting ? <span className={SPINNER} /> : null}
           {isSubmitting ? "Actualizando..." : "Cambiar contraseña"}
         </button>
-        <span className="form-hint">
+        <span className={FORM_HINT}>
           La nueva contraseña debe tener al menos 8 caracteres.
         </span>
       </div>

@@ -10,6 +10,38 @@ import { paymentMethodLabels, saleStatusLabels } from "../../utils/labels.ts";
 
 const PAGE_SIZE = 10;
 
+const CARD =
+  "overflow-hidden rounded-card border border-line bg-white shadow-card";
+const CARD_HEADER =
+  "flex flex-wrap items-start justify-between gap-4 px-[22px] pt-5 pb-1";
+const CARD_TITLE = "text-[15px] font-bold tracking-[-0.01em]";
+const CARD_SUBTITLE = "mt-[3px] text-[12.5px] text-muted";
+const CARD_BODY = "px-[22px] py-5";
+
+const BTN =
+  "inline-flex items-center justify-center gap-2 rounded-field px-3.5 py-2 text-[13px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-65";
+const BTN_PRIMARY = `${BTN} bg-brand text-white hover:bg-brand-dark`;
+const BTN_GHOST = `${BTN} border border-line text-ink-soft hover:border-slate-300 hover:bg-slate-50`;
+const BTN_DANGER = `${BTN} bg-danger text-white hover:bg-red-700`;
+
+const TABLE = "w-full border-collapse text-[13.5px]";
+const TH =
+  "whitespace-nowrap border-b border-line px-[22px] py-2.5 text-left text-[11px] font-bold uppercase tracking-[0.07em] text-muted max-md:px-4";
+const TD =
+  "whitespace-nowrap border-b border-slate-100 px-[22px] py-[13px] align-middle max-md:px-4";
+const TBODY = "[&>tr:last-child>td]:border-b-0 [&>tr:hover]:bg-slate-50";
+
+const BADGE =
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold";
+
+const FIELD = "flex flex-col gap-[7px]";
+const FIELD_LABEL = "text-[13px] font-semibold text-ink-soft";
+const FIELD_CONTROL =
+  "w-full rounded-field border border-line bg-white px-[13px] py-[11px] text-sm text-ink focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand/13 disabled:bg-slate-50 disabled:text-muted aria-[invalid=true]:border-red-300 aria-[invalid=true]:bg-[#fff7f7]";
+
+const PAGINATION =
+  "flex flex-wrap items-center justify-between gap-3 border-t border-line px-[22px] py-3.5 max-md:px-4";
+
 const currency = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
@@ -60,10 +92,13 @@ const errorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback;
 
 function SaleStatusBadge({ status }: { status: SaleSummary["status"] }) {
-  const tone = status === "completed" ? "success" : "danger";
+  const tone =
+    status === "completed"
+      ? "bg-success-soft text-green-700"
+      : "bg-danger-soft text-red-700";
 
   return (
-    <span className={`badge badge--${tone}`}>
+    <span className={`${BADGE} ${tone}`}>
       {saleStatusLabels[status] ?? status}
     </span>
   );
@@ -190,16 +225,16 @@ export function SalesPage() {
 
   return (
     <>
-      <section className="card" aria-labelledby="sales-history-title">
-        <div className="card__header card__header--stack">
+      <section className={CARD} aria-labelledby="sales-history-title">
+        <div className={CARD_HEADER}>
           <div>
-            <h2 id="sales-history-title" className="card__title">
+            <h2 id="sales-history-title" className={CARD_TITLE}>
               Historial de ventas
             </h2>
-            <p className="card__subtitle">Consultá las ventas registradas.</p>
+            <p className={CARD_SUBTITLE}>Consultá las ventas registradas.</p>
           </div>
 
-          <Link to="/dashboard/sales/new" className="btn btn--primary btn--sm">
+          <Link to="/dashboard/sales/new" className={BTN_PRIMARY}>
             <IconPlus width={16} height={16} />
             Registrar venta
           </Link>
@@ -216,11 +251,7 @@ export function SalesPage() {
             message={currentHistory.error}
             tone="error"
             action={
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={reload}
-              >
+              <button type="button" className={BTN_GHOST} onClick={reload}>
                 Reintentar
               </button>
             }
@@ -235,39 +266,55 @@ export function SalesPage() {
             }
           />
         ) : (
-          <div className="table-wrap">
-            <table className="table" aria-label="Historial de ventas">
+          <div className="mt-4 overflow-x-auto">
+            <table className={TABLE} aria-label="Historial de ventas">
               <thead>
                 <tr>
-                  <th scope="col">Número</th>
-                  <th scope="col">Fecha</th>
-                  <th scope="col">Usuario</th>
-                  <th scope="col">Total</th>
-                  <th scope="col">Pago</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Acción</th>
+                  <th scope="col" className={TH}>
+                    Número
+                  </th>
+                  <th scope="col" className={TH}>
+                    Fecha
+                  </th>
+                  <th scope="col" className={TH}>
+                    Usuario
+                  </th>
+                  <th scope="col" className={TH}>
+                    Total
+                  </th>
+                  <th scope="col" className={TH}>
+                    Pago
+                  </th>
+                  <th scope="col" className={TH}>
+                    Estado
+                  </th>
+                  <th scope="col" className={TH}>
+                    Acción
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className={TBODY}>
                 {currentHistory.data.sales.map((entry) => (
                   <tr key={entry.id}>
-                    <td className="cell-strong">{saleNumber(entry.number)}</td>
-                    <td>{formatDateTime(entry.createdAt)}</td>
-                    <td>#{entry.userId}</td>
-                    <td className="cell-strong">
+                    <td className={`${TD} font-semibold text-ink`}>
+                      {saleNumber(entry.number)}
+                    </td>
+                    <td className={TD}>{formatDateTime(entry.createdAt)}</td>
+                    <td className={TD}>#{entry.userId}</td>
+                    <td className={`${TD} font-semibold text-ink`}>
                       {currency.format(Number(entry.total))}
                     </td>
-                    <td>
+                    <td className={TD}>
                       {paymentMethodLabels[entry.paymentMethod] ??
                         entry.paymentMethod}
                     </td>
-                    <td>
+                    <td className={TD}>
                       <SaleStatusBadge status={entry.status} />
                     </td>
-                    <td>
+                    <td className={TD}>
                       <button
                         type="button"
-                        className="btn btn--ghost btn--sm"
+                        className={BTN_GHOST}
                         aria-label={`Ver detalle de ${saleNumber(entry.number)}`}
                         disabled={isCancelling}
                         onClick={() => selectSale(entry.id)}
@@ -283,12 +330,12 @@ export function SalesPage() {
         )}
 
         {historyData && (page > 1 || historyData.pagination.hasNextPage) && (
-          <div className="pagination">
-            <p className="pagination__info">Página {page}</p>
-            <div className="pagination__actions">
+          <div className={PAGINATION}>
+            <p className="text-[12.5px] text-muted">Página {page}</p>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="btn btn--ghost btn--sm"
+                className={BTN_GHOST}
                 disabled={page <= 1 || isCancelling}
                 onClick={() => setPage((current) => current - 1)}
               >
@@ -296,7 +343,7 @@ export function SalesPage() {
               </button>
               <button
                 type="button"
-                className="btn btn--ghost btn--sm"
+                className={BTN_GHOST}
                 disabled={!historyData.pagination.hasNextPage || isCancelling}
                 onClick={() => setPage((current) => current + 1)}
               >
@@ -308,10 +355,10 @@ export function SalesPage() {
       </section>
 
       {selectedId !== null && (
-        <section className="card" aria-labelledby="sale-detail-title">
-          <div className="card__header card__header--stack">
-            <div>
-              <h2 id="sale-detail-title" className="card__title">
+        <section className={CARD} aria-labelledby="sale-detail-title">
+          <div className={CARD_HEADER}>
+            <div className="flex flex-col items-start">
+              <h2 id="sale-detail-title" className={CARD_TITLE}>
                 {sale
                   ? `Detalle de ${saleNumber(sale.number)}`
                   : "Detalle de venta"}
@@ -321,7 +368,7 @@ export function SalesPage() {
 
             <button
               type="button"
-              className="btn btn--ghost btn--sm"
+              className={BTN_GHOST}
               disabled={isCancelling}
               onClick={() => selectSale(null)}
             >
@@ -340,11 +387,7 @@ export function SalesPage() {
               message={currentDetail.error}
               tone="error"
               action={
-                <button
-                  type="button"
-                  className="btn btn--ghost btn--sm"
-                  onClick={reload}
-                >
+                <button type="button" className={BTN_GHOST} onClick={reload}>
                   Reintentar
                 </button>
               }
@@ -352,33 +395,42 @@ export function SalesPage() {
           ) : (
             sale && (
               <>
-                <div className="table-wrap">
-                  <table className="table" aria-label="Productos vendidos">
+                <div className="mt-4 overflow-x-auto">
+                  <table className={TABLE} aria-label="Productos vendidos">
                     <thead>
                       <tr>
-                        <th scope="col">Producto</th>
-                        <th scope="col">Cantidad</th>
-                        <th scope="col">Precio unitario</th>
-                        <th scope="col">Subtotal</th>
+                        <th scope="col" className={TH}>
+                          Producto
+                        </th>
+                        <th scope="col" className={TH}>
+                          Cantidad
+                        </th>
+                        <th scope="col" className={TH}>
+                          Precio unitario
+                        </th>
+                        <th scope="col" className={TH}>
+                          Subtotal
+                        </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className={TBODY}>
                       {sale.items.map((item) => (
                         <tr key={item.productId}>
-                          <td>{item.productName}</td>
-                          <td>{item.quantity}</td>
-                          <td>{currency.format(Number(item.unitPrice))}</td>
-                          <td>{currency.format(Number(item.subtotal))}</td>
+                          <td className={TD}>{item.productName}</td>
+                          <td className={TD}>{item.quantity}</td>
+                          <td className={TD}>
+                            {currency.format(Number(item.unitPrice))}
+                          </td>
+                          <td className={TD}>
+                            {currency.format(Number(item.subtotal))}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div
-                  className="card__body"
-                  style={{ display: "grid", gap: 16 }}
-                >
+                <div className={`${CARD_BODY} grid gap-4`}>
                   <p>
                     <strong>Total {currency.format(Number(sale.total))}</strong>
                   </p>
@@ -401,18 +453,22 @@ export function SalesPage() {
                     sale.status === "completed" &&
                     (isShowingCancellation ? (
                       <form
-                        style={{ display: "grid", gap: 12, maxWidth: 420 }}
+                        className="grid max-w-[420px] gap-3"
                         onSubmit={(event) => {
                           event.preventDefault();
                           void cancelSale();
                         }}
                       >
-                        <div className="field">
-                          <label htmlFor="sale-cancellation-reason">
+                        <div className={FIELD}>
+                          <label
+                            htmlFor="sale-cancellation-reason"
+                            className={FIELD_LABEL}
+                          >
                             Motivo de la anulación
                           </label>
                           <textarea
                             id="sale-cancellation-reason"
+                            className={FIELD_CONTROL}
                             value={reason}
                             onChange={(event) => setReason(event.target.value)}
                             maxLength={500}
@@ -422,17 +478,17 @@ export function SalesPage() {
                           />
                         </div>
 
-                        <p className="card__subtitle">
+                        <p className={CARD_SUBTITLE}>
                           Las unidades volverán al stock y la venta quedará en
                           el historial.
                         </p>
 
                         {cancelError && <p role="alert">{cancelError}</p>}
 
-                        <div className="toolbar">
+                        <div className="flex flex-wrap items-center gap-2.5">
                           <button
                             type="submit"
-                            className="btn btn--danger btn--sm"
+                            className={BTN_DANGER}
                             disabled={!reason.trim() || isCancelling}
                           >
                             {isCancelling
@@ -441,7 +497,7 @@ export function SalesPage() {
                           </button>
                           <button
                             type="button"
-                            className="btn btn--ghost btn--sm"
+                            className={BTN_GHOST}
                             disabled={isCancelling}
                             onClick={() => selectSale(sale.id)}
                           >
@@ -453,7 +509,7 @@ export function SalesPage() {
                       <div>
                         <button
                           type="button"
-                          className="btn btn--danger btn--sm"
+                          className={BTN_DANGER}
                           onClick={() => setIsShowingCancellation(true)}
                         >
                           Anular venta

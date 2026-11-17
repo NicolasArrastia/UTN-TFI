@@ -9,7 +9,7 @@ Repositorio correspondiente al Trabajo Final Integrador de la Tecnicatura Univer
 
 | Parte | Tecnología |
 |---|---|
-| Frontend | React + TypeScript |
+| Frontend | React + TypeScript + Tailwind CSS |
 | Backend | Node.js + Express + TypeScript |
 | Base de datos | PostgreSQL alojado en Render, accedido con `pg` |
 | Seguridad | JWT |
