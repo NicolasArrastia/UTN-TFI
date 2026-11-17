@@ -143,10 +143,10 @@ Rutas:
 | Ruta                    | Pantalla                         | Protección   |
 | ----------------------- | -------------------------------- | ------------ |
 | `/`                     | Login                            | Solo invitado|
-| `/dashboard`            | Resumen del panel                | Autenticado  |
-| `/dashboard/products`   | Products (mockeado)              | Autenticado  |
-| `/dashboard/sales`      | Ventas (mockeado)                | Autenticado  |
-| `/dashboard/stats`      | Estadísticas (mockeado)          | Autenticado  |
+| `/dashboard`            | Resumen del panel                | Admin (el empleado se redirige a Ventas) |
+| `/dashboard/products`   | Products (mockeado)              | Autenticado (ABM solo admin) |
+| `/dashboard/sales`      | Ventas (mockeado)                | Autenticado (cada empleado ve solo las suyas) |
+| `/dashboard/stats`      | Estadísticas (mockeado)          | Admin        |
 | `/dashboard/settings`   | Settings (mockeado)              | Autenticado  |
 
 Comportamiento:
@@ -203,3 +203,31 @@ Cada commit debe dejar el repositorio compilando (`tsc` en la API, `lint` y
 - Administración de usuarios (listado, edición y baja lógica).
 - Refresh tokens o sesiones con expiración deslizante.
 - Rate limiting en el endpoint de login.
+
+## 9. Matriz de permisos por rol
+
+| Permiso                                              | Empleado | Admin |
+| ---------------------------------------------------- | :------: | :---: |
+| Registrar venta                                      |    ✓     |   ✓   |
+| Consultar stock y precio                             |    ✓     |   ✓   |
+| Ver costo y margen                                   |    ✗     |   ✓   |
+| Ver sus propias ventas                               |    ✓     |   ✓   |
+| Ver todas las ventas o anularlas                     |    ✗     |   ✓   |
+| Estadísticas y facturación                           |    ✗     |   ✓   |
+| ABM de productos, categorías, etiquetas y usuarios   |    ✗     |   ✓   |
+| Cambiar su contraseña                                |    ✓     |   ✓   |
+
+Implementación:
+
+- Productos: `list` y `getById` reciben el rol y omiten la propiedad `cost`
+  cuando el usuario no es `admin` (`forRole` en el service). Las respuestas de
+  empleados no incluyen `cost` en absoluto.
+- Ventas: el repositorio filtra por `user_id` cuando el solicitante es
+  `employee`. Pedir una venta ajena responde `404 SALE_NOT_FOUND` (no `403`)
+  para no revelar que existe. La anulación sigue siendo exclusiva de `admin`.
+- Estadísticas: `/api/stats` y `/api/stats/overview` usan `authorize("admin")`.
+- Cliente: `RoleHome` redirige a los empleados de `/dashboard` a
+  `/dashboard/sales`; `/dashboard/stats` queda envuelto en `AdminOnly` con un
+  mensaje específico; el menú oculta Resumen y Estadísticas para empleados
+  (`adminOnly` en `NAV_ITEMS`); el detalle de producto no muestra las tarjetas
+  de costo y margen cuando `cost` no viene en la respuesta.
