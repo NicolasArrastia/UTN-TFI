@@ -1,6 +1,17 @@
 import { AppError } from "../errors/app-error.ts";
 import type { UserRole } from "../types/auth.types.ts";
-import { map, oneOf, parseObject, text } from "./validation.ts";
+import type { UpdateUserInput, UserListQuery } from "../types/user.types.ts";
+import {
+  boolean,
+  integerString,
+  map,
+  oneOf,
+  parseObject,
+  parseOptionalObject,
+  parsePartialObject,
+  text,
+  withDefault,
+} from "./validation.ts";
 
 export interface CreateUserInput {
   fullname: string;
@@ -10,18 +21,22 @@ export interface CreateUserInput {
   role: UserRole;
 }
 
+const MAX_FULLNAME_LENGTH = 100;
+const MAX_USERNAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 150;
+
 const fullname = text({
   field: "El nombre completo",
-  maxLength: 100,
+  maxLength: MAX_FULLNAME_LENGTH,
 });
 
 const username = map(
-  text({ field: "El nombre de usuario", maxLength: 100 }),
+  text({ field: "El nombre de usuario", maxLength: MAX_USERNAME_LENGTH }),
   (value) => value.toLowerCase(),
 );
 
 const email = map(
-  text({ field: "El correo electrónico", maxLength: 150 }),
+  text({ field: "El correo electrónico", maxLength: MAX_EMAIL_LENGTH }),
   (value) => {
     const normalized = value.toLowerCase();
 
@@ -54,6 +69,8 @@ const role = oneOf(
   "El rol debe ser admin o employee.",
 );
 
+const isActive = boolean("El estado");
+
 const createValidators = {
   fullname,
   username,
@@ -62,9 +79,46 @@ const createValidators = {
   role,
 };
 
+const updateValidators = {
+  fullname,
+  email,
+  role,
+  isActive,
+};
+
+const includeInactiveQuery = withDefault(
+  map(
+    oneOf(
+      ["true", "false"] as const,
+      "El parámetro includeInactive debe ser true o false.",
+    ),
+    (value) => value === "true",
+  ),
+  false,
+);
+
+const listQueryValidators = {
+  includeInactive: includeInactiveQuery,
+};
+
 export const parseCreateUserInput = (body: unknown): CreateUserInput =>
   parseObject<CreateUserInput>(
     createValidators,
     body,
     "El cuerpo de la solicitud debe ser un objeto JSON.",
   );
+
+export const parseUpdateUserInput = (body: unknown): UpdateUserInput =>
+  parsePartialObject<UpdateUserInput>(updateValidators, body, {
+    invalid: "El cuerpo de la solicitud debe ser un objeto JSON.",
+    empty: "Enviá al menos un campo para actualizar.",
+  });
+
+export const parseUserListQuery = (query: unknown): UserListQuery =>
+  parseOptionalObject<UserListQuery>(
+    listQueryValidators,
+    query,
+    "Los parámetros de búsqueda no son válidos.",
+  );
+
+export const parseIdParam = integerString({ field: "El identificador" });
