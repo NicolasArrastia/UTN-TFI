@@ -42,6 +42,21 @@ const toTopProducts = (
   }));
 };
 
+const toSummaryProduct = (
+  row: Omit<TopProduct, "share"> | undefined,
+): Omit<TopProduct, "share"> | null => {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    productId: row.productId,
+    name: row.name,
+    units: row.units,
+    revenue: row.revenue,
+  };
+};
+
 const toBestMarginProduct = (
   row:
     | { name: string; profit: string; revenue: string }
@@ -118,14 +133,8 @@ export const statsService = {
       },
       monthlyRevenue: data.monthlyRevenue,
       topProducts,
-      topProduct: topProducts[0]
-        ? {
-            productId: topProducts[0].productId,
-            name: topProducts[0].name,
-            units: topProducts[0].units,
-            revenue: topProducts[0].revenue,
-          }
-        : null,
+      topProduct: toSummaryProduct(topProducts[0]),
+      topRevenueProduct: toSummaryProduct(data.topRevenueProduct),
       bestMarginProduct: toBestMarginProduct(data.bestMargin),
     };
   },

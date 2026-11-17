@@ -73,5 +73,6 @@ export interface StatsResponse {
   monthlyRevenue: MonthlyRevenue[];
   topProducts: TopProduct[];
   topProduct: Omit<TopProduct, "share"> | null;
+  topRevenueProduct: Omit<TopProduct, "share"> | null;
   bestMarginProduct: StatsSummaryProduct | null;
 }
