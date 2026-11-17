@@ -54,6 +54,7 @@
 - Conventions: plural snake_case tables, English enum values (`admin`/`employee`, `completed`/`cancelled`, `cash`/`transfer`/`card`/`other`), money as `decimal(10,2)`, `timestamptz` stored in UTC, soft delete via `is_active` (sales use `status` + cancellation fields instead), sale numbers from `sale_number_seq`.
 - The API uses `pg` (no Prisma, no `schema.prisma`, no migrations folder). `src/config/database.ts` owns the pool; `src/scripts/setup-database.ts` creates the database, applies the SQL schema and seeds the bootstrap admin.
 - Users, categories, tags, products, product-tag relations and sales are read from and written to their PostgreSQL tables (`users`, `categories`, `tags`, `products`, `product_tags`, `sales`, `sale_products`).
+- Dates are stored as `timestamptz` in UTC, while the API pool opens every session with `TimeZone=America/Argentina/Buenos_Aires` so `NOW()`, `date_trunc` and `to_char` group stats periods by the local (Argentine) day.
 
 ## Deployment
 
