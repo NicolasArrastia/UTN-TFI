@@ -149,12 +149,11 @@ const findEstimatedProfit = async (
   const { rows } = await query<ProfitRow>(
     `WITH bounds AS (SELECT date_trunc($1, NOW()) AS start)
      SELECT COALESCE(
-              SUM((sale_products.unit_price - products.cost) * sale_products.quantity),
+              SUM((sale_products.unit_price - sale_products.unit_cost) * sale_products.quantity),
               0
             )::text AS profit
      FROM public.sale_products
-     JOIN public.sales ON sales.id = sale_products.sale_id
-     JOIN public.products ON products.id = sale_products.product_id, bounds
+     JOIN public.sales ON sales.id = sale_products.sale_id, bounds
      WHERE sales.status = 'completed'
        AND ${isCurrent ? "sales.created_at >= bounds.start" : "sales.created_at >= bounds.start - $2::interval AND sales.created_at < bounds.start"}`,
     isCurrent
@@ -231,15 +230,14 @@ const findBestMarginProduct = async (
   const { rows } = await query<BestMarginRow>(
     `WITH bounds AS (SELECT date_trunc($1, NOW()) AS start)
      SELECT sale_products.product_name AS name,
-            SUM((sale_products.unit_price - products.cost) * sale_products.quantity)::text AS profit,
+            SUM((sale_products.unit_price - sale_products.unit_cost) * sale_products.quantity)::text AS profit,
             SUM(sale_products.subtotal)::text AS revenue
      FROM public.sale_products
-     JOIN public.sales ON sales.id = sale_products.sale_id
-     JOIN public.products ON products.id = sale_products.product_id, bounds
+     JOIN public.sales ON sales.id = sale_products.sale_id, bounds
      WHERE sales.status = 'completed'
        AND sales.created_at >= bounds.start
      GROUP BY sale_products.product_id, sale_products.product_name
-     ORDER BY SUM((sale_products.unit_price - products.cost) * sale_products.quantity) DESC
+     ORDER BY SUM((sale_products.unit_price - sale_products.unit_cost) * sale_products.quantity) DESC
      LIMIT 1`,
     [PERIOD_INTERVALS[period].trunc],
   );

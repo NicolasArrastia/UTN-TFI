@@ -268,10 +268,10 @@ COMMENT ON COLUMN sales.cancellation_reason IS 'Motivo de la anulación. Nulo mi
 -- Detalle de la venta: los productos que la componen y la cantidad vendida de
 -- cada uno.
 --
--- product_name y unit_price son copias de los valores que tenía el producto en
--- el momento de la venta. No son referencias a los valores actuales, para que
--- el historial no cambie si después se renombra un producto o se le modifica
--- el precio.
+-- product_name, unit_price y unit_cost son copias de los valores que tenía el
+-- producto en el momento de la venta. No son referencias a los valores
+-- actuales, para que el historial y la ganancia no cambien si después se
+-- renombra un producto o se le modifican el precio o el costo.
 --
 -- La clave primaria es compuesta por sale_id y product_id, lo que impide que
 -- una misma venta tenga dos renglones del mismo producto. El backend agrupa los
@@ -284,6 +284,7 @@ CREATE TABLE IF NOT EXISTS sale_products (
     product_name VARCHAR(150)  NOT NULL,
     quantity     INTEGER       NOT NULL,
     unit_price   NUMERIC(10,2) NOT NULL,
+    unit_cost    NUMERIC(10,2) NOT NULL,
     subtotal     NUMERIC(10,2) NOT NULL,
 
     CONSTRAINT pk_sale_products PRIMARY KEY (sale_id, product_id),
@@ -299,9 +300,31 @@ CREATE TABLE IF NOT EXISTS sale_products (
         ON UPDATE CASCADE
 );
 
+-- -----------------------------------------------------------------------------
+-- 3.7.1 Migración de unit_cost en sale_products
+-- -----------------------------------------------------------------------------
+-- Script idempotente para bases creadas antes de que existiera unit_cost.
+-- En las ventas previas a este cambio, el costo vigente al momento de migrar
+-- es el mejor dato disponible: no hay forma de recuperar el costo que tenía el
+-- producto cuando se registró cada venta.
+-- -----------------------------------------------------------------------------
+
+ALTER TABLE sale_products ADD COLUMN IF NOT EXISTS unit_cost NUMERIC(10,2);
+
+UPDATE sale_products
+SET unit_cost = products.cost
+FROM products
+WHERE products.id = sale_products.product_id
+  AND sale_products.unit_cost IS NULL;
+
+ALTER TABLE sale_products ALTER COLUMN unit_cost SET NOT NULL;
+
+
 COMMENT ON COLUMN sale_products.product_name IS 'Copia del nombre del producto en el momento de la venta.';
 
 COMMENT ON COLUMN sale_products.unit_price IS 'Copia del precio unitario aplicado en la venta.';
+
+COMMENT ON COLUMN sale_products.unit_cost IS 'Copia del costo unitario del producto en el momento de la venta. Se usa para calcular la ganancia histórica sin depender del costo actual.';
 
 COMMENT ON COLUMN sale_products.subtotal IS 'Copia del resultado de cantidad por precio unitario. Se almacena para que el total histórico no varíe.';
 
@@ -342,6 +365,10 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_sales_total') THEN
         ALTER TABLE sales ADD CONSTRAINT chk_sales_total CHECK (total >= 0);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_sale_products_unit_cost') THEN
+        ALTER TABLE sale_products ADD CONSTRAINT chk_sale_products_unit_cost CHECK (unit_cost >= 0);
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_sale_products_quantity') THEN

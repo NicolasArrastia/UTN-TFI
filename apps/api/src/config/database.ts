@@ -7,11 +7,14 @@ import {
 } from "pg";
 import { env } from "./env.ts";
 
+const DATABASE_TIME_ZONE = "America/Argentina/Buenos_Aires";
+
 const poolConfig: PoolConfig = {
   connectionString: env.databaseUrl,
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
+  options: `-c TimeZone=${DATABASE_TIME_ZONE}`,
   ...(env.databaseSsl ? { ssl: { rejectUnauthorized: false } } : {}),
 };
 
