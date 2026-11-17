@@ -1,6 +1,16 @@
 import type { NextFunction, Request, Response } from "express";
+import { AppError } from "../errors/app-error.ts";
 import { productService } from "../services/product.service.ts";
+import type { UserRole } from "../types/auth.types.ts";
 import { parseIdParam } from "../validators/product.validator.ts";
+
+const getRole = (req: Request): UserRole => {
+  if (!req.auth) {
+    throw new AppError("No autenticado.", 401, "UNAUTHORIZED");
+  }
+
+  return req.auth.role;
+};
 
 export const listProducts = async (
   req: Request,
@@ -8,7 +18,7 @@ export const listProducts = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const products = await productService.list(req.query);
+    const products = await productService.list(req.query, getRole(req));
 
     res.status(200).json(products);
   } catch (error) {
@@ -23,7 +33,7 @@ export const getProduct = async (
 ): Promise<void> => {
   try {
     const id = parseIdParam(req.params.id);
-    const product = await productService.getById(id);
+    const product = await productService.getById(id, getRole(req));
 
     res.status(200).json({ product });
   } catch (error) {

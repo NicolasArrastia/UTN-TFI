@@ -68,7 +68,8 @@ export interface ProductResponse {
   name: string;
   description: string | null;
   price: number;
-  cost: number;
+  /** Solo se envía a los administradores; los empleados no ven el costo. */
+  cost?: number;
   stock: number;
   minStock: number;
   lowStock: boolean;

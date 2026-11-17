@@ -2,6 +2,7 @@ import { AppError } from "../errors/app-error.ts";
 import { categoryRepository } from "../repositories/category.repository.ts";
 import { productRepository } from "../repositories/product.repository.ts";
 import { tagRepository } from "../repositories/tag.repository.ts";
+import type { UserRole } from "../types/auth.types.ts";
 import type {
   PaginatedProducts,
   Product,
@@ -101,13 +102,29 @@ const getProductOrThrow = async (id: number): Promise<Product> => {
   return product;
 };
 
+/**
+ * El costo y el margen son información sensible: solo los administradores
+ * reciben la propiedad `cost`. Para el resto se omite por completo.
+ */
+const forRole = (product: ProductResponse, role: UserRole): ProductResponse => {
+  if (role === "admin") {
+    return product;
+  }
+
+  const { cost: _cost, ...visible } = product;
+
+  return visible;
+};
+
 export const productService = {
-  async list(query: unknown): Promise<PaginatedProducts> {
+  async list(query: unknown, role: UserRole): Promise<PaginatedProducts> {
     const filters = parseProductListQuery(query);
     const { items, total } = await productRepository.findAll(filters);
 
     return {
-      products: await Promise.all(items.map(toProductResponse)),
+      products: await Promise.all(
+        items.map(async (item) => forRole(await toProductResponse(item), role)),
+      ),
       pagination: {
         page: filters.page,
         limit: filters.limit,
@@ -117,8 +134,8 @@ export const productService = {
     };
   },
 
-  async getById(id: number): Promise<ProductResponse> {
-    return toProductResponse(await getProductOrThrow(id));
+  async getById(id: number, role: UserRole): Promise<ProductResponse> {
+    return forRole(await toProductResponse(await getProductOrThrow(id)), role);
   },
 
   async create(body: unknown): Promise<ProductResponse> {
