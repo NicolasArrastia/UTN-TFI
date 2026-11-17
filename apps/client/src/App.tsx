@@ -3,6 +3,7 @@ import { ToastContainer } from "react-toastify";
 import { AdminOnly } from "./components/AdminOnly.tsx";
 import { GuestRoute } from "./components/GuestRoute.tsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.tsx";
+import { RoleHome } from "./components/RoleHome.tsx";
 import { AuthProvider } from "./context/AuthProvider.tsx";
 import { DashboardLayout } from "./layouts/DashboardLayout.tsx";
 import { LoginPage } from "./pages/LoginPage.tsx";
@@ -36,7 +37,14 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<OverviewPage />} />
+              <Route
+                index
+                element={
+                  <RoleHome>
+                    <OverviewPage />
+                  </RoleHome>
+                }
+              />
               <Route path="products" element={<ProductsPage />} />
               <Route
                 path="products/new"
@@ -57,7 +65,18 @@ function App() {
               />
               <Route path="sales" element={<SalesPage />} />
               <Route path="sales/new" element={<SaleCreatePage />} />
-              <Route path="stats" element={<StatsPage />} />
+              <Route
+                path="stats"
+                element={
+                  <AdminOnly
+                    message="Solo los administradores pueden ver estadísticas y facturación."
+                    backTo="/dashboard/sales"
+                    backLabel="Ir a ventas"
+                  >
+                    <StatsPage />
+                  </AdminOnly>
+                }
+              />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>

@@ -68,7 +68,7 @@ const getInitialValues = (product?: Product | null): FormValues => ({
   categoryId: product ? String(product.categoryId) : "",
   description: product?.description ?? "",
   price: product ? String(product.price) : "",
-  cost: product ? String(product.cost) : "",
+  cost: product?.cost === undefined ? "" : String(product.cost),
   stock: product ? String(product.stock) : "0",
   minStock: product ? String(product.minStock) : "0",
   isActive: product?.isActive ?? true,
