@@ -5,16 +5,14 @@ import {
   type QueryResult,
   type QueryResultRow,
 } from "pg";
-import { env } from "./env.ts";
-
-const DATABASE_TIME_ZONE = "America/Argentina/Buenos_Aires";
+import { BUSINESS_TIME_ZONE, env } from "./env.ts";
 
 const poolConfig: PoolConfig = {
   connectionString: env.databaseUrl,
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
-  options: `-c TimeZone=${DATABASE_TIME_ZONE}`,
+  options: `-c TimeZone=${BUSINESS_TIME_ZONE}`,
   ...(env.databaseSsl ? { ssl: { rejectUnauthorized: false } } : {}),
 };
 
