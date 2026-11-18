@@ -1,14 +1,22 @@
 import { Link, useLocation } from "react-router-dom";
+import { SortableHeader } from "../SortableHeader.tsx";
 import { IconEdit, IconTrash } from "../icons.tsx";
 import { formatCurrency } from "../../utils/format.ts";
-import type { Product } from "../../types/product.types.ts";
+import type { Product, ProductSortBy } from "../../types/product.types.ts";
+import type { SortDir } from "../../types/sort.types.ts";
 
 interface ProductTableProps {
   products: Product[];
   isLoading: boolean;
   canManage: boolean;
+  sortBy: ProductSortBy;
+  sortDir: SortDir;
+  onSortChange: (sortBy: ProductSortBy, direction: SortDir) => void;
   onDelete: (product: Product) => void;
 }
+
+const TH =
+  "whitespace-nowrap border-b border-line px-[22px] py-2.5 text-left text-[11px] font-bold uppercase tracking-[0.07em] text-muted max-md:px-4";
 
 const BADGE =
   "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold";
@@ -43,6 +51,9 @@ export function ProductTable({
   products,
   isLoading,
   canManage,
+  sortBy,
+  sortDir,
+  onSortChange,
   onDelete,
 }: ProductTableProps) {
   const location = useLocation();
@@ -53,16 +64,46 @@ export function ProductTable({
       <table className="w-full border-collapse text-[13.5px]">
         <thead>
           <tr>
-            {["Producto", "Categoría", "Precio", "Stock", "Estado", "Acciones"].map(
-              (heading) => (
-                <th
-                  key={heading}
-                  className="whitespace-nowrap border-b border-line px-[22px] py-2.5 text-left text-[11px] font-bold uppercase tracking-[0.07em] text-muted max-md:px-4"
-                >
-                  {heading}
-                </th>
-              ),
-            )}
+            <SortableHeader<ProductSortBy>
+              label="Producto"
+              column="name"
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSortChange={onSortChange}
+            />
+            <SortableHeader<ProductSortBy>
+              label="Categoría"
+              column="category"
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSortChange={onSortChange}
+            />
+            <SortableHeader<ProductSortBy>
+              label="Precio"
+              column="price"
+              sortBy={sortBy}
+              sortDir={sortDir}
+              defaultDir="desc"
+              onSortChange={onSortChange}
+            />
+            <SortableHeader<ProductSortBy>
+              label="Stock"
+              column="stock"
+              sortBy={sortBy}
+              sortDir={sortDir}
+              defaultDir="desc"
+              onSortChange={onSortChange}
+            />
+            <SortableHeader<ProductSortBy>
+              label="Estado"
+              column="isActive"
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSortChange={onSortChange}
+            />
+            <th scope="col" className={TH}>
+              Acciones
+            </th>
           </tr>
         </thead>
         <tbody className="[&>tr:last-child>td]:border-b-0 [&>tr:hover]:bg-slate-50">

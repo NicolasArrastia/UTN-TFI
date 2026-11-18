@@ -1,3 +1,15 @@
+import type { SortDir } from "./sort.types.ts";
+
+export const PRODUCT_SORT_FIELDS = [
+  "name",
+  "category",
+  "price",
+  "stock",
+  "isActive",
+] as const;
+
+export type ProductSortBy = (typeof PRODUCT_SORT_FIELDS)[number];
+
 export interface ProductCategorySummary {
   id: number;
   name: string;
@@ -48,6 +60,8 @@ export interface ProductListParams {
   lowStock?: boolean;
   page?: number;
   limit?: number;
+  sortBy?: ProductSortBy;
+  sortDir?: SortDir;
 }
 
 export interface ProductPayload {
