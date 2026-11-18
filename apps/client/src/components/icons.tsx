@@ -251,6 +251,22 @@ export function IconRefresh(props: IconProps) {
   );
 }
 
+export function IconSortAsc(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m7 14 5-5 5 5" />
+    </Svg>
+  );
+}
+
+export function IconSortDesc(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="m7 10 5 5 5-5" />
+    </Svg>
+  );
+}
+
 export function IconChevronLeft(props: IconProps) {
   return (
     <Svg {...props}>

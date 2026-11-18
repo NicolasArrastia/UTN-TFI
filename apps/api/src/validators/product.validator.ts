@@ -1,8 +1,10 @@
-import type {
-  ProductInput,
-  ProductListQuery,
-  UpdateProductInput,
+import {
+  PRODUCT_SORT_FIELDS,
+  type ProductInput,
+  type ProductListQuery,
+  type UpdateProductInput,
 } from "../types/product.types.ts";
+import { SORT_DIRS } from "../types/sort.types.ts";
 import {
   arrayOf,
   boolean,
@@ -96,6 +98,19 @@ const lowStockQuery = withDefault(
   false,
 );
 
+const sortByQuery = withDefault(
+  oneOf(
+    PRODUCT_SORT_FIELDS,
+    "El parámetro sortBy debe ser name, category, price, stock o isActive.",
+  ),
+  "name",
+);
+
+const sortDirQuery = withDefault(
+  oneOf(SORT_DIRS, "El parámetro sortDir debe ser asc o desc."),
+  "asc",
+);
+
 const listQueryValidators = {
   search: optionalText({
     field: "El parámetro search",
@@ -114,6 +129,8 @@ const listQueryValidators = {
     }),
     DEFAULT_PAGE_LIMIT,
   ),
+  sortBy: sortByQuery,
+  sortDir: sortDirQuery,
 };
 
 export const parseCreateProductInput = (body: unknown): ProductInput =>

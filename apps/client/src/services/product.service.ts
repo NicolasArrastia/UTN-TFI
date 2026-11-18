@@ -45,6 +45,14 @@ const buildListQuery = (params: ProductListParams): string => {
     searchParams.set("limit", String(params.limit));
   }
 
+  if (params.sortBy !== undefined && params.sortBy !== "name") {
+    searchParams.set("sortBy", params.sortBy);
+  }
+
+  if (params.sortDir !== undefined && params.sortDir !== "asc") {
+    searchParams.set("sortDir", params.sortDir);
+  }
+
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 };

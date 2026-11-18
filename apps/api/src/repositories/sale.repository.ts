@@ -1,13 +1,16 @@
 import { query, withTransaction } from "../config/database.ts";
+import { BUSINESS_TIME_ZONE } from "../config/env.ts";
 import { AppError } from "../errors/app-error.ts";
 import type {
   CreateSaleInput,
   PaymentMethod,
   SaleItemResponse,
+  SaleListQuery,
   SaleResponse,
+  SaleSortBy,
+  SaleStatus,
 } from "../types/sale.types.ts";
-
-type SaleStatus = "completed" | "cancelled";
+import type { SortDir } from "../types/sort.types.ts";
 
 interface SaleRow {
   id: number;
@@ -20,6 +23,13 @@ interface SaleRow {
   cancelled_at: Date | null;
   cancelled_by: number | null;
   cancellation_reason: string | null;
+  user_name?: string | null;
+}
+
+interface SaleSummaryRow {
+  completedCount: string;
+  completedTotal: string;
+  cancelledCount: string;
 }
 
 interface SaleItemRow {
@@ -67,6 +77,75 @@ const saleColumns = `
   created_at, cancelled_at, cancelled_by, cancellation_reason
 `;
 
+const saleListColumns = `
+  s.id, s.number, s.user_id, s.payment_method, s.total::text AS total, s.status,
+  s.created_at, s.cancelled_at, s.cancelled_by, s.cancellation_reason,
+  u.fullname AS user_name
+`;
+
+const LIST_JOIN = "LEFT JOIN public.users AS u ON u.id = s.user_id";
+
+/**
+ * Whitelist de ordenamiento: la clave recibida se resuelve a una expresión SQL
+ * fija. Nunca se interpola el valor que manda el cliente.
+ */
+const SORT_EXPRESSIONS: Record<SaleSortBy, string> = {
+  number: "s.number",
+  createdAt: "s.created_at",
+  user: "lower(u.fullname)",
+  total: "s.total",
+  paymentMethod: "s.payment_method",
+  status: "s.status",
+};
+
+const toOrderBy = (sortBy: SaleSortBy, sortDir: SortDir): string =>
+  `${SORT_EXPRESSIONS[sortBy]} ${sortDir === "asc" ? "ASC" : "DESC"} NULLS LAST, s.id`;
+
+const buildSaleFilters = (
+  queryFilters: SaleListQuery,
+): { where: string; values: unknown[] } => {
+  const conditions: string[] = [];
+  const values: unknown[] = [];
+
+  const addValue = (value: unknown): string => {
+    values.push(value);
+    return `$${values.length}`;
+  };
+
+  if (queryFilters.userId !== undefined) {
+    conditions.push(`s.user_id = ${addValue(queryFilters.userId)}`);
+  }
+
+  if (queryFilters.status !== undefined) {
+    conditions.push(`s.status = ${addValue(queryFilters.status)}`);
+  }
+
+  if (
+    queryFilters.from !== undefined ||
+    queryFilters.to !== undefined
+  ) {
+    // Los extremos son inclusivos y se interpretan en la hora argentina.
+    const timeZone = addValue(BUSINESS_TIME_ZONE);
+
+    if (queryFilters.from !== undefined) {
+      conditions.push(
+        `s.created_at >= (${addValue(queryFilters.from)}::date::timestamp AT TIME ZONE ${timeZone})`,
+      );
+    }
+
+    if (queryFilters.to !== undefined) {
+      conditions.push(
+        `s.created_at < (((${addValue(queryFilters.to)}::date + 1)::timestamp) AT TIME ZONE ${timeZone})`,
+      );
+    }
+  }
+
+  return {
+    where: conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "",
+    values,
+  };
+};
+
 const toDecimal = (cents: bigint): string =>
   `${cents / 100n}.${(cents % 100n).toString().padStart(2, "0")}`;
 
@@ -81,6 +160,11 @@ const toSaleSummary = (row: SaleRow) => ({
   cancelledAt: row.cancelled_at?.toISOString() ?? null,
   cancelledBy: row.cancelled_by,
   cancellationReason: row.cancellation_reason,
+});
+
+const toSaleListItem = (row: SaleRow) => ({
+  ...toSaleSummary(row),
+  userName: row.user_name ?? null,
 });
 
 const toSaleItem = (row: SaleItemRow): SaleItemResponse => ({
@@ -111,21 +195,47 @@ export const saleRepository = {
     };
   },
 
-  async list(page: number, limit: number, userId: number | null) {
-    const offset = (page - 1) * limit;
+  async list(filters: SaleListQuery) {
+    const { where, values } = buildSaleFilters(filters);
+    const offset = (filters.page - 1) * filters.limit;
+    const limitPlaceholder = `$${values.length + 1}`;
+    const offsetPlaceholder = `$${values.length + 2}`;
 
-    const { rows } = await query<SaleRow>(
-      `SELECT ${saleColumns}
-       FROM public.sales
-       WHERE ($1::integer IS NULL OR user_id = $1)
-       ORDER BY created_at DESC, id DESC
-       LIMIT $2 OFFSET $3`,
-      [userId, limit + 1, offset],
-    );
+    const [salesResult, summaryResult] = await Promise.all([
+      query<SaleRow>(
+        `SELECT ${saleListColumns}
+         FROM public.sales AS s
+         ${LIST_JOIN}
+         ${where}
+         ORDER BY ${toOrderBy(filters.sortBy, filters.sortDir)}
+         LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
+        [...values, filters.limit + 1, offset],
+      ),
+      query<SaleSummaryRow>(
+        `SELECT
+           COUNT(*) FILTER (WHERE s.status = 'completed')::text AS "completedCount",
+           COALESCE(SUM(s.total) FILTER (WHERE s.status = 'completed'), 0)::text AS "completedTotal",
+           COUNT(*) FILTER (WHERE s.status = 'cancelled')::text AS "cancelledCount"
+         FROM public.sales AS s
+         ${where}`,
+        values,
+      ),
+    ]);
+
+    const summary = summaryResult.rows[0];
 
     return {
-      sales: rows.slice(0, limit).map(toSaleSummary),
-      pagination: { page, limit, hasNextPage: rows.length > limit },
+      sales: salesResult.rows.slice(0, filters.limit).map(toSaleListItem),
+      pagination: {
+        page: filters.page,
+        limit: filters.limit,
+        hasNextPage: salesResult.rows.length > filters.limit,
+      },
+      summary: {
+        completedCount: Number(summary?.completedCount ?? 0),
+        completedTotal: summary?.completedTotal ?? "0",
+        cancelledCount: Number(summary?.cancelledCount ?? 0),
+      },
     };
   },
 

@@ -4,8 +4,10 @@ import type {
   Product,
   ProductInput,
   ProductListQuery,
+  ProductSortBy,
   UpdateProductInput,
 } from "../types/product.types.ts";
+import type { SortDir } from "../types/sort.types.ts";
 
 interface ProductRow extends QueryResultRow {
   id: number;
@@ -49,6 +51,24 @@ const PRODUCT_COLUMNS = `
   p.created_at AS "createdAt",
   p.updated_at AS "updatedAt"
 `;
+
+const LIST_JOIN =
+  "LEFT JOIN public.categories AS c ON c.id = p.category_id";
+
+/**
+ * Whitelist de ordenamiento: el cliente elige una clave y acá se resuelve a
+ * una expresión SQL fija. Nunca se interpola el valor recibido.
+ */
+const SORT_EXPRESSIONS: Record<ProductSortBy, string> = {
+  name: "lower(p.name)",
+  category: "lower(c.name)",
+  price: "p.price",
+  stock: "p.stock",
+  isActive: "p.is_active",
+};
+
+const toOrderBy = (sortBy: ProductSortBy, sortDir: SortDir): string =>
+  `${SORT_EXPRESSIONS[sortBy]} ${sortDir === "asc" ? "ASC" : "DESC"} NULLS LAST, p.id`;
 
 const toProduct = (row: ProductRow): Product => ({
   id: row.id,
@@ -175,8 +195,9 @@ export const productRepository = {
       query<ProductRow>(
         `SELECT ${PRODUCT_COLUMNS}
          FROM public.products AS p
+         ${LIST_JOIN}
          ${where}
-         ORDER BY lower(p.name), p.id
+         ORDER BY ${toOrderBy(filters.sortBy, filters.sortDir)}
          LIMIT ${limitPlaceholder} OFFSET ${offsetPlaceholder}`,
         [...values, filters.limit, offset],
       ),

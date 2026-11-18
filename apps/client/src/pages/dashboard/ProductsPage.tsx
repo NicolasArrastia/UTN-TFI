@@ -15,15 +15,20 @@ import {
   getProductErrorMessage,
   notify,
 } from "../../services/notifications.ts";
-import type {
-  Product,
-  ProductListParams,
-  ProductPagination,
-  ProductStatusFilter,
+import {
+  PRODUCT_SORT_FIELDS,
+  type Product,
+  type ProductListParams,
+  type ProductPagination,
+  type ProductSortBy,
+  type ProductStatusFilter,
 } from "../../types/product.types.ts";
+import type { SortDir } from "../../types/sort.types.ts";
 
 const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 350;
+const DEFAULT_SORT_BY: ProductSortBy = "name";
+const DEFAULT_SORT_DIR: SortDir = "asc";
 
 const PRIMARY_BUTTON =
   "inline-flex items-center justify-center gap-2 rounded-field bg-brand px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-65";
@@ -50,6 +55,22 @@ const parsePage = (value: string | null): number => {
 
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+};
+
+const parseSortBy = (value: string | null): ProductSortBy => {
+  if (value !== null && PRODUCT_SORT_FIELDS.includes(value as ProductSortBy)) {
+    return value as ProductSortBy;
+  }
+
+  return DEFAULT_SORT_BY;
+};
+
+const parseSortDir = (value: string | null): SortDir => {
+  if (value === "asc" || value === "desc") {
+    return value;
+  }
+
+  return DEFAULT_SORT_DIR;
 };
 
 const parseStatus = (value: string | null): ProductStatusFilter => {
@@ -86,6 +107,8 @@ export function ProductsPage() {
   const tagId = parsePositiveId(searchParams.get("tagId"));
   const lowStock = searchParams.get("lowStock") === "true";
   const page = parsePage(searchParams.get("page"));
+  const sortBy = parseSortBy(searchParams.get("sortBy"));
+  const sortDir = parseSortDir(searchParams.get("sortDir"));
 
   const [searchInput, setSearchInput] = useState(search);
   const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
@@ -101,8 +124,10 @@ export function ProductsPage() {
       lowStock,
       page,
       limit: PAGE_SIZE,
+      sortBy,
+      sortDir,
     }),
-    [search, categoryId, tagId, status, lowStock, page],
+    [search, categoryId, tagId, status, lowStock, page, sortBy, sortDir],
   );
 
   const { products, pagination, isLoading, error, reload } =
@@ -195,6 +220,13 @@ export function ProductsPage() {
 
   const handlePageChange = (nextPage: number) => {
     applyFilters({ page: String(nextPage) });
+  };
+
+  const handleSortChange = (nextSortBy: ProductSortBy, nextSortDir: SortDir) => {
+    applyFilters({
+      sortBy: nextSortBy === DEFAULT_SORT_BY ? null : nextSortBy,
+      sortDir: nextSortDir === DEFAULT_SORT_DIR ? null : nextSortDir,
+    });
   };
 
   const handleConfirmDelete = async () => {
@@ -292,6 +324,9 @@ export function ProductsPage() {
             products={products}
             isLoading={isLoading}
             canManage={canManage}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSortChange={handleSortChange}
             onDelete={setProductToDelete}
           />
 

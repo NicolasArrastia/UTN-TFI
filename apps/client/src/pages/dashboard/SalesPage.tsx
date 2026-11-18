@@ -1,14 +1,28 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { SortableHeader } from "../../components/SortableHeader.tsx";
 import { StateCard } from "../../components/StateCard.tsx";
 import { IconPlus } from "../../components/icons.tsx";
+import { SalesFilters } from "../../components/sales/SalesFilters.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
-import { authenticatedRequest } from "../../services/api-client.ts";
 import { notify } from "../../services/notifications.ts";
-import { formatDateTime } from "../../utils/format.ts";
+import { saleService } from "../../services/sale.service.ts";
+import {
+  SALE_SORT_FIELDS,
+  type SaleDetail,
+  type SaleListParams,
+  type SaleSortBy,
+  type SaleStatusFilter,
+  type SalesResponse,
+  type SaleSummary,
+} from "../../types/sale.types.ts";
+import type { SortDir } from "../../types/sort.types.ts";
+import { formatCurrency, formatDateTime } from "../../utils/format.ts";
 import { paymentMethodLabels, saleStatusLabels } from "../../utils/labels.ts";
 
 const PAGE_SIZE = 10;
+const DEFAULT_SORT_BY: SaleSortBy = "createdAt";
+const DEFAULT_SORT_DIR: SortDir = "desc";
 
 const CARD =
   "overflow-hidden rounded-card border border-line bg-white shadow-card";
@@ -34,6 +48,9 @@ const TBODY = "[&>tr:last-child>td]:border-b-0 [&>tr:hover]:bg-slate-50";
 const BADGE =
   "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold";
 
+const SUMMARY =
+  "mx-[22px] mt-4 rounded-field border border-line bg-slate-50 px-4 py-3 text-[13px] text-ink-soft max-md:mx-4";
+
 const FIELD = "flex flex-col gap-[7px]";
 const FIELD_LABEL = "text-[13px] font-semibold text-ink-soft";
 const FIELD_CONTROL =
@@ -42,44 +59,14 @@ const FIELD_CONTROL =
 const PAGINATION =
   "flex flex-wrap items-center justify-between gap-3 border-t border-line px-[22px] py-3.5 max-md:px-4";
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 const currency = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
-
-interface SaleSummary {
-  id: number;
-  number: number;
-  userId: number;
-  paymentMethod: string;
-  total: string;
-  status: "completed" | "cancelled";
-  createdAt: string;
-  cancelledAt: string | null;
-  cancelledBy: number | null;
-  cancellationReason: string | null;
-}
-
-interface SaleDetail extends SaleSummary {
-  items: {
-    productId: number;
-    productName: string;
-    quantity: number;
-    unitPrice: string;
-    subtotal: string;
-  }[];
-}
-
-interface SalesResponse {
-  sales: SaleSummary[];
-  pagination: {
-    page: number;
-    limit: number;
-    hasNextPage: boolean;
-  };
-}
 
 type RequestState<T> =
   | { key: string; data: T }
@@ -90,6 +77,51 @@ const saleNumber = (number: number): string =>
 
 const errorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error ? error.message : fallback;
+
+const parsePage = (value: string | null): number => {
+  if (!value) {
+    return 1;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+};
+
+const parsePositiveId = (value: string | null): number | null => {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const parseDate = (value: string | null): string | null =>
+  value !== null && DATE_PATTERN.test(value) ? value : null;
+
+const parseSortBy = (value: string | null): SaleSortBy => {
+  if (value !== null && SALE_SORT_FIELDS.includes(value as SaleSortBy)) {
+    return value as SaleSortBy;
+  }
+
+  return DEFAULT_SORT_BY;
+};
+
+const parseSortDir = (value: string | null): SortDir => {
+  if (value === "asc" || value === "desc") {
+    return value;
+  }
+
+  return DEFAULT_SORT_DIR;
+};
+
+const parseStatus = (value: string | null): SaleStatusFilter => {
+  if (value === "completed" || value === "cancelled") {
+    return value;
+  }
+
+  return "all";
+};
 
 function SaleStatusBadge({ status }: { status: SaleSummary["status"] }) {
   const tone =
@@ -106,7 +138,21 @@ function SaleStatusBadge({ status }: { status: SaleSummary["status"] }) {
 
 export function SalesPage() {
   const { user } = useAuth();
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const isAdmin = user?.role === "admin";
+  const page = parsePage(searchParams.get("page"));
+  const sortBy = parseSortBy(searchParams.get("sortBy"));
+  const sortDir = parseSortDir(searchParams.get("sortDir"));
+  const userId = parsePositiveId(searchParams.get("userId"));
+  const from = parseDate(searchParams.get("from"));
+  const to = parseDate(searchParams.get("to"));
+  const status = parseStatus(searchParams.get("status"));
+
+  const effectiveUserId = isAdmin ? userId : null;
+  const hasActiveFilters =
+    effectiveUserId !== null || from !== null || to !== null || status !== "all";
+
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [history, setHistory] = useState<RequestState<SalesResponse> | null>(
@@ -119,7 +165,22 @@ export function SalesPage() {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const cancelling = useRef(false);
 
-  const historyKey = `${page}:${refresh}`;
+  const params = useMemo<SaleListParams>(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      sortBy,
+      sortDir,
+      userId: effectiveUserId ?? undefined,
+      from: from ?? undefined,
+      to: to ?? undefined,
+      status: status === "all" ? undefined : status,
+    }),
+    [page, sortBy, sortDir, effectiveUserId, from, to, status],
+  );
+
+  const paramsKey = JSON.stringify(params);
+  const historyKey = `${paramsKey}:${refresh}`;
   const detailKey = `${selectedId}:${refresh}`;
   const currentHistory = history?.key === historyKey ? history : null;
   const currentDetail = detail?.key === detailKey ? detail : null;
@@ -130,13 +191,10 @@ export function SalesPage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    const requestParams = JSON.parse(paramsKey) as SaleListParams;
 
-    authenticatedRequest<SalesResponse>(
-      `/sales?page=${page}&limit=${PAGE_SIZE}`,
-      {
-        signal: controller.signal,
-      },
-    )
+    saleService
+      .list(requestParams, controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) {
           setHistory({ key: historyKey, data });
@@ -152,7 +210,7 @@ export function SalesPage() {
       });
 
     return () => controller.abort();
-  }, [historyKey, page]);
+  }, [paramsKey, historyKey]);
 
   useEffect(() => {
     if (selectedId === null) {
@@ -161,10 +219,9 @@ export function SalesPage() {
 
     const controller = new AbortController();
 
-    authenticatedRequest<{ sale: SaleDetail }>(`/sales/${selectedId}`, {
-      signal: controller.signal,
-    })
-      .then(({ sale: data }) => {
+    saleService
+      .getById(selectedId, controller.signal)
+      .then((data) => {
         if (!controller.signal.aborted) {
           setDetail({ key: detailKey, data });
         }
@@ -182,6 +239,58 @@ export function SalesPage() {
   }, [detailKey, selectedId]);
 
   const reload = () => setRefresh((current) => current + 1);
+
+  const applyFilters = (changes: Record<string, string | null>) => {
+    const next = new URLSearchParams(searchParams);
+
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === null || value === "") {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+    }
+
+    if (!("page" in changes)) {
+      next.delete("page");
+    }
+
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleUserChange = (nextUserId: number | null) => {
+    applyFilters({ userId: nextUserId === null ? null : String(nextUserId) });
+  };
+
+  const handleFromChange = (value: string | null) => {
+    applyFilters({ from: value });
+  };
+
+  const handleToChange = (value: string | null) => {
+    applyFilters({ to: value });
+  };
+
+  const handleStatusChange = (nextStatus: SaleStatusFilter) => {
+    applyFilters({ status: nextStatus === "all" ? null : nextStatus });
+  };
+
+  const handleSortChange = (
+    nextSortBy: SaleSortBy,
+    nextSortDir: SortDir,
+  ) => {
+    applyFilters({
+      sortBy: nextSortBy === DEFAULT_SORT_BY ? null : nextSortBy,
+      sortDir: nextSortDir === DEFAULT_SORT_DIR ? null : nextSortDir,
+    });
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    applyFilters({ page: nextPage <= 1 ? null : String(nextPage) });
+  };
+
+  const clearFilters = () => {
+    applyFilters({ userId: null, from: null, to: null, status: null });
+  };
 
   const selectSale = (id: number | null) => {
     setSelectedId(id);
@@ -206,10 +315,7 @@ export function SalesPage() {
     setCancelError(null);
 
     try {
-      await authenticatedRequest(`/sales/${sale.id}/cancel`, {
-        method: "PATCH",
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
+      await saleService.cancel(sale.id, reason.trim());
 
       setIsShowingCancellation(false);
       setReason("");
@@ -240,6 +346,20 @@ export function SalesPage() {
           </Link>
         </div>
 
+        <SalesFilters
+          isAdmin={isAdmin}
+          userId={effectiveUserId}
+          onUserChange={handleUserChange}
+          from={from}
+          to={to}
+          onFromChange={handleFromChange}
+          onToChange={handleToChange}
+          status={status}
+          onStatusChange={handleStatusChange}
+          hasActiveFilters={hasActiveFilters}
+          onClear={clearFilters}
+        />
+
         {!currentHistory ? (
           <StateCard
             title="Cargando ventas"
@@ -257,76 +377,137 @@ export function SalesPage() {
             }
           />
         ) : currentHistory.data.sales.length === 0 ? (
-          <StateCard
-            title="No hay ventas para mostrar"
-            message={
-              page === 1
-                ? "Las ventas registradas van a aparecer acá."
-                : "Volvé a la página anterior para ver más ventas."
-            }
-          />
+          hasActiveFilters ? (
+            <StateCard
+              title="No hay ventas para los filtros seleccionados"
+              message="Probá con otro rango de fechas, estado o empleado."
+              action={
+                <button
+                  type="button"
+                  className={BTN_GHOST}
+                  onClick={clearFilters}
+                >
+                  Limpiar filtros
+                </button>
+              }
+            />
+          ) : (
+            <StateCard
+              title="No hay ventas para mostrar"
+              message={
+                page === 1
+                  ? "Las ventas registradas van a aparecer acá."
+                  : "Volvé a la página anterior para ver más ventas."
+              }
+            />
+          )
         ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className={TABLE} aria-label="Historial de ventas">
-              <thead>
-                <tr>
-                  <th scope="col" className={TH}>
-                    Número
-                  </th>
-                  <th scope="col" className={TH}>
-                    Fecha
-                  </th>
-                  <th scope="col" className={TH}>
-                    Usuario
-                  </th>
-                  <th scope="col" className={TH}>
-                    Total
-                  </th>
-                  <th scope="col" className={TH}>
-                    Pago
-                  </th>
-                  <th scope="col" className={TH}>
-                    Estado
-                  </th>
-                  <th scope="col" className={TH}>
-                    Acción
-                  </th>
-                </tr>
-              </thead>
-              <tbody className={TBODY}>
-                {currentHistory.data.sales.map((entry) => (
-                  <tr key={entry.id}>
-                    <td className={`${TD} font-semibold text-ink`}>
-                      {saleNumber(entry.number)}
-                    </td>
-                    <td className={TD}>{formatDateTime(entry.createdAt)}</td>
-                    <td className={TD}>#{entry.userId}</td>
-                    <td className={`${TD} font-semibold text-ink`}>
-                      {currency.format(Number(entry.total))}
-                    </td>
-                    <td className={TD}>
-                      {paymentMethodLabels[entry.paymentMethod] ??
-                        entry.paymentMethod}
-                    </td>
-                    <td className={TD}>
-                      <SaleStatusBadge status={entry.status} />
-                    </td>
-                    <td className={TD}>
-                      <button
-                        type="button"
-                        className={BTN_GHOST}
-                        aria-label={`Ver detalle de ${saleNumber(entry.number)}`}
-                        disabled={isCancelling}
-                        onClick={() => selectSale(entry.id)}
-                      >
-                        Ver detalle
-                      </button>
-                    </td>
+          <>
+            {hasActiveFilters ? (
+              <div className={SUMMARY}>
+                <strong>
+                  {currentHistory.data.summary.completedCount} ventas completadas
+                </strong>
+                {" · "}
+                {formatCurrency(
+                  Number(currentHistory.data.summary.completedTotal),
+                )}
+                {" · "}
+                {currentHistory.data.summary.cancelledCount} anuladas
+              </div>
+            ) : null}
+
+            <div className="mt-4 overflow-x-auto">
+              <table className={TABLE} aria-label="Historial de ventas">
+                <thead>
+                  <tr>
+                    <SortableHeader<SaleSortBy>
+                      label="Número"
+                      column="number"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                      defaultDir="desc"
+                      onSortChange={handleSortChange}
+                    />
+                    <SortableHeader<SaleSortBy>
+                      label="Fecha"
+                      column="createdAt"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                      defaultDir="desc"
+                      onSortChange={handleSortChange}
+                    />
+                    <SortableHeader<SaleSortBy>
+                      label="Usuario"
+                      column="user"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                      onSortChange={handleSortChange}
+                    />
+                    <SortableHeader<SaleSortBy>
+                      label="Total"
+                      column="total"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                      defaultDir="desc"
+                      onSortChange={handleSortChange}
+                    />
+                    <SortableHeader<SaleSortBy>
+                      label="Pago"
+                      column="paymentMethod"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                      onSortChange={handleSortChange}
+                    />
+                    <SortableHeader<SaleSortBy>
+                      label="Estado"
+                      column="status"
+                      sortBy={sortBy}
+                      sortDir={sortDir}
+                      onSortChange={handleSortChange}
+                    />
+                    <th scope="col" className={TH}>
+                      Acción
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className={TBODY}>
+                  {currentHistory.data.sales.map((entry) => (
+                    <tr key={entry.id}>
+                      <td className={`${TD} font-semibold text-ink`}>
+                        {saleNumber(entry.number)}
+                      </td>
+                      <td className={TD}>{formatDateTime(entry.createdAt)}</td>
+                      <td className={TD}>
+                        {entry.userName ?? `#${entry.userId}`}
+                      </td>
+                      <td className={`${TD} font-semibold text-ink`}>
+                        {currency.format(Number(entry.total))}
+                      </td>
+                      <td className={TD}>
+                        {paymentMethodLabels[entry.paymentMethod] ??
+                          entry.paymentMethod}
+                      </td>
+                      <td className={TD}>
+                        <SaleStatusBadge status={entry.status} />
+                      </td>
+                      <td className={TD}>
+                        <button
+                          type="button"
+                          className={BTN_GHOST}
+                          aria-label={`Ver detalle de ${saleNumber(entry.number)}`}
+                          disabled={isCancelling}
+                          onClick={() => selectSale(entry.id)}
+                        >
+                          Ver detalle
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {historyData && (page > 1 || historyData.pagination.hasNextPage) && (
@@ -337,7 +518,7 @@ export function SalesPage() {
                 type="button"
                 className={BTN_GHOST}
                 disabled={page <= 1 || isCancelling}
-                onClick={() => setPage((current) => current - 1)}
+                onClick={() => handlePageChange(page - 1)}
               >
                 Anterior
               </button>
@@ -345,7 +526,7 @@ export function SalesPage() {
                 type="button"
                 className={BTN_GHOST}
                 disabled={!historyData.pagination.hasNextPage || isCancelling}
-                onClick={() => setPage((current) => current + 1)}
+                onClick={() => handlePageChange(page + 1)}
               >
                 Siguiente
               </button>
