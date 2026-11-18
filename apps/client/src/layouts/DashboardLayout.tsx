@@ -1,10 +1,17 @@
 import { useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import {
   IconBell,
   IconBox,
   IconCart,
   IconChart,
+  IconChevronLeft,
   IconClose,
   IconGrid,
   IconLogout,
@@ -106,6 +113,26 @@ const getPageMeta = (pathname: string): { title: string; subtitle: string } => {
   );
 };
 
+const EMPLOYEE_PAGE_META: Record<string, { title: string; subtitle: string }> = {
+  "/dashboard": {
+    title: "Inicio",
+    subtitle: "Accesos rápidos para tu turno.",
+  },
+  "/dashboard/sales": {
+    title: "Mis ventas",
+    subtitle: "Tus operaciones registradas.",
+  },
+  "/dashboard/sales/new": {
+    title: "Registrar venta",
+    subtitle: "Cargá una nueva operación.",
+  },
+};
+
+const getEmployeePageMeta = (
+  pathname: string,
+): { title: string; subtitle: string } =>
+  EMPLOYEE_PAGE_META[pathname] ?? getPageMeta(pathname);
+
 const getInitials = (fullname: string): string =>
   fullname
     .split(" ")
@@ -129,7 +156,10 @@ export function DashboardLayout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const meta = getPageMeta(location.pathname);
+  const isEmployee = user?.role !== "admin";
+  const meta = isEmployee
+    ? getEmployeePageMeta(location.pathname)
+    : getPageMeta(location.pathname);
 
   const roleLabel = user?.role === "admin" ? "Administrador" : "Empleado";
 
@@ -145,77 +175,93 @@ export function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen">
-      <aside
-        className={`fixed inset-y-0 left-0 z-[60] flex h-screen w-[264px] flex-[0_0_264px] flex-col bg-sidebar px-4 py-[22px] text-slate-300 transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:translate-x-0 ${
-          isSidebarOpen
-            ? "translate-x-0 shadow-[20px_0_45px_-30px_rgba(15,23,42,0.6)]"
-            : "-translate-x-full"
-        }`}
-      >
-        <div className="relative mb-1.5 flex items-center gap-3 px-2 pb-6 text-[17px] font-bold tracking-[-0.01em] text-slate-50">
-          <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-indigo-300/35 bg-indigo-500/22 text-indigo-200">
-            <IconStore width={20} height={20} />
-          </span>
-          <span>UTN TFI</span>
-          <button
-            type="button"
-            className="ml-auto inline-flex items-center justify-center text-slate-400 transition-colors hover:text-slate-100 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-            aria-label="Cerrar menú"
-          >
-            <IconClose width={18} height={18} />
-          </button>
-        </div>
-
-        <nav className="grid gap-1" aria-label="Secciones del panel">
-          <p className="mx-3 mb-2 mt-2.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-500">
-            Panel
-          </p>
-          {navItems.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) =>
-                `${NAV_LINK}${isActive ? ` ${NAV_LINK_ACTIVE}` : ""}`
-              }
+      {!isEmployee && (
+        <aside
+          className={`fixed inset-y-0 left-0 z-[60] flex h-screen w-[264px] flex-[0_0_264px] flex-col bg-sidebar px-4 py-[22px] text-slate-300 transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:translate-x-0 ${
+            isSidebarOpen
+              ? "translate-x-0 shadow-[20px_0_45px_-30px_rgba(15,23,42,0.6)]"
+              : "-translate-x-full"
+          }`}
+        >
+          <div className="relative mb-1.5 flex items-center gap-3 px-2 pb-6 text-[17px] font-bold tracking-[-0.01em] text-slate-50">
+            <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-indigo-300/35 bg-indigo-500/22 text-indigo-200">
+              <IconStore width={20} height={20} />
+            </span>
+            <span>UTN TFI</span>
+            <button
+              type="button"
+              className="ml-auto inline-flex items-center justify-center text-slate-400 transition-colors hover:text-slate-100 lg:hidden"
               onClick={() => setIsSidebarOpen(false)}
+              aria-label="Cerrar menú"
             >
-              <Icon width={18} height={18} />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
+              <IconClose width={18} height={18} />
+            </button>
+          </div>
 
-        <div className="mt-auto border-t border-slate-400/15 px-3 pb-1 pt-4 text-[13px] text-slate-200">
-          <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-500">
-            Sesión activa
-          </p>
-          <p className="font-semibold">{user?.fullname}</p>
-          <p className="mt-0.5 text-xs text-indigo-400">{roleLabel}</p>
-        </div>
-      </aside>
+          <nav className="grid gap-1" aria-label="Secciones del panel">
+            <p className="mx-3 mb-2 mt-2.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-500">
+              Panel
+            </p>
+            {navItems.map(({ to, label, icon: Icon, end }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  `${NAV_LINK}${isActive ? ` ${NAV_LINK_ACTIVE}` : ""}`
+                }
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <Icon width={18} height={18} />
+                {label}
+              </NavLink>
+            ))}
+          </nav>
 
-      <button
-        type="button"
-        className={`fixed inset-0 z-50 bg-ink/45 lg:hidden ${
-          isSidebarOpen ? "block" : "hidden"
-        }`}
-        onClick={() => setIsSidebarOpen(false)}
-        aria-label="Cerrar menú"
-        tabIndex={-1}
-      />
+          <div className="mt-auto border-t border-slate-400/15 px-3 pb-1 pt-4 text-[13px] text-slate-200">
+            <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              Sesión activa
+            </p>
+            <p className="font-semibold">{user?.fullname}</p>
+            <p className="mt-0.5 text-xs text-indigo-400">{roleLabel}</p>
+          </div>
+        </aside>
+      )}
+
+      {!isEmployee && (
+        <button
+          type="button"
+          className={`fixed inset-0 z-50 bg-ink/45 lg:hidden ${
+            isSidebarOpen ? "block" : "hidden"
+          }`}
+          onClick={() => setIsSidebarOpen(false)}
+          aria-label="Cerrar menú"
+          tabIndex={-1}
+        />
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-white/92 px-4 py-3 backdrop-blur md:gap-4 md:px-7 md:py-3.5">
-          <button
-            type="button"
-            className={`${ICON_BUTTON} lg:hidden`}
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Abrir menú"
-          >
-            <IconMenu width={20} height={20} />
-          </button>
+          {isEmployee ? (
+            <Link
+              to="/dashboard"
+              className="flex items-center gap-3 text-[17px] font-bold tracking-[-0.01em] text-ink"
+            >
+              <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-indigo-300/35 bg-indigo-500/22 text-indigo-200">
+                <IconStore width={20} height={20} />
+              </span>
+              <span>UTN TFI</span>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className={`${ICON_BUTTON} lg:hidden`}
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Abrir menú"
+            >
+              <IconMenu width={20} height={20} />
+            </button>
+          )}
 
           <div>
             <h1 className="text-[19px] font-bold tracking-[-0.01em]">{meta.title}</h1>
@@ -257,6 +303,15 @@ export function DashboardLayout() {
         </header>
 
         <main className="grid content-start gap-[22px] p-[18px] px-4 md:p-7">
+          {isEmployee && location.pathname !== "/dashboard" ? (
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft hover:text-brand"
+            >
+              <IconChevronLeft width={16} height={16} />
+              Volver al inicio
+            </Link>
+          ) : null}
           <Outlet />
         </main>
       </div>
