@@ -79,6 +79,17 @@ const NAV_ITEM =
 const NAV_ITEM_ACTIVE =
   "border-line bg-white font-semibold text-ink shadow-card [&>svg]:text-brand [&>svg]:opacity-100";
 
+const getInitials = (fullname: string): string =>
+  fullname
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+
+const PROFILE_ROW =
+  "flex justify-between border-b border-slate-100 py-3 text-[13.5px]";
+
 export function SettingsPage() {
   const { user } = useAuth();
   const [lowStockAlerts, setLowStockAlerts] = useState(true);
@@ -127,6 +138,85 @@ export function SettingsPage() {
       setIsChangingPassword(false);
     }
   };
+
+  const renderEmployeeProfile = () => {
+    const rows = [
+      { label: "Nombre completo", value: user?.fullname ?? "" },
+      { label: "Usuario", value: user?.username ?? "" },
+      { label: "Email", value: user?.email ?? "" },
+      { label: "Rol", value: "Empleado" },
+    ];
+
+    return (
+      <section className="mx-auto w-full max-w-xl rounded-card border border-line bg-white shadow-card">
+        <div className="flex items-center gap-4 px-[22px] pt-6">
+          <span className="grid size-14 flex-none place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-900 text-[16px] font-bold text-white">
+            {getInitials(user?.fullname ?? "U")}
+          </span>
+          <div className="min-w-0">
+            <h2 className="truncate text-[16px] font-bold tracking-[-0.01em]">
+              {user?.fullname}
+            </h2>
+            <span className={`${BADGE} mt-1`}>Empleado</span>
+          </div>
+        </div>
+
+        <div className={CARD_BODY}>
+          <dl className="m-0">
+            {rows.map((row) => (
+              <div className={PROFILE_ROW} key={row.label}>
+                <dt className="text-muted">{row.label}</dt>
+                <dd className="font-semibold text-ink">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className={CARD_BODY}>
+          <div>
+            <h3 className={CARD_TITLE}>Seguridad de la cuenta</h3>
+            <p className={CARD_SUBTITLE}>
+              Actualizá tu contraseña para proteger tu cuenta.
+            </p>
+          </div>
+
+          <div className={FORM_ACTIONS}>
+            <button
+              type="button"
+              className={GHOST_BUTTON}
+              onClick={() => setIsChangePasswordOpen(true)}
+            >
+              Cambiar contraseña
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  };
+
+  const changePasswordModal =
+    user && isChangePasswordOpen ? (
+      <Modal
+        title="Cambiar contraseña"
+        description="Ingresá tu contraseña actual y elegí una nueva."
+        isBusy={isChangingPassword}
+        onClose={() => setIsChangePasswordOpen(false)}
+      >
+        <ChangePasswordForm
+          isSubmitting={isChangingPassword}
+          onSubmit={handleChangePassword}
+        />
+      </Modal>
+    ) : null;
+
+  if (!isAdmin) {
+    return (
+      <>
+        <div className="flex flex-col gap-5">{renderEmployeeProfile()}</div>
+        {changePasswordModal}
+      </>
+    );
+  }
 
   const renderProfile = () => (
     <section className={CARD}>
@@ -331,19 +421,7 @@ export function SettingsPage() {
         </div>
       </div>
 
-      {user && isChangePasswordOpen && (
-        <Modal
-          title="Cambiar contraseña"
-          description="Ingresá tu contraseña actual y elegí una nueva."
-          isBusy={isChangingPassword}
-          onClose={() => setIsChangePasswordOpen(false)}
-        >
-          <ChangePasswordForm
-            isSubmitting={isChangingPassword}
-            onSubmit={handleChangePassword}
-          />
-        </Modal>
-      )}
+      {changePasswordModal}
     </>
   );
 }

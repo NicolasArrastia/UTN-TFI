@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { EmployeeHomePage } from "../pages/dashboard/EmployeeHomePage.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 
 interface RoleHomeProps {
@@ -10,7 +10,7 @@ export function RoleHome({ children }: RoleHomeProps) {
   const { user } = useAuth();
 
   if (user?.role !== "admin") {
-    return <Navigate to="/dashboard/sales" replace />;
+    return <EmployeeHomePage />;
   }
 
   return <>{children}</>;
