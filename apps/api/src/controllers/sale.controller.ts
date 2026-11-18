@@ -1,7 +1,11 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../errors/app-error.ts";
 import { saleRepository } from "../repositories/sale.repository.ts";
-import { parseCreateSaleInput } from "../validators/sale.validator.ts";
+import {
+  parseCreateSaleInput,
+  parsePagination,
+  parseSaleListQuery,
+} from "../validators/sale.validator.ts";
 import { parseObject, text } from "../validators/validation.ts";
 
 const MAX_ID = 2_147_483_647;
@@ -29,19 +33,6 @@ const parsePositiveInteger = (
     "VALIDATION_ERROR",
   );
 };
-
-const parsePagination = (req: Request) => ({
-  page: parsePositiveInteger(
-    req.query.page === undefined ? "1" : req.query.page,
-    "La página",
-    MAX_ID,
-  ),
-  limit: parsePositiveInteger(
-    req.query.limit === undefined ? "20" : req.query.limit,
-    "El límite",
-    100,
-  ),
-});
 
 const parseCatalogSearch = (value: unknown): string => {
   if (value === undefined) {
@@ -76,7 +67,7 @@ export const listSaleCatalog = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { page, limit } = parsePagination(req);
+    const { page, limit } = parsePagination(req.query);
     const search = parseCatalogSearch(req.query.search);
     const catalog = await saleRepository.listCatalog(page, limit, search);
 
@@ -92,11 +83,12 @@ export const listSales = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { page, limit } = parsePagination(req);
+    const query = parseSaleListQuery(req.query);
+    const ownerFilter = getSalesOwnerFilter(req);
+    const filters =
+      ownerFilter === null ? query : { ...query, userId: ownerFilter };
 
-    res
-      .status(200)
-      .json(await saleRepository.list(page, limit, getSalesOwnerFilter(req)));
+    res.status(200).json(await saleRepository.list(filters));
   } catch (error) {
     next(error);
   }

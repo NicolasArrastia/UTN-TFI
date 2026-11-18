@@ -58,6 +58,12 @@ const isLocalDatabase = /(^|[@/])(localhost|127\.0\.0\.1|\[::1\])(:|\/)/.test(
 
 const adminUsername = process.env.ADMIN_USERNAME ?? DEFAULT_ADMIN_USERNAME;
 
+/**
+ * Las fechas de negocio (`from`/`to` del historial de ventas) se interpretan
+ * en la hora local argentina, igual que las sesiones de PostgreSQL.
+ */
+export const BUSINESS_TIME_ZONE = "America/Argentina/Buenos_Aires";
+
 export const env = {
   port: toNumber(process.env.PORT, 3000),
   jwtSecret: process.env.JWT_SECRET ?? "dev-secret-change-me",
