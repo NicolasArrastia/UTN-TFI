@@ -17,6 +17,13 @@ const PERIODS: Array<{ id: StatsPeriod; label: string }> = [
   { id: "year", label: "Año" },
 ];
 
+const CARD =
+  "overflow-hidden rounded-card border border-line bg-white shadow-card";
+const STATE_ROW =
+  "flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted";
+const LARGE_SPINNER =
+  "size-8 animate-spin rounded-full border-[3px] border-line border-t-brand";
+
 type StatsState =
   | { key: string; status: "loading" }
   | { key: string; status: "error"; message: string }
@@ -135,10 +142,12 @@ export function StatsPage() {
       </div>
 
       {!current || current.status === "loading" ? (
-        <StateCard
-          title="Cargando estadísticas"
-          message="Consultando las ventas del período."
-        />
+        <section className={CARD} aria-busy="true">
+          <div className={STATE_ROW} role="status" aria-live="polite">
+            <span className={LARGE_SPINNER} aria-hidden="true" />
+            <span>Cargando estadísticas...</span>
+          </div>
+        </section>
       ) : current.status === "error" ? (
         <StateCard
           title="No pudimos cargar las estadísticas"
