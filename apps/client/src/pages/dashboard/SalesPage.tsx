@@ -574,10 +574,21 @@ export function SalesPage() {
           {sale && <SaleStatusBadge status={sale.status} />}
 
           {!currentDetail ? (
-            <StateCard
-              title="Cargando detalle"
-              message="Consultando la venta."
-            />
+            <div
+              className="flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <span
+                className="size-8 animate-spin rounded-full border-[3px] border-line border-t-brand"
+                aria-hidden="true"
+              />
+              <div>
+                <h3 className="text-[15px] font-bold text-ink">Cargando detalle</h3>
+                <p>Consultando la venta.</p>
+              </div>
+            </div>
           ) : "error" in currentDetail ? (
             <StateCard
               title="No pudimos cargar el detalle"
