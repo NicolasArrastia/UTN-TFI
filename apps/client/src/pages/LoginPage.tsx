@@ -44,21 +44,21 @@ export function LoginPage() {
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      <aside className="relative hidden flex-col justify-between gap-10 overflow-hidden bg-[radial-gradient(circle_at_12%_18%,rgba(99,102,241,0.45),transparent_45%),radial-gradient(circle_at_88%_82%,rgba(14,165,233,0.28),transparent_50%),linear-gradient(155deg,#0b1220_0%,#171444_55%,#312e81_100%)] px-14 py-12 text-slate-50 lg:flex">
+      <aside className="login-hero relative hidden flex-col justify-between gap-10 overflow-hidden px-14 py-12 text-slate-50 lg:flex">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -bottom-[160px] -right-[120px] size-[420px] rounded-full border border-slate-400/18 shadow-[0_0_0_60px_rgba(148,163,184,0.05)]"
         />
 
         <div className="relative z-10 flex items-center gap-3 text-lg font-bold tracking-[-0.01em]">
-          <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-indigo-300/35 bg-indigo-500/25 text-indigo-200">
+          <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-accent-300/35 bg-accent-500/25 text-accent-200">
             <IconStore width={22} height={22} />
           </span>
           <span>UTN TFI</span>
         </div>
 
         <div className="relative z-10 max-w-[460px]">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-indigo-300">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-accent-300">
             Gestión comercial
           </p>
           <h2 className="mb-[18px] text-[clamp(30px,3.4vw,42px)] font-bold leading-[1.12] tracking-[-0.03em]">
@@ -102,7 +102,7 @@ export function LoginPage() {
       <section className="grid place-items-center bg-white px-[18px] py-8 sm:p-10">
         <div className="w-full max-w-[410px]">
           <div className="mb-7 flex items-center gap-2.5 font-bold text-brand lg:hidden">
-            <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-indigo-200 bg-brand-soft text-brand">
+            <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-accent-200 bg-brand-soft text-brand">
               <IconStore width={20} height={20} />
             </span>
             <span>UTN TFI</span>

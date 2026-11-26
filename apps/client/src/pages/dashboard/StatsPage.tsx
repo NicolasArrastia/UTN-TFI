@@ -245,7 +245,7 @@ export function StatsPage() {
                           key={item.month}
                         >
                           <div
-                            className="w-full max-w-[46px] min-h-1.5 rounded-t-lg rounded-b bg-linear-to-b from-indigo-400 to-indigo-600 transition-opacity hover:opacity-80"
+                            className="w-full max-w-[46px] min-h-1.5 rounded-t-lg rounded-b bg-linear-to-b from-accent-400 to-accent-600 transition-opacity hover:opacity-80"
                             style={{
                               height: `${Math.round((Number(item.total) / maxRevenue) * 100)}%`,
                             }}
@@ -289,7 +289,7 @@ export function StatsPage() {
                           </div>
                           <div className="h-2 overflow-hidden rounded-full bg-brand-soft">
                             <span
-                              className="block h-full rounded-full bg-linear-to-r from-indigo-500 to-indigo-400"
+                              className="block h-full rounded-full bg-linear-to-r from-accent-500 to-accent-400"
                               style={{ width: `${product.share}%` }}
                             />
                           </div>

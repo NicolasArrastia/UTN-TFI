@@ -14,6 +14,14 @@
   --color-brand-dark: #4338ca;
   --color-brand-soft: #eef2ff;
 
+  /* Escala de acento: los valores por defecto son los índigo actuales. */
+  --color-accent-200: #c7d2fe;
+  --color-accent-300: #a5b4fc;
+  --color-accent-400: #818cf8;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-900: #312e81;
+
   --color-success: #16a34a;
   --color-success-soft: #dcfce7;
   --color-danger: #dc2626;
@@ -30,6 +38,14 @@
 }
 
 :root {
+  /* Variables de acento que se consumen desde valores arbitrarios (var()). */
+  --color-accent-glow: rgb(129 140 248 / 0.22);
+  --color-hero-glow: rgb(99 102 241 / 0.45);
+  --color-hero-glow-2: rgb(14 165 233 / 0.28);
+  --color-hero-start: #0b1220;
+  --color-hero-mid: #171444;
+  --color-hero-end: #312e81;
+
   /* Variables que consume react-toastify para respetar la identidad visual. */
   --toastify-color-dark: #0f172a;
   --toastify-text-color-dark: #f8fafc;
@@ -37,6 +53,50 @@
   --toastify-toast-bd-radius: 12px;
   --toastify-color-success: #22c55e;
   --toastify-color-error: #f87171;
+}
+
+:root[data-theme="emerald"] {
+  --color-brand: #059669;
+  --color-brand-dark: #047857;
+  --color-brand-soft: #ecfdf5;
+
+  --color-accent-200: #a7f3d0;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+  --color-accent-900: #064e3b;
+
+  --color-sidebar: #052e23;
+
+  --color-accent-glow: rgb(52 211 153 / 0.22);
+  --color-hero-glow: rgb(16 185 129 / 0.45);
+  --color-hero-glow-2: rgb(45 212 191 / 0.28);
+  --color-hero-start: #0b1220;
+  --color-hero-mid: #0d3b2e;
+  --color-hero-end: #064e3b;
+}
+
+:root[data-theme="gray"] {
+  --color-brand: #475569;
+  --color-brand-dark: #334155;
+  --color-brand-soft: #f1f5f9;
+
+  --color-accent-200: #e2e8f0;
+  --color-accent-300: #cbd5e1;
+  --color-accent-400: #94a3b8;
+  --color-accent-500: #64748b;
+  --color-accent-600: #475569;
+  --color-accent-900: #0f172a;
+
+  --color-sidebar: #111827;
+
+  --color-accent-glow: rgb(148 163 184 / 0.22);
+  --color-hero-glow: rgb(100 116 139 / 0.45);
+  --color-hero-glow-2: rgb(148 163 184 / 0.28);
+  --color-hero-start: #0b1220;
+  --color-hero-mid: #1e293b;
+  --color-hero-end: #334155;
 }
 
 @layer base {
@@ -77,5 +137,19 @@
   /* La librería de toasts no acepta utilidades de Tailwind desde acá. */
   .Toastify__toast {
     font-size: 0.875rem;
+  }
+}
+
+@layer components {
+  .login-hero {
+    background-image:
+      radial-gradient(circle at 12% 18%, var(--color-hero-glow), transparent 45%),
+      radial-gradient(circle at 88% 82%, var(--color-hero-glow-2), transparent 50%),
+      linear-gradient(
+        155deg,
+        var(--color-hero-start) 0%,
+        var(--color-hero-mid) 55%,
+        var(--color-hero-end) 100%
+      );
   }
 }
