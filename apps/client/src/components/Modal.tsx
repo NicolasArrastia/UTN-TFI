@@ -6,6 +6,7 @@ interface ModalProps {
   title: string;
   description?: string;
   children: ReactNode;
+  size?: "default" | "wide";
   isBusy?: boolean;
   onClose: () => void;
 }
@@ -14,6 +15,7 @@ export function Modal({
   title,
   description,
   children,
+  size = "default",
   isBusy = false,
   onClose,
 }: ModalProps) {
@@ -88,7 +90,7 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className="max-h-[calc(100dvh-1.5rem)] w-full max-w-[520px] overflow-y-auto rounded-card bg-white p-[18px] shadow-soft sm:max-h-[calc(100dvh-2.5rem)] sm:p-[22px]"
+        className={`max-h-[calc(100dvh-1.5rem)] w-full overflow-y-auto rounded-card bg-white p-[18px] shadow-soft sm:max-h-[calc(100dvh-2.5rem)] sm:p-[22px] ${size === "wide" ? "max-w-[800px]" : "max-w-[520px]"}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
