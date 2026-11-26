@@ -360,12 +360,7 @@ export function SalesPage() {
           onClear={clearFilters}
         />
 
-        {!currentHistory ? (
-          <StateCard
-            title="Cargando ventas"
-            message="Consultando el historial."
-          />
-        ) : "error" in currentHistory ? (
+        {currentHistory && "error" in currentHistory ? (
           <StateCard
             title="No pudimos cargar las ventas"
             message={currentHistory.error}
@@ -376,7 +371,7 @@ export function SalesPage() {
               </button>
             }
           />
-        ) : currentHistory.data.sales.length === 0 ? (
+        ) : historyData?.sales.length === 0 ? (
           hasActiveFilters ? (
             <StateCard
               title="No hay ventas para los filtros seleccionados"
@@ -403,22 +398,26 @@ export function SalesPage() {
           )
         ) : (
           <>
-            {hasActiveFilters ? (
+            {historyData && hasActiveFilters ? (
               <div className={SUMMARY}>
                 <strong>
-                  {currentHistory.data.summary.completedCount} ventas completadas
+                  {historyData.summary.completedCount} ventas completadas
                 </strong>
                 {" · "}
                 {formatCurrency(
-                  Number(currentHistory.data.summary.completedTotal),
+                  Number(historyData.summary.completedTotal),
                 )}
                 {" · "}
-                {currentHistory.data.summary.cancelledCount} anuladas
+                {historyData.summary.cancelledCount} anuladas
               </div>
             ) : null}
 
             <div className="mt-4 overflow-x-auto">
-              <table className={TABLE} aria-label="Historial de ventas">
+              <table
+                className={TABLE}
+                aria-label="Historial de ventas"
+                aria-busy={!currentHistory}
+              >
                 <thead>
                   <tr>
                     <SortableHeader<SaleSortBy>
@@ -472,7 +471,24 @@ export function SalesPage() {
                   </tr>
                 </thead>
                 <tbody className={TBODY}>
-                  {currentHistory.data.sales.map((entry) => (
+                  {!currentHistory ? (
+                    <tr>
+                      <td colSpan={7}>
+                        <div
+                          className="flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted"
+                          role="status"
+                          aria-live="polite"
+                        >
+                          <span
+                            className="size-8 animate-spin rounded-full border-[3px] border-line border-t-brand"
+                            aria-hidden="true"
+                          />
+                          <span>Cargando ventas...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                  {historyData?.sales.map((entry) => (
                     <tr key={entry.id}>
                       <td className={`${TD} font-semibold text-ink`}>
                         {saleNumber(entry.number)}
