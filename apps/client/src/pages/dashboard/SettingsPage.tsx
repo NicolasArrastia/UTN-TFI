@@ -12,6 +12,8 @@ import { TagManager } from "../../components/tags/TagManager.tsx";
 import { ChangePasswordForm } from "../../components/users/ChangePasswordForm.tsx";
 import { UserManager } from "../../components/users/UserManager.tsx";
 import { useAuth } from "../../hooks/useAuth.ts";
+import { useTheme } from "../../hooks/useTheme.ts";
+import type { ThemeName } from "../../context/theme-context.ts";
 import {
   authService,
   type ChangePasswordPayload,
@@ -73,6 +75,12 @@ const SWITCH_ROW =
 const SWITCH_TRACK =
   "absolute inset-0 rounded-full bg-slate-300 transition-colors peer-checked:bg-brand peer-focus-visible:ring-[3px] peer-focus-visible:ring-brand/25 after:absolute after:left-[3px] after:top-[3px] after:size-[19px] after:rounded-full after:bg-white after:shadow-[0_1px_3px_rgba(15,23,42,0.25)] after:transition-transform after:content-[''] peer-checked:after:translate-x-[19px]";
 
+const THEME_OPTIONS: Array<{ id: ThemeName; label: string; color: string }> = [
+  { id: "indigo", label: "Índigo", color: "#4f46e5" },
+  { id: "emerald", label: "Esmeralda", color: "#059669" },
+  { id: "gray", label: "Gris", color: "#475569" },
+];
+
 const NAV_ITEM =
   "flex w-full items-center gap-2.5 rounded-lg border px-3 py-2 text-left text-[13px] font-medium text-muted transition-colors hover:bg-white/65 hover:text-ink-soft [&>svg]:flex-none [&>svg]:text-muted [&>svg]:opacity-85 [&>svg]:transition-colors hover:[&>svg]:text-ink-soft hover:[&>svg]:opacity-100 max-[720px]:w-auto max-[720px]:flex-none max-[720px]:whitespace-nowrap";
 
@@ -92,6 +100,7 @@ const PROFILE_ROW =
 
 export function SettingsPage() {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [lowStockAlerts, setLowStockAlerts] = useState(true);
   const [dailySummary, setDailySummary] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -139,6 +148,47 @@ export function SettingsPage() {
     }
   };
 
+  const renderThemeSelector = () => (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-2.5">
+      {THEME_OPTIONS.map((option) => {
+        const isActive = theme === option.id;
+
+        return (
+          <button
+            key={option.id}
+            type="button"
+            className={`flex items-center gap-2 rounded-field border px-3 py-2 text-[13px] font-semibold transition-colors ${
+              isActive
+                ? "border-brand bg-brand-soft text-brand-dark"
+                : "border-line bg-white text-ink-soft hover:border-slate-300 hover:bg-slate-50"
+            }`}
+            aria-pressed={isActive}
+            onClick={() => setTheme(option.id)}
+          >
+            <span
+              className="size-3.5 flex-none rounded-full"
+              style={{ backgroundColor: option.color }}
+            />
+            <span className="truncate">{option.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const renderAppearance = () => (
+    <section className={CARD}>
+      <div className={CARD_HEADER}>
+        <div>
+          <h2 className={CARD_TITLE}>Apariencia</h2>
+          <p className={CARD_SUBTITLE}>Elegí el color de acento del panel</p>
+        </div>
+      </div>
+
+      <div className={CARD_BODY}>{renderThemeSelector()}</div>
+    </section>
+  );
+
   const renderEmployeeProfile = () => {
     const rows = [
       { label: "Nombre completo", value: user?.fullname ?? "" },
@@ -150,7 +200,7 @@ export function SettingsPage() {
     return (
       <section className="mx-auto w-full max-w-xl rounded-card border border-line bg-white shadow-card">
         <div className="flex items-center gap-4 px-[22px] pt-6">
-          <span className="grid size-14 flex-none place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-900 text-[16px] font-bold text-white">
+          <span className="grid size-14 flex-none place-items-center rounded-full bg-gradient-to-br from-accent-500 to-accent-900 text-[16px] font-bold text-white">
             {getInitials(user?.fullname ?? "U")}
           </span>
           <div className="min-w-0">
@@ -212,7 +262,10 @@ export function SettingsPage() {
   if (!isAdmin) {
     return (
       <>
-        <div className="flex flex-col gap-5">{renderEmployeeProfile()}</div>
+        <div className="flex flex-col gap-5">
+          {renderEmployeeProfile()}
+          {renderAppearance()}
+        </div>
         {changePasswordModal}
       </>
     );
@@ -324,6 +377,12 @@ export function SettingsPage() {
       </div>
 
       <div className={CARD_BODY}>
+        <div className="border-b border-slate-100 pb-4">
+          <strong className="text-[13.5px]">Apariencia</strong>
+          <p className={CARD_SUBTITLE}>Elegí el color de acento del panel.</p>
+          <div className="mt-3">{renderThemeSelector()}</div>
+        </div>
+
         <div className={SWITCH_ROW}>
           <div>
             <strong className="text-[13.5px]">Avisos de stock bajo</strong>

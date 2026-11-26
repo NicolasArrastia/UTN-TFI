@@ -183,7 +183,7 @@ export function OverviewPage() {
                     key={item.month}
                   >
                     <div
-                      className="w-full max-w-[46px] min-h-[6px] rounded-t-[8px] rounded-b-[4px] bg-gradient-to-b from-indigo-400 to-brand transition-opacity hover:opacity-80"
+                      className="w-full max-w-[46px] min-h-[6px] rounded-t-[8px] rounded-b-[4px] bg-gradient-to-b from-accent-400 to-brand transition-opacity hover:opacity-80"
                       style={{
                         height: `${Math.round((Number(item.total) / maxTotal) * 100)}%`,
                       }}

@@ -148,7 +148,7 @@ const NAV_LINK =
   "flex items-center gap-3 rounded-field px-3 py-[11px] text-sm font-medium text-slate-400 transition-colors hover:bg-slate-400/10 hover:text-slate-200";
 
 const NAV_LINK_ACTIVE =
-  "bg-gradient-to-r from-brand/30 to-brand/10 text-white shadow-[inset_0_0_0_1px_rgba(129,140,248,0.22)]";
+  "bg-gradient-to-r from-brand/30 to-brand/10 text-white shadow-[inset_0_0_0_1px_var(--color-accent-glow)]";
 
 export function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -184,7 +184,7 @@ export function DashboardLayout() {
           }`}
         >
           <div className="relative mb-1.5 flex items-center gap-3 px-2 pb-6 text-[17px] font-bold tracking-[-0.01em] text-slate-50">
-            <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-indigo-300/35 bg-indigo-500/22 text-indigo-200">
+            <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-accent-300/35 bg-accent-500/22 text-accent-200">
               <IconStore width={20} height={20} />
             </span>
             <span>UTN TFI</span>
@@ -223,7 +223,7 @@ export function DashboardLayout() {
               Sesión activa
             </p>
             <p className="font-semibold">{user?.fullname}</p>
-            <p className="mt-0.5 text-xs text-indigo-400">{roleLabel}</p>
+            <p className="mt-0.5 text-xs text-accent-400">{roleLabel}</p>
           </div>
         </aside>
       )}
@@ -247,7 +247,7 @@ export function DashboardLayout() {
               to="/dashboard"
               className="flex items-center gap-3 text-[17px] font-bold tracking-[-0.01em] text-ink"
             >
-              <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-indigo-300/35 bg-indigo-500/22 text-indigo-200">
+              <span className="inline-flex size-[38px] items-center justify-center rounded-[11px] border border-accent-300/35 bg-accent-500/22 text-accent-200">
                 <IconStore width={20} height={20} />
               </span>
               <span>UTN TFI</span>
@@ -281,7 +281,7 @@ export function DashboardLayout() {
             </button>
 
             <div className="flex items-center gap-2.5 rounded-full border border-line bg-white py-1 pl-1 pr-3 max-md:p-1">
-              <span className="grid size-[30px] place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-900 text-[11.5px] font-bold text-white">
+              <span className="grid size-[30px] place-items-center rounded-full bg-gradient-to-br from-accent-500 to-accent-900 text-[11.5px] font-bold text-white">
                 {getInitials(user?.fullname ?? "U")}
               </span>
               <span className="hidden flex-col leading-[1.25] md:flex">

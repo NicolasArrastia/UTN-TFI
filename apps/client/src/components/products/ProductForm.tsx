@@ -483,7 +483,7 @@ export function ProductForm({
                     key={tag.id}
                     className={`relative inline-flex cursor-pointer items-center gap-2 rounded-full border px-[13px] py-2 text-[13px] font-semibold transition-colors focus-within:ring-[3px] focus-within:ring-brand/20 ${
                       isSelected
-                        ? "border-indigo-200 bg-brand-soft text-brand-dark"
+                        ? "border-accent-200 bg-brand-soft text-brand-dark"
                         : "border-line bg-white text-ink-soft hover:border-slate-300"
                     }`}
                   >

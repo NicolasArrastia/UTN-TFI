@@ -1,10 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link id="app-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      (function () {
+        try {
+          var stored = window.localStorage.getItem("utn-tfi-theme");
+          var theme =
+            stored === "emerald" || stored === "gray" || stored === "indigo"
+              ? stored
+              : "indigo";
+
+          document.documentElement.dataset.theme = theme;
+
+          var favicon = document.getElementById("app-favicon");
+
+          if (favicon) {
+            favicon.setAttribute("href", "/favicon-" + theme + ".svg");
+          }
+        } catch (error) {
+          document.documentElement.dataset.theme = "indigo";
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>client</title>
+    <title>UTN TFI</title>
   </head>
   <body>
     <div id="root"></div>
