@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { Modal } from "../../components/Modal.tsx";
 import { SortableHeader } from "../../components/SortableHeader.tsx";
 import { StateCard } from "../../components/StateCard.tsx";
 import { IconPlus } from "../../components/icons.tsx";
@@ -299,6 +300,14 @@ export function SalesPage() {
     setCancelError(null);
   };
 
+  const closeDetail = () => {
+    if (cancelling.current) {
+      return;
+    }
+
+    selectSale(null);
+  };
+
   const cancelSale = async () => {
     if (
       cancelling.current ||
@@ -552,26 +561,17 @@ export function SalesPage() {
       </section>
 
       {selectedId !== null && (
-        <section className={CARD} aria-labelledby="sale-detail-title">
-          <div className={CARD_HEADER}>
-            <div className="flex flex-col items-start">
-              <h2 id="sale-detail-title" className={CARD_TITLE}>
-                {sale
-                  ? `Detalle de ${saleNumber(sale.number)}`
-                  : "Detalle de venta"}
-              </h2>
-              {sale && <SaleStatusBadge status={sale.status} />}
-            </div>
-
-            <button
-              type="button"
-              className={BTN_GHOST}
-              disabled={isCancelling}
-              onClick={() => selectSale(null)}
-            >
-              Cerrar detalle
-            </button>
-          </div>
+        <Modal
+          title={
+            sale
+              ? `Detalle de ${saleNumber(sale.number)}`
+              : "Detalle de venta"
+          }
+          size="wide"
+          isBusy={isCancelling}
+          onClose={closeDetail}
+        >
+          {sale && <SaleStatusBadge status={sale.status} />}
 
           {!currentDetail ? (
             <StateCard
@@ -613,7 +613,11 @@ export function SalesPage() {
                     <tbody className={TBODY}>
                       {sale.items.map((item) => (
                         <tr key={item.productId}>
-                          <td className={TD}>{item.productName}</td>
+                          <td className={TD}>
+                            <div className="max-w-[220px] whitespace-normal wrap-anywhere">
+                              {item.productName}
+                            </div>
+                          </td>
                           <td className={TD}>{item.quantity}</td>
                           <td className={TD}>
                             {currency.format(Number(item.unitPrice))}
@@ -717,7 +721,7 @@ export function SalesPage() {
               </>
             )
           )}
-        </section>
+        </Modal>
       )}
     </>
   );
