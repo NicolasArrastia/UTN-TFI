@@ -49,6 +49,12 @@ const TH =
 const TD =
   "whitespace-nowrap border-b border-slate-100 px-[22px] py-[13px] align-middle max-md:px-4";
 
+const STATE_ROW =
+  "flex items-center justify-center gap-3 py-[26px] text-[13.5px] text-muted";
+
+const LARGE_SPINNER =
+  "size-8 animate-spin rounded-full border-[3px] border-line border-t-brand";
+
 export function OverviewPage() {
   const [state, setState] = useState<OverviewState>({
     key: "",
@@ -84,10 +90,12 @@ export function OverviewPage() {
 
   if (!current || current.status === "loading") {
     return (
-      <StateCard
-        title="Cargando panel"
-        message="Consultando los indicadores del comercio."
-      />
+      <section className={CARD} aria-busy="true">
+        <div className={STATE_ROW} role="status" aria-live="polite">
+          <span className={LARGE_SPINNER} aria-hidden="true" />
+          <span>Cargando resumen...</span>
+        </div>
+      </section>
     );
   }
 
